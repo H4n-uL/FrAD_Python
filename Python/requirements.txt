@@ -1,0 +1,6 @@
+cffi
+ml-dtypes
+numpy
+pycparser
+scipy
+sounddevice
