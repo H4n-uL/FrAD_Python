@@ -44,7 +44,7 @@ class encoder:
         chright = data[:, 1]
         fftleft = fft(chleft); fftright = fft(chright)
 
-        # if bits == 251256:
+        # if bits == 512:
         #     ampleft  = np.abs(fftleft) .astype(np.float512); phaleft  = np.angle(fftleft) .astype(np.float512)
         #     ampright = np.abs(fftright).astype(np.float512); pharight = np.angle(fftright).astype(np.float512)
         # elif bits == 256:
