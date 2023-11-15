@@ -64,7 +64,6 @@ class decoder:
             if channels == 1:
                 block_data = block_data.reshape(-1, 2)
                 restored = decoder.decode_mono(sample_rate, block_data)
-            
 
             if out is not None and out[-4:-1]+out[-1] != '.wav':
                 out += '.wav'
