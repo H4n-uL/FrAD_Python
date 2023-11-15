@@ -1,6 +1,5 @@
 from ml_dtypes import bfloat16
 import numpy as np
-import pyaudio
 from scipy.io import wavfile
 from scipy.fft import fft
 from scipy.signal import resample
