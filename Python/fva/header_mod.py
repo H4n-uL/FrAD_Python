@@ -1,5 +1,5 @@
 import struct
-from .header.header import header
+from .tools.header import header
 
 b3_to_bits = {
     0b110: 512,

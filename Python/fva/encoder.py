@@ -1,12 +1,13 @@
+from .tools.ecc import ecc
 from ml_dtypes import bfloat16
 import numpy as np
 from scipy.io import wavfile
 from scipy.fft import fft
 from scipy.signal import resample
-from .header.header import header
+from .tools.header import header
 
 class encoder:
-    def encode_mono(data, bits: int, osr: int, nsr: int = None):
+    def encode_mono(data, bits: int, osr: int, nsr: int = None, ecc_: str = None):
         if nsr and nsr != osr:
             resdata = np.zeros(int(len(data) * nsr / osr))
             resdata = resample(data, int(len(data) * nsr / osr))
@@ -31,9 +32,12 @@ class encoder:
 
         data = np.column_stack((amp, pha))
 
+        if ecc_ is not None:
+            data = ecc.encode(data, ecc_)
+
         return data
 
-    def encode_stereo(data, bits: int, osr: int, nsr: int = None):
+    def encode_stereo(data, bits: int, osr: int, nsr: int = None, ecc_: str = None):
         if nsr and nsr != osr:
             resdata = np.zeros((int(len(data) * nsr / osr), 2))
             resdata[:, 0] = resample(data[:, 0], int(len(data[:, 0]) * nsr / osr))
@@ -70,9 +74,12 @@ class encoder:
 
         data = np.ravel(np.column_stack((data_left, data_right)), order='C')
 
+        if ecc_ is not None:
+            data = ecc.encode(data, ecc_)
+
         return data
 
-    def encode(filename, bits: int, out: str = None,
+    def encode(filename, bits: int, out: str = None, ecc: str = None,
                 new_sample_rate: int = None, title: str = None, artist: str = None,
                 lyrics: str = None, album: str = None, track_number: int = None,
                 genre: str = None, date: str = None, description: str = None,
@@ -94,13 +101,13 @@ class encoder:
         channel = len(data.shape)
 
         if len(data.shape) == 1:
-            data = encoder.encode_mono(data, bits, sample_rate, new_sample_rate)
+            data = encoder.encode_mono(data, bits, sample_rate, new_sample_rate, ecc)
         elif len(data.shape) == 2:
-            data = encoder.encode_stereo(data, bits, sample_rate, new_sample_rate)
+            data = encoder.encode_stereo(data, bits, sample_rate, new_sample_rate, ecc)
         else:
             raise Exception('Fourier Analogue only supports Mono and Stereo.')
 
-        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, 
+        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, ecc=ecc,
             title=title, lyrics=lyrics, artist=artist, album=album,
             track_number=track_number,
             genre=genre, date=date,
@@ -115,4 +122,4 @@ class encoder:
 
         with open(out if out is not None else'fourierAnalogue.fva', 'wb') as f:
             f.write(h)
-            f.write(data.tobytes())
+            f.write(data)

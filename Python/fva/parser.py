@@ -29,6 +29,12 @@ b3_to_bits = {
     0b001: 16
 }
 
+ecc_options = {
+    0b001: 'digitalfile',
+    0b010: 'cd-digitalaudio',
+    0b011: 'advancedformat'
+}
+
 class parser:
     def parse(file_path):
         d = dict()
@@ -41,6 +47,7 @@ class parser:
             cfb = struct.unpack('<B', header[0x15:0x16])[0]
             d['channel'] = cfb >> 3
             d['bitrate'] = b3_to_bits.get(cfb & 0b111, None)
+            d['ecc'] = ecc_options.get(struct.unpack('<B', header[0x16:0x17])[0] >> 5)
 
             blocks = f.read(d['headlen'] - 256)
             i = 0

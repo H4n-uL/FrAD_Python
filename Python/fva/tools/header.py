@@ -1,4 +1,5 @@
 from .comment_block import cb
+from .ecc import ecc as ecc_class
 import struct
 
 bits_to_b3 = {
@@ -12,7 +13,7 @@ bits_to_b3 = {
 
 class header:
     def builder(
-            sample_rate_bytes: bytes, channel: int, bits: int,
+            sample_rate_bytes: bytes, channel: int, bits: int, ecc: str = None,
             title: str = None, lyrics: str = None, artist: str = None,
             album: str = None, track_number: int = None, genre: str = None,
             date: str = None, description: str = None, comment: str = None,
@@ -26,7 +27,8 @@ class header:
         signature = b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80'
         length = b'\x00'*8; sample_rate_bytes
         cfb_struct = struct.pack('<B', cfb)
-        reserved = b'\x00'*234
+        ecc_bits = struct.pack('<B', ecc_class.ENCODE_OPTIONS[ecc][2] << 5 | 0b00000)
+        reserved = b'\x00'*233
 
         blocks = bytes()
 
@@ -48,7 +50,7 @@ class header:
         if isrc is not None: blocks += cb.header_block_gen(isrc, cb.ISRC)
         if img is not None: blocks += cb.header_block_gen(img, cb.IMAGE)
 
-        length = struct.pack('<Q', (len(signature + length + sample_rate_bytes + cfb_struct + reserved + blocks)))
+        length = struct.pack('<Q', (len(signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + blocks)))
 
-        header = signature + length + sample_rate_bytes + cfb_struct + reserved + blocks
+        header = signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + blocks
         return header

@@ -1,4 +1,5 @@
 from .decoder import decoder
+from .tools.ecc import ecc
 from ml_dtypes import bfloat16
 import numpy as np
 import struct
@@ -17,10 +18,12 @@ class player:
             cfb = struct.unpack('<B', header[0x15:0x16])[0]
             channels = cfb >> 3
             bits = cfb & 0b111
+            ecc_opt = struct.unpack('<B', header[0x15:0x16])[0] >> 5
 
             f.seek(header_length)
 
             block = f.read()
+            block = ecc.decode(block, ecc_opt)
             # if bits == 0b110:
             #     block_data = np.frombuffer(block, dtype=np.float512)
             # elif bits == 0b101:
@@ -38,10 +41,10 @@ class player:
 
             if channels == 2:
                 block_data = block_data.reshape(-1, 4)
-                wave = decoder.decode_stereo(sample_rate, block_data)
+                wave = decoder.decode_stereo(sample_rate, block_data, 32)
             if channels == 1:
                 block_data = block_data.reshape(-1, 2)
-                wave = decoder.decode_mono(sample_rate, block_data)
+                wave = decoder.decode_mono(sample_rate, block_data, 32)
 
             sd.play(wave, samplerate=sample_rate)
             sd.wait()
