@@ -5,16 +5,14 @@ from scipy.fft import ifft
 import struct
 
 class decoder:
-    def decode_mono(sample_rate, data, out):
+    def decode_mono(sample_rate, data):
         data = data[:,0] * np.exp(1j * data[:,1])
         wave = np.real(ifft(data))
         restored = np.int32(wave / np.max(np.abs(wave)) * ((2**31)-1))
 
-        if out is not None and out[-4:-1]+out[-1] != '.wav':
-            out += '.wav'
-        wavfile.write(out if out is not None else'restored.wav', sample_rate, restored)
+        return restored
 
-    def decode_stereo(sample_rate, data, out):
+    def decode_stereo(sample_rate, data):
         left_freq_data = data[:, 0] * np.exp(1j * data[:, 1])
         right_freq_data = data[:, 2] * np.exp(1j * data[:, 3])
 
@@ -26,10 +24,7 @@ class decoder:
 
         restored_stereo = np.column_stack((left_wave, right_wave))
 
-        if out is not None and out[-4:-1]+out[-1] != '.wav':
-            out += '.wav'
-        wavfile.write(out if out is not None else'restored.wav', sample_rate, restored_stereo)
-
+        return restored_stereo
 
     def decode(file_path, out: str = None):
         with open(file_path, 'rb') as f:
@@ -65,7 +60,12 @@ class decoder:
 
             if channels == 2:
                 block_data = block_data.reshape(-1, 4)
-                decoder.decode_stereo(sample_rate, block_data, out)
+                restored = decoder.decode_stereo(sample_rate, block_data)
             if channels == 1:
                 block_data = block_data.reshape(-1, 2)
-                decoder.decode_mono(sample_rate, block_data, out)
+                restored = decoder.decode_mono(sample_rate, block_data)
+            
+
+            if out is not None and out[-4:-1]+out[-1] != '.wav':
+                out += '.wav'
+            wavfile.write(out if out is not None else'restored.wav', sample_rate, restored)
