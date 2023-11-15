@@ -64,7 +64,7 @@ class ecc:
         if option is None: return data
 
         rs = RSCodec(ecc.ENCODE_OPTIONS[option][0], ecc.ENCODE_OPTIONS[option][1])
-        block_size = ecc.ENCODE_OPTIONS[option][1]
+        block_size = ecc.ENCODE_OPTIONS[option][1] - ecc.ENCODE_OPTIONS[option][0]
 
         num_blocks = len(data) // block_size
         data_rs = bytearray()
@@ -91,12 +91,15 @@ class ecc:
         data = bytearray()
 
         for i in range(num_blocks):
+            print(num_blocks,'/',i)
             block = data_rs[i*block_size:(i+1)*block_size]
             try:
                 data.extend(rs.decode(block))
             except ReedSolomonError as e:
                 print(f"Block {i} failed to decode: {e}")
+                print()
                 # Handle error as needed
+            print("\033[A\033[K", end="")
 
         if len(data_rs) % block_size != 0:
             block = data_rs[num_blocks*block_size:]

@@ -18,7 +18,7 @@ class player:
             cfb = struct.unpack('<B', header[0x15:0x16])[0]
             channels = cfb >> 3
             bits = cfb & 0b111
-            ecc_opt = struct.unpack('<B', header[0x15:0x16])[0] >> 5
+            ecc_opt = struct.unpack('<B', header[0x16:0x17])[0] >> 5
 
             f.seek(header_length)
 
