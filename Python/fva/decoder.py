@@ -8,7 +8,7 @@ class decoder:
     def decode_mono(sample_rate, data):
         data = data[:,0] * np.exp(1j * data[:,1])
         wave = np.real(ifft(data))
-        restored = np.int32(wave / np.max(np.abs(wave)) * ((2**31)-1))
+        restored = np.int32((wave / 2**31) * ((2**31)-1))
 
         return restored
 
@@ -19,8 +19,8 @@ class decoder:
         left_wave = np.fft.ifft(left_freq_data).real
         right_wave = np.fft.ifft(right_freq_data).real
 
-        left_wave = np.int32(left_wave / np.max(np.abs(left_wave)) * ((2**31)-1))
-        right_wave = np.int32(right_wave / np.max(np.abs(right_wave)) * ((2**31)-1))
+        left_wave = np.int32((left_wave / 2**31) * ((2**31)-1))
+        right_wave = np.int32((right_wave / 2**31) * ((2**31)-1))
 
         restored_stereo = np.column_stack((left_wave, right_wave))
 

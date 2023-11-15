@@ -1,4 +1,4 @@
-from decoder import decoder
+from .decoder import decoder
 from ml_dtypes import bfloat16
 import numpy as np
 import struct
