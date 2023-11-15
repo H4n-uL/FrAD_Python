@@ -96,7 +96,7 @@ class ecc:
             try:
                 data.extend(rs.decode(block))
             except ReedSolomonError as e:
-                print(f"Block {i} failed to decode: {e}")
+                print(f"\033[A\033[KBlock {i} failed to decode: {e}")
                 print()
                 # Handle error as needed
             print("\033[A\033[K", end="")
