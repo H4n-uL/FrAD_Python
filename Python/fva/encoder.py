@@ -30,7 +30,7 @@ class encoder:
         else:
             raise Exception('Illegal bits value.')
 
-        data = np.column_stack((amp, pha))
+        data = np.column_stack((amp, pha)).tobytes()
 
         if ecc_ is not None:
             data = ecc.encode(data, ecc_)
@@ -72,7 +72,7 @@ class encoder:
         data_left  = np.column_stack((ampleft,  phaleft))
         data_right = np.column_stack((ampright, pharight))
 
-        data = np.ravel(np.column_stack((data_left, data_right)), order='C')
+        data = np.ravel(np.column_stack((data_left, data_right)), order='C').tobytes()
 
         if ecc_ is not None:
             data = ecc.encode(data, ecc_)
