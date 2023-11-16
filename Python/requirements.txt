@@ -2,6 +2,6 @@ cffi
 ml-dtypes
 numpy
 pycparser
-unireedsolomon
+reedsolo
 scipy
 sounddevice

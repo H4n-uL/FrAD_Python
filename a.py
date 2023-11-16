@@ -1,11 +1,25 @@
-from unireedsolomon import rs
+from reedsolo import RSCodec
+import numpy as np
 
-codec = rs.RSCoder(255, 245)  # 10개의 에러 정정 코드를 생성합니다.
-encoded = codec.encode(b'Hello, world!')  # 'Hello, world!'를 인코딩합니다.
-print(encoded)
+def split_data(data, chunk_size):
+    return [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
 
-try:
-    decoded = codec.decode(encoded)  # 인코딩된 데이터를 디코딩합니다.
-    print(decoded)
-except rs.RSCodecError as e:
-    print(f'Decoding failed: {e}')
+class cd:
+    rs = RSCodec(16, 128)
+
+    def encode(data):
+        chunks = split_data(data, 112)
+        return b''.join([cd.rs.encode(chunk) for chunk in chunks])
+
+    def decode(data):
+        chunks = split_data(data, 128)
+        return b''.join([cd.rs.decode(chunk)[0] for chunk in chunks])
+
+data = b''
+with open('cons.wav', 'rb') as f:
+    data = f.read()
+
+encoded_data = cd.encode(data)
+decoded_data = cd.decode(encoded_data)
+
+assert data == decoded_data, "Decoded data does not match original data."

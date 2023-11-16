@@ -25,6 +25,8 @@ class decoder:
         left_freq_data = data[:, 0] * np.exp(1j * data[:, 1])
         right_freq_data = data[:, 2] * np.exp(1j * data[:, 3])
 
+        left_wave, right_wave = np.int32(), np.int32()
+
         if bits == 32:
             left_wave = np.int32(np.fft.ifft(left_freq_data).real)
             right_wave = np.int32(np.fft.ifft(right_freq_data).real)
