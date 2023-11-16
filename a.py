@@ -1,4 +1,4 @@
-from reedsolo import RSCodec
+from reedsolo import RSCodec, ReedSolomonError
 import numpy as np
 
 def split_data(data, chunk_size):
@@ -9,17 +9,31 @@ class cd:
 
     def encode(data):
         chunks = split_data(data, 112)
-        return b''.join([cd.rs.encode(chunk) for chunk in chunks])
+        enc = b''
+        for i, chunk in enumerate(chunks):
+            print(i,'/',len(chunks))
+            enc += cd.rs.encode(chunk)
+            print('\033[A\033[K', end='')
+        return enc
 
     def decode(data):
-        chunks = split_data(data, 128)
-        return b''.join([cd.rs.decode(chunk)[0] for chunk in chunks])
+        try:
+            chunks = split_data(data, 128)
+            dec = b''
+            for i, chunk in enumerate(chunks):
+                print(i,'/',len(chunks))
+                dec += cd.rs.decode(chunk)[0]
+                print('\033[A\033[K', end='')
+            return dec
+        except ReedSolomonError as e:
+            print('Error:', e)
 
 data = b''
 with open('cons.wav', 'rb') as f:
     data = f.read()
-
+# data = np.random.bytes(2**23)
 encoded_data = cd.encode(data)
 decoded_data = cd.decode(encoded_data)
+# print(decoded_data)
 
 assert data == decoded_data, "Decoded data does not match original data."
