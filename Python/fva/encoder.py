@@ -71,7 +71,7 @@ class encode:
         data = np.ravel(np.column_stack((data_left, data_right)), order='C').tobytes()
         return data
 
-    def enc(filename, bits: int, out: str = None, ecc_or_not: bool = False,
+    def enc(filename, bits: int, out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None, title: str = None, artist: str = None,
                 lyrics: str = None, album: str = None, track_number: int = None,
                 genre: str = None, date: str = None, description: str = None,
@@ -99,9 +99,9 @@ class encode:
         else:
             raise Exception('Fourier Analogue only supports Mono and Stereo.')
 
-        data = ecc.encode(data, ecc_or_not)
+        data = ecc.encode(data, apply_ecc)
 
-        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, isecc=ecc_or_not,
+        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, isecc=apply_ecc,
             title=title, lyrics=lyrics, artist=artist, album=album,
             track_number=track_number,
             genre=genre, date=date,
