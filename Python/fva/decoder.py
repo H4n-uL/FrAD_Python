@@ -5,8 +5,8 @@ from scipy.io import wavfile
 from scipy.fft import ifft
 import struct
 
-class decoder:
-    def decode_mono(sample_rate, data, bits):
+class decode:
+    def mono(sample_rate, data, bits):
         data = data[:,0] * np.exp(1j * data[:,1])
 
         if bits == 32: wave = np.int32(np.real(ifft(data)))
@@ -16,7 +16,7 @@ class decoder:
 
         return wave
 
-    def decode_stereo(sample_rate, data, bits):
+    def stereo(sample_rate, data, bits):
         left_freq = data[:, 0] * np.exp(1j * data[:, 1])
         right_freq = data[:, 2] * np.exp(1j * data[:, 3])
 
@@ -36,7 +36,7 @@ class decoder:
 
         return np.column_stack((left_wave, right_wave))
 
-    def decode(file_path, out: str = None, bits: int = 32):
+    def dec(file_path, out: str = None, bits: int = 32):
         with open(file_path, 'rb') as f:
             header = f.read(256)
 
@@ -72,10 +72,10 @@ class decoder:
 
             if cb == 2:
                 block_data = block_data.reshape(-1, 4)
-                restored = decoder.decode_stereo(sample_rate, block_data, bits)
+                restored = decode.stereo(sample_rate, block_data, bits)
             elif cb == 1:
                 block_data = block_data.reshape(-1, 2)
-                restored = decoder.decode_mono(sample_rate, block_data, bits)
+                restored = decode.mono(sample_rate, block_data, bits)
             else:
                 raise Exception('Fourier Analogue only supports Mono and Stereo.')
 

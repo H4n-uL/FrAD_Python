@@ -1,4 +1,4 @@
-from .decoder import decoder
+from .decoder import decode
 from .tools.ecc import ecc
 from ml_dtypes import bfloat16
 import numpy as np
@@ -41,10 +41,10 @@ class player:
 
             if channels == 2:
                 block_data = block_data.reshape(-1, 4)
-                wave = decoder.decode_stereo(sample_rate, block_data, 32)
+                wave = decode.stereo(sample_rate, block_data, 32)
             if channels == 1:
                 block_data = block_data.reshape(-1, 2)
-                wave = decoder.decode_mono(sample_rate, block_data, 32)
+                wave = decode.mono(sample_rate, block_data, 32)
 
             sd.play(wave, samplerate=sample_rate)
             sd.wait()

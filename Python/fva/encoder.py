@@ -6,8 +6,8 @@ from scipy.fft import fft
 from scipy.signal import resample
 from .tools.header import header
 
-class encoder:
-    def encode_mono(data, bits: int, osr: int, nsr: int = None, ecc_: str = None):
+class encode:
+    def mono(data, bits: int, osr: int, nsr: int = None, ecc_: str = None):
         if nsr and nsr != osr:
             resdata = np.zeros(int(len(data) * nsr / osr))
             resdata = resample(data, int(len(data) * nsr / osr))
@@ -37,7 +37,7 @@ class encoder:
 
         return data
 
-    def encode_stereo(data, bits: int, osr: int, nsr: int = None, ecc_: str = None):
+    def stereo(data, bits: int, osr: int, nsr: int = None, ecc_: str = None):
         if nsr and nsr != osr:
             resdata = np.zeros((int(len(data) * nsr / osr), 2))
             resdata[:, 0] = resample(data[:, 0], int(len(data[:, 0]) * nsr / osr))
@@ -79,7 +79,7 @@ class encoder:
 
         return data
 
-    def encode(filename, bits: int, out: str = None, ecc: str = None,
+    def enc(filename, bits: int, out: str = None, ecc: str = None,
                 new_sample_rate: int = None, title: str = None, artist: str = None,
                 lyrics: str = None, album: str = None, track_number: int = None,
                 genre: str = None, date: str = None, description: str = None,
@@ -101,9 +101,9 @@ class encoder:
         channel = len(data.shape)
 
         if len(data.shape) == 1:
-            data = encoder.encode_mono(data, bits, sample_rate, new_sample_rate, ecc)
+            data = encode.mono(data, bits, sample_rate, new_sample_rate, ecc)
         elif len(data.shape) == 2:
-            data = encoder.encode_stereo(data, bits, sample_rate, new_sample_rate, ecc)
+            data = encode.stereo(data, bits, sample_rate, new_sample_rate, ecc)
         else:
             raise Exception('Fourier Analogue only supports Mono and Stereo.')
 
