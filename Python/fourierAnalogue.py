@@ -1,16 +1,17 @@
-from fva import encoder
-from fva import decoder
-from fva import parser
-from fva import headmod
+from fva import encode
+from fva import decode
+from fva import header
 from fva import player
+from fva import repack
 
 wav_name = 'mus.wav'
 fva_name = 'fourierAnalogue.fva'
 restored_name = 'restored.wav'
 
 if __name__ == '__main__':
-    encoder.encode(wav_name, 32, out=fva_name)
-    decoder.decode(fva_name, out=restored_name)
-    print(parser.parse(fva_name))
-    headmod.modify(fva_name)
+    encode.enc(wav_name, 32, out=fva_name)
+    decode.dec(fva_name, out=restored_name)
+    print(header.parse(fva_name))
+    header.modify(fva_name)
+    repack.ecc(fva_name, ecc_type=0)
     player.play(fva_name)
