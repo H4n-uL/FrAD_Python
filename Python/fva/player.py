@@ -6,7 +6,7 @@ import struct
 import sounddevice as sd
 
 class player:
-    def play(file_path):
+    def play(file_path, eccless: bool = True):
         with open(file_path, 'rb') as f:
             header = f.read(256)
 
@@ -18,12 +18,18 @@ class player:
             cfb = struct.unpack('<B', header[0x15:0x16])[0]
             channels = cfb >> 3
             bits = cfb & 0b111
-            ecc_opt = struct.unpack('<B', header[0x16:0x17])[0] >> 5
+            is_ecc_on = struct.unpack('<B', header[0x16:0x17])[0] >> 7
 
             f.seek(header_length)
 
             block = f.read()
-            block = ecc.decode(block, ecc_opt)
+            if is_ecc_on == 0b0:
+                pass
+            elif eccless:
+                chunks = ecc.split_data(block, 128)
+                block =  b''.join([bytes(chunk) for chunk in chunks])
+            else:
+                block = ecc.decode(block, is_ecc_on)
             # if bits == 0b110:
             #     block_data = np.frombuffer(block, dtype=np.float512)
             # elif bits == 0b101:

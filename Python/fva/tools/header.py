@@ -13,7 +13,7 @@ bits_to_b3 = {
 
 class header:
     def builder(
-            sample_rate_bytes: bytes, channel: int, bits: int, ecc: str = None,
+            sample_rate_bytes: bytes, channel: int, bits: int, isecc: bool = False,
             title: str = None, lyrics: str = None, artist: str = None,
             album: str = None, track_number: int = None, genre: str = None,
             date: str = None, description: str = None, comment: str = None,
@@ -27,7 +27,8 @@ class header:
         signature = b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80'
         length = b'\x00'*8; sample_rate_bytes
         cfb_struct = struct.pack('<B', cfb)
-        ecc_bits = struct.pack('<B', ecc_class.ENCODE_OPTIONS[ecc] << 5 | 0b00000)
+        isecc = 0b1 if isecc else 0b0 << 7
+        ecc_bits = struct.pack('<B', isecc | 0b0000000)
         reserved = b'\x00'*233
 
         blocks = bytes()

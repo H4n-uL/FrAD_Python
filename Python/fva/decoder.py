@@ -36,7 +36,7 @@ class decode:
 
         return np.column_stack((left_wave, right_wave))
 
-    def dec(file_path, out: str = None, bits: int = 32):
+    def dec(file_path, out: str = None, bits: int = 32, eccless: bool = True):
         with open(file_path, 'rb') as f:
             header = f.read(256)
 
@@ -49,12 +49,18 @@ class decode:
             cfb = struct.unpack('<B', header[0x15:0x16])[0]
             cb = cfb >> 3
             fb = cfb & 0b111
-            ecc_opt = struct.unpack('<B', header[0x16:0x17])[0] >> 5
+            is_ecc_on = struct.unpack('<B', header[0x16:0x17])[0] >> 7
 
             f.seek(header_length)
 
             block = f.read()
-            block = ecc.decode(block, ecc_opt)
+            if is_ecc_on == 0b0:
+                pass
+            elif eccless:
+                chunks = ecc.split_data(block, 128)
+                block =  b''.join([bytes(chunk) for chunk in chunks])
+            else:
+                block = ecc.decode(block, is_ecc_on)
             # if b == 0b110:
             #     block_data = np.frombuffer(block, dtype=np.float512)
             # elif b == 0b101:

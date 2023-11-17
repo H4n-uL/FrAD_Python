@@ -7,7 +7,7 @@ from scipy.signal import resample
 from .tools.header import header
 
 class encode:
-    def mono(data, bits: int, osr: int, nsr: int = None, ecc_: str = None):
+    def mono(data, bits: int, osr: int, nsr: int = None):
         if nsr and nsr != osr:
             resdata = np.zeros(int(len(data) * nsr / osr))
             resdata = resample(data, int(len(data) * nsr / osr))
@@ -31,13 +31,9 @@ class encode:
             raise Exception('Illegal bits value.')
 
         data = np.column_stack((amp, pha)).tobytes()
-
-        if ecc_ is not None:
-            data = ecc.encode(data, ecc_)
-
         return data
 
-    def stereo(data, bits: int, osr: int, nsr: int = None, ecc_: str = None):
+    def stereo(data, bits: int, osr: int, nsr: int = None):
         if nsr and nsr != osr:
             resdata = np.zeros((int(len(data) * nsr / osr), 2))
             resdata[:, 0] = resample(data[:, 0], int(len(data[:, 0]) * nsr / osr))
@@ -73,13 +69,9 @@ class encode:
         data_right = np.column_stack((ampright, pharight))
 
         data = np.ravel(np.column_stack((data_left, data_right)), order='C').tobytes()
-
-        if ecc_ is not None:
-            data = ecc.encode(data, ecc_)
-
         return data
 
-    def enc(filename, bits: int, out: str = None, ecc: str = None,
+    def enc(filename, bits: int, out: str = None, ecc_or_not: bool = False, ecc_strength = None,
                 new_sample_rate: int = None, title: str = None, artist: str = None,
                 lyrics: str = None, album: str = None, track_number: int = None,
                 genre: str = None, date: str = None, description: str = None,
@@ -101,13 +93,15 @@ class encode:
         channel = len(data.shape)
 
         if len(data.shape) == 1:
-            data = encode.mono(data, bits, sample_rate, new_sample_rate, ecc)
+            data = encode.mono(data, bits, sample_rate, new_sample_rate)
         elif len(data.shape) == 2:
-            data = encode.stereo(data, bits, sample_rate, new_sample_rate, ecc)
+            data = encode.stereo(data, bits, sample_rate, new_sample_rate)
         else:
             raise Exception('Fourier Analogue only supports Mono and Stereo.')
 
-        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, ecc=ecc,
+        data = ecc.encode(data, ecc_or_not)
+
+        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, isecc=ecc_or_not,
             title=title, lyrics=lyrics, artist=artist, album=album,
             track_number=track_number,
             genre=genre, date=date,
