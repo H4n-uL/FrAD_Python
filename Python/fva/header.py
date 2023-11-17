@@ -1,26 +1,6 @@
 import struct
 from .tools.header import header
 
-block_types = {
-    b'T': 'TITLE',
-    b'R': 'LIRYCS',
-    b'A': 'ARTIST',
-    b'a': 'ALBUM',
-    b't': 'TRACKNUMBER',
-    b'G': 'GENRE',
-    b'D': 'DATE',
-    b'd': 'DESCRIPTION',
-    b'C': 'COMMENT',
-    b'M': 'COMPOSER',
-    b'c': 'COPYRIGHT',
-    b'L': 'LICENSE',
-    b'O': 'ORGANIZATION',
-    b'l': 'LOCATION',
-    b'P': 'PERFORMER',
-    b'I': 'ISRC',
-    b'i': 'IMAGE'
-}
-
 b3_to_bits = {
     0b110: 512,
     0b101: 256,
@@ -47,11 +27,19 @@ class header:
             blocks = f.read(d['headlen'] - 256)
             i = 0
             while i < len(blocks):
-                block_type = blocks[i:i+1]
-                block_length = int(struct.unpack('<I', blocks[i+1:i+5])[0])
-                block_data = blocks[i+5:i+block_length].decode('utf-8')
-                d[f'{block_types.get(block_type, "UNKNOWN")}'] = block_data
-                i += block_length
+                block_type = blocks[i:i+2]
+                if block_type == b'\x72\xeb':
+                    block_length = int.from_bytes(blocks[i+2:i+8], 'little')
+                    title_length = int(struct.unpack('<I', blocks[i+8:i+12])[0])
+                    title = blocks[i+12:i+12+title_length].decode('utf-8')
+                    data = blocks[i+12+title_length:block_length].decode('utf-8')
+                    d[title] = data
+                    i += block_length
+                else:
+                    block_length = int(struct.unpack('<I', blocks[i+2:i+6])[0])
+                    block_data = blocks[i+5:i+block_length].decode('utf-8')
+                    d[block_type] = block_data
+                    i += block_length
 
         return d
 
