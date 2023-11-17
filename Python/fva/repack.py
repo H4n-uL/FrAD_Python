@@ -3,7 +3,7 @@ from .header import header
 import struct
 
 class repack:
-    def ecc(file_path, ecc_or_not: bool = False, ecc_strength = None):
+    def ecc(file_path, ecc_or_not: bool = False):
         with open(file_path, 'r+b') as f:
             head = f.read(256)
 
@@ -12,7 +12,7 @@ class repack:
                 raise Exception('This is not Fourier Analogue file.')
 
             header_length = struct.unpack('<Q', head[0xa:0x12])[0]
-            is_ecc_on = struct.unpack('<B', header[0x16:0x17])[0] >> 7
+            is_ecc_on = True if (struct.unpack('<B', header[0x16:0x17])[0] >> 7) == 0b1 else False
 
             f.seek(header_length)
 
