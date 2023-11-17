@@ -88,9 +88,9 @@ class encoder:
                 performer: str = None, isrc: str = None, img: bytes = None):
         sample_rate, data = wavfile.read(filename)
         sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')
-        
-        if data.dtype == np.int8:
-            data = data.astype(np.int32) * 2**24
+
+        if data.dtype == np.uint8:
+            data = (data.astype(np.int32) - 2**7) * 2**24
         elif data.dtype == np.int16:
             data = data.astype(np.int32) * 2**16
         elif data.dtype == np.int32:
