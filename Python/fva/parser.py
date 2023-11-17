@@ -31,7 +31,7 @@ b3_to_bits = {
 
 ecc_options = {
     0b001: 'digitalfile',
-    0b010: 'cd-digitalaudio',
+    0b010: 'reedsolomon',
     0b011: 'advancedformat'
 }
 
