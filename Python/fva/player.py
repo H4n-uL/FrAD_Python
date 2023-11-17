@@ -18,16 +18,16 @@ class player:
             cfb = struct.unpack('<B', header[0x15:0x16])[0]
             channels = cfb >> 3
             bits = cfb & 0b111
-            is_ecc_on = struct.unpack('<B', header[0x16:0x17])[0] >> 7
+            is_ecc_on = True if (struct.unpack('<B', header[0x16:0x17])[0] >> 7) == 0b1 else False
 
             f.seek(header_length)
 
             block = f.read()
-            if is_ecc_on == 0b0:
+            if is_ecc_on == False:
                 pass
             elif eccless:
                 chunks = ecc.split_data(block, 128)
-                block =  b''.join([bytes(chunk) for chunk in chunks])
+                block =  b''.join([bytes(chunk[:112]) for chunk in chunks])
             else:
                 block = ecc.decode(block, is_ecc_on)
             # if bits == 0b110:

@@ -27,7 +27,7 @@ class header:
         signature = b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80'
         length = b'\x00'*8; sample_rate_bytes
         cfb_struct = struct.pack('<B', cfb)
-        isecc = 0b1 if isecc else 0b0 << 7
+        isecc = (0b1 if isecc else 0b0) << 7
         ecc_bits = struct.pack('<B', isecc | 0b0000000)
         reserved = b'\x00'*233
 
