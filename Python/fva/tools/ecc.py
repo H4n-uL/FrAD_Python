@@ -1,5 +1,4 @@
 from multiprocessing import Pool, cpu_count
-import os
 from reedsolo import RSCodec, ReedSolomonError
 
 class ecc:
@@ -9,16 +8,27 @@ class ecc:
     class rdsl:
         rs = RSCodec(16, 128)
 
+        def encode_chunk(chunk):
+            return bytes(ecc.rdsl.rs.encode(chunk))
+
+        def decode_chunk(chunk):
+            try:
+                return bytes(ecc.rdsl.rs.decode(chunk)[0])
+            except ReedSolomonError as e:
+                print(f'Error: {e}')
+                return None
+
         def encode(data):
             chunks = ecc.split_data(data, 112)
-            return b''.join([bytes(ecc.rdsl.rs.encode(chunk)) for chunk in chunks])
+            with Pool(cpu_count() // 2) as p:
+                encoded_chunks = p.map(ecc.rdsl.encode_chunk, chunks)
+            return b''.join(encoded_chunks)
 
         def decode(data):
-          try:
             chunks = ecc.split_data(data, 128)
-            return b''.join([bytes(ecc.rdsl.rs.decode(chunk)[0]) for chunk in chunks])
-          except ReedSolomonError as e:
-            print(f'Error: {e}')
+            with Pool(cpu_count() // 2) as p:
+                decoded_chunks = p.map(ecc.rdsl.decode_chunk, chunks)
+            return b''.join(decoded_chunks)
 
     def encode(data, is_ecc_on: bool):
         if is_ecc_on == True: return ecc.rdsl.encode(data)
