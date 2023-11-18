@@ -119,6 +119,6 @@ class encode:
         if out is not None and (fva_fra != '.fva' or fva_fra != '.fra' or sine != '.sine'):
             out += '.fra'
 
-        with open(out if out is not None else'fourierAnalogue.fa', 'wb') as f:
+        with open(out if out is not None else'fourierAnalogue.fra', 'wb') as f:
             f.write(h)
             f.write(data)
