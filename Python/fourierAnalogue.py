@@ -5,13 +5,13 @@ from fva import player
 from fva import repack
 
 wav_name = 'mus.wav'
-fva_name = 'fourierAnalogue.fra'
+fra_name = 'fourierAnalogue.fra'
 restored_name = 'restored.wav'
 
 if __name__ == '__main__':
-    encode.enc(wav_name, 32, out=fva_name)
-    decode.dec(fva_name, out=restored_name)
-    print(header.parse(fva_name))
-    header.modify(fva_name)
-    repack.ecc(fva_name)
-    player.play(fva_name)
+    encode.enc(wav_name, 32, out=fra_name)
+    decode.dec(fra_name, out=restored_name)
+    print(header.parse(fra_name))
+    header.modify(fra_name)
+    repack.ecc(fra_name)
+    player.play(fra_name)

@@ -5,5 +5,7 @@
 **/__pycache__/
 
 # Music files #
+*.fra
 *.fva
+*.sine
 *.wav
