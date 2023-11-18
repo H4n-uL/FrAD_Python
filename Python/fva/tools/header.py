@@ -1,5 +1,4 @@
 from .comment_block import cb
-from .ecc import ecc as ecc_class
 import struct
 
 bits_to_b3 = {

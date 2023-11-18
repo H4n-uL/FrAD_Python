@@ -1,6 +1,5 @@
 import hashlib
 from .tools.ecc import ecc
-from .header import header
 import struct
 
 class repack:
