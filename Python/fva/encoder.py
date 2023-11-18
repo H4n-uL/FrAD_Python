@@ -1,9 +1,10 @@
-from .tools.ecc import ecc
+import hashlib
 from ml_dtypes import bfloat16
 import numpy as np
 from scipy.io import wavfile
 from scipy.fft import fft
 from scipy.signal import resample
+from .tools.ecc import ecc
 from .tools.header import header
 
 class encode:
@@ -100,8 +101,9 @@ class encode:
             raise Exception('Fourier Analogue only supports Mono and Stereo.')
 
         data = ecc.encode(data, apply_ecc)
+        checksum = hashlib.md5(data).digest()
 
-        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, isecc=apply_ecc,
+        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
             title=title, lyrics=lyrics, artist=artist, album=album,
             track_number=track_number,
             genre=genre, date=date,

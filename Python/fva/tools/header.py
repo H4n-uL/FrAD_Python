@@ -13,7 +13,11 @@ bits_to_b3 = {
 
 class header:
     def builder(
-            sample_rate_bytes: bytes, channel: int, bits: int, isecc: bool = False,
+            # Fixed Header
+            sample_rate_bytes: bytes, channel: int,
+            bits: int, isecc: bool, md5: bytes,
+
+            # Metadata
             title: str = None, lyrics: str = None, artist: str = None,
             album: str = None, track_number: int = None, genre: str = None,
             date: str = None, description: str = None, comment: str = None,
@@ -29,7 +33,7 @@ class header:
         cfb_struct = struct.pack('<B', cfb)
         isecc = (0b1 if isecc else 0b0) << 7
         ecc_bits = struct.pack('<B', isecc | 0b0000000)
-        reserved = b'\x00'*233
+        reserved = b'\x00'*217
 
         blocks = bytes()
 
@@ -51,7 +55,7 @@ class header:
         if isrc is not None: blocks += cb.typical(isrc, cb.ISRC)
         if img is not None: blocks += cb.typical(img, cb.IMAGE)
 
-        length = struct.pack('<Q', (len(signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + blocks)))
+        length = struct.pack('<Q', (len(signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + md5 + blocks)))
 
-        header = signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + blocks
+        header = signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + md5 + blocks
         return header
