@@ -1,4 +1,3 @@
-import binascii
 import hashlib
 from ml_dtypes import bfloat16
 import numpy as np

@@ -1,7 +1,5 @@
-cffi
 ml-dtypes
 numpy
-pycparser
 reedsolo
 scipy
 sounddevice
