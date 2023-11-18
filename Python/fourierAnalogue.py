@@ -13,5 +13,5 @@ if __name__ == '__main__':
     decode.dec(fva_name, out=restored_name)
     print(header.parse(fva_name))
     header.modify(fva_name)
-    repack.ecc(fva_name, )
+    repack.ecc(fva_name)
     player.play(fva_name)

@@ -27,7 +27,7 @@ class cb:
 
         _block = block_type + block_length + block_data
         return _block
-    
+
     def custom(title, data):
         block_type = cb.CUSTOM
         title_length = struct.pack('<I', len(title))
