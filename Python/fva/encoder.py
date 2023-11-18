@@ -112,10 +112,13 @@ class encode:
             copyright=copyright, license=license,
             organization=organization, location=location,
             performer=performer, isrc=isrc, img=img)
+        
+        fva_fra = out[-4:-1]+out[-1]
+        sine = out[-5:-1]+out[-1]
 
-        if out is not None and out[-4:-1]+out[-1] != '.fva':
-            out += '.fva'
+        if out is not None and (fva_fra != '.fva' or fva_fra != '.fra' or sine != '.sine'):
+            out += '.fra'
 
-        with open(out if out is not None else'fourierAnalogue.fva', 'wb') as f:
+        with open(out if out is not None else'fourierAnalogue.fa', 'wb') as f:
             f.write(h)
             f.write(data)

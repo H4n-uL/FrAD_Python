@@ -5,7 +5,7 @@ from fva import player
 from fva import repack
 
 wav_name = 'mus.wav'
-fva_name = 'fourierAnalogue.fva'
+fva_name = 'fourierAnalogue.fra'
 restored_name = 'restored.wav'
 
 if __name__ == '__main__':
