@@ -34,6 +34,5 @@ class ecc:
         if is_ecc_on == True: return ecc.rdsl.encode(data)
         if is_ecc_on == False: return data
 
-    def decode(data, is_ecc_on: bool):
-        if is_ecc_on == True: return ecc.rdsl.decode(data)
-        if is_ecc_on == False: return data
+    def decode(data):
+        return ecc.rdsl.decode(data)
