@@ -116,7 +116,7 @@ class encode:
         fva_fra = out[-4:-1]+out[-1]
         sine = out[-5:-1]+out[-1]
 
-        if out is not None and (fva_fra != '.fva' or fva_fra != '.fra' or sine != '.sine'):
+        if out is not None and fva_fra != '.fva' and fva_fra != '.fra' and sine != '.sine':
             out += '.fra'
 
         with open(out if out is not None else'fourierAnalogue.fra', 'wb') as f:
