@@ -23,6 +23,7 @@ class header:
             d['channel'] = cfb >> 3
             d['bitrate'] = b3_to_bits.get(cfb & 0b111, None)
             d['isecc'] = struct.unpack('<B', header[0x16:0x17])[0] >> 7
+            d['checksum'] = header[0xf0:0x100]
 
             blocks = f.read(d['headlen'] - 256)
             i = 0
