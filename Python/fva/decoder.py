@@ -7,7 +7,7 @@ import struct
 from .tools.ecc import ecc
 
 class decode:
-    def mono(sample_rate, data, bits):
+    def mono(data, bits):
         data = data[:,0] * np.exp(1j * data[:,1])
         wave = np.int32(np.real(ifft(data)))
 
@@ -18,7 +18,7 @@ class decode:
 
         return wave
 
-    def stereo(sample_rate, data, bits):
+    def stereo(data, bits):
         left_freq = data[:, 0] * np.exp(1j * data[:, 1])
         right_freq = data[:, 2] * np.exp(1j * data[:, 3])
 
@@ -88,10 +88,10 @@ class decode:
 
             if cb == 2:
                 data_numpy = data_numpy.reshape(-1, 4)
-                restored = decode.stereo(sample_rate, data_numpy, bits)
+                restored = decode.stereo(data_numpy, bits)
             elif cb == 1:
                 data_numpy = data_numpy.reshape(-1, 2)
-                restored = decode.mono(sample_rate, data_numpy, bits)
+                restored = decode.mono(data_numpy, bits)
             else:
                 raise Exception('Fourier Analogue only supports Mono and Stereo.')
             
