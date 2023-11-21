@@ -12,6 +12,9 @@ class repack:
                 raise Exception('This is not Fourier Analogue file.')
 
             header_length = struct.unpack('<Q', head[0xa:0x12])[0]
+            is_ecc_on = True if (struct.unpack('<B', head[0x16:0x17])[0] >> 7) == 0b1 else False
+            if not is_ecc_on:
+                return
 
             f.seek(header_length)
 
