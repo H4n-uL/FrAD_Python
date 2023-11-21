@@ -1,5 +1,5 @@
 import struct
-from .tools.header import header
+from .tools.header import header as h
 
 b3_to_bits = {
     0b110: 512,
@@ -54,17 +54,19 @@ class header:
         with open(file_path, 'rb') as f:
                 head = f.read(256)
 
-                header_length_old = struct.unpack('<Q', head[0xa:0x12])[0]
+                header_length = struct.unpack('<Q', head[0xa:0x12])[0]
                 sample_rate = head[0x12:0x15]
                 cfb = struct.unpack('<B', head[0x15:0x16])[0]
+                is_ecc_on = True if (struct.unpack('<B', head[0x16:0x17])[0] >> 7) == 0b1 else False
+                checksum_header = head[0xf0:0x100]
 
                 channel = cfb >> 3
                 bits = b3_to_bits.get(cfb & 0b111)
 
-                f.seek(header_length_old)
+                f.seek(header_length)
                 audio = f.read()
 
-                head_new = header.builder(sample_rate, channel, bits,
+                head_new = h.builder(sample_rate, channel, bits, is_ecc_on, checksum_header,
                 title, lyrics, artist,
                 album, track_number, genre,
                 date, description, comment,
