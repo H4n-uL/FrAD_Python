@@ -20,9 +20,10 @@ class cb:
     IMAGE =        b'\x8a\x68'
     CUSTOM =       b'\x72\xeb'
 
-    def typical(data, type):
-        block_type = type
-        block_data = data.encode('utf-8')
+    def typical(data, block_type):
+        if type(data) == str: block_data = data.encode('utf-8')
+        elif type(data) == int: block_data = struct.pack('<Q', data)
+        else: block_data = data
         block_length = struct.pack('<I', len(block_data) + 5)
 
         _block = block_type + block_length + block_data
