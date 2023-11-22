@@ -38,7 +38,10 @@ class header:
                     i += block_length
                 else:
                     block_length = int(struct.unpack('<I', blocks[i+2:i+6])[0])
-                    block_data = blocks[i+5:i+block_length].decode('utf-8')
+                    block_data = blocks[i+6:i+block_length]
+                    if block_type == b'\xb6\xb9': block_data = struct.unpack('<Q', block_data)[0]
+                    elif block_type == b'\x8a\x68': pass
+                    else: block_data = block_data.decode('utf-8')
                     d[block_type] = block_data
                     i += block_length
 
