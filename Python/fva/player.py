@@ -7,7 +7,7 @@ class player:
     def runtime(dur):
         start_time = time.time_ns()
         while sd.get_stream().active:
-            print(f'{round((time.time_ns() - start_time) / 10**9, 3):.3f} s / {dur:.3f} s')
+            print(f'{(time.time_ns() - start_time) / 10**9:.3f} s / {dur:.3f} s')
             time.sleep(1/18)
             print('\x1b[1A\x1b[2K', end='')
 
