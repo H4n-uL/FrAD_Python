@@ -24,7 +24,7 @@ class cb:
         if type(data) == str: block_data = data.encode('utf-8')
         elif type(data) == int: block_data = struct.pack('<Q', data)
         else: block_data = data
-        block_length = struct.pack('<I', len(block_data) + 5)
+        block_length = struct.pack('<I', len(block_data) + 6)
 
         _block = block_type + block_length + block_data
         return _block
