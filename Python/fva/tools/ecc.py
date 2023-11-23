@@ -6,7 +6,7 @@ class ecc:
         return [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
 
     class rdsl:
-        rs = RSCodec(32, 160)
+        rs = RSCodec(10, 74)
 
         def encode_chunk(chunk):
             return bytes(ecc.rdsl.rs.encode(chunk))
@@ -19,13 +19,13 @@ class ecc:
                 return None
 
         def encode(data):
-            chunks = ecc.split_data(data, 128)
+            chunks = ecc.split_data(data, 64)
             with Pool(cpu_count() // 2) as p:
                 encoded_chunks = p.map(ecc.rdsl.encode_chunk, chunks)
             return b''.join(encoded_chunks)
 
         def decode(data):
-            chunks = ecc.split_data(data, 160)
+            chunks = ecc.split_data(data, 74)
             with Pool(cpu_count() // 2) as p:
                 decoded_chunks = p.map(ecc.rdsl.decode_chunk, chunks)
             return b''.join(decoded_chunks)
