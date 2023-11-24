@@ -64,8 +64,8 @@ class decode:
                     raise Exception('File has corrupted but it has no ECC option. Decoder halted.')
             else:
                 if checksum_data == checksum_header:
-                    chunks = ecc.split_data(data, 74)
-                    data =  b''.join([bytes(chunk[:64]) for chunk in chunks])
+                    chunks = ecc.split_data(data, 148)
+                    data =  b''.join([bytes(chunk[:128]) for chunk in chunks])
                 else:
                     print(f'{file_path} has been corrupted, Please repack your file for the best music experience.')
                     print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
