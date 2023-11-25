@@ -1,5 +1,5 @@
 import struct
-from .tools.header import header as h
+from .tools.headb import headb
 
 b3_to_bits = {
     0b110: 512,
@@ -29,31 +29,22 @@ class header:
             i = 0
             while i < len(blocks):
                 block_type = blocks[i:i+2]
-                if block_type == b'\x72\xeb':
+                if block_type == b'\xfa\xaa':
                     block_length = int.from_bytes(blocks[i+2:i+8], 'little')
                     title_length = int(struct.unpack('<I', blocks[i+8:i+12])[0])
                     title = blocks[i+12:i+12+title_length].decode('utf-8')
-                    data = blocks[i+12+title_length:block_length].decode('utf-8')
-                    d[title] = data
+                    data = blocks[i+12+title_length:i+block_length]
+                    d[title] = data.decode('utf-8')
                     i += block_length
-                else:
-                    block_length = int(struct.unpack('<I', blocks[i+2:i+6])[0])
-                    block_data = blocks[i+6:i+block_length]
-                    if block_type == b'\xb6\xb9': block_data = struct.unpack('<Q', block_data)[0]
-                    elif block_type == b'\x8a\x68': pass
-                    else: block_data = block_data.decode('utf-8')
-                    d[block_type] = block_data
+                elif block_type == b'\xf5\x55':
+                    block_length = int(struct.unpack('<Q', blocks[i+2:i+10])[0])
+                    data = blocks[i+10+title_length:i+block_length]
+                    image = data
                     i += block_length
 
-        return d
+        return d, image
 
-    def modify(file_path,
-                title: str = None, lyrics: str = None, artist: str = None,
-                album: str = None, track_number: int = None, genre: str = None,
-                date: str = None, description: str = None, comment: str = None,
-                composer: str = None, copyright: str = None, license: str = None,
-                organization: str = None, location: str = None, performer: str = None,
-                isrc: str = None, img: bytes = None):
+    def modify(file_path, meta = None, img: bytes = None):
         with open(file_path, 'rb') as f:
                 head = f.read(256)
 
@@ -69,13 +60,8 @@ class header:
                 f.seek(header_length)
                 audio = f.read()
 
-                head_new = h.builder(sample_rate, channel, bits, is_ecc_on, checksum_header,
-                title, lyrics, artist,
-                album, track_number, genre,
-                date, description, comment,
-                composer, copyright, license,
-                organization, location, performer,
-                isrc, img)
+                head_new = headb.uilder(sample_rate, channel, bits, is_ecc_on, checksum_header,
+                meta, img)
 
                 with open(file_path, 'wb') as f:
                     f.write(head_new)

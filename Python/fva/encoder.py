@@ -6,7 +6,7 @@ from scipy.fft import fft
 from scipy.signal import resample
 import subprocess
 from .tools.ecc import ecc
-from .tools.header import header
+from .tools.headb import headb
 
 class encode:
     def mono(data, bits: int, osr: int, nsr: int = None):
@@ -103,12 +103,8 @@ class encode:
         return data, sample_rate, channels
 
     def enc(file_path: str, bits: int, out: str = None, apply_ecc: bool = False,
-                new_sample_rate: int = None, title: str = None, artist: str = None,
-                lyrics: str = None, album: str = None, track_number: int = None,
-                genre: str = None, date: str = None, description: str = None,
-                comment: str = None, composer: str = None, copyright: str = None,
-                license: str = None, organization: str = None, location: str = None,
-                performer: str = None, isrc: str = None, img: bytes = None):
+                new_sample_rate: int = None, 
+                meta = None, img: bytes = None):
         data, sample_rate, channel = encode.get_pcm(file_path)
         sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')
 
@@ -131,15 +127,8 @@ class encode:
         data = ecc.encode(data, apply_ecc)
         checksum = hashlib.md5(data).digest()
 
-        h = header.builder(sample_rate_bytes, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
-            title=title, lyrics=lyrics, artist=artist, album=album,
-            track_number=track_number,
-            genre=genre, date=date,
-            description=description,
-            comment=comment, composer=composer,
-            copyright=copyright, license=license,
-            organization=organization, location=location,
-            performer=performer, isrc=isrc, img=img)
+        h = headb.uilder(sample_rate_bytes, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
+            meta=meta, img=img)
 
         if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
             out += '.fra'
