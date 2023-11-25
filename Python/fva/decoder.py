@@ -101,11 +101,14 @@ class decode:
     def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '5000k'):
         restored, sample_rate = decode.internal(file_path, bits)
         out = out if out is not None else 'restored'
-        _, ext = os.path.splitext(out)
+        out, ext = os.path.splitext(out)
         container = ext.lstrip('.').lower() if ext else codec
 
         channels = restored.shape[1] if len(restored.shape) > 1 else 1
         raw_audio = restored.tobytes()
+
+        if codec == 'vorbis':
+            codec = 'libvorbis'
 
         if bits == 32:
             f = 's32le'
