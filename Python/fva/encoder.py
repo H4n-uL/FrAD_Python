@@ -1,7 +1,7 @@
 import hashlib
 from ml_dtypes import bfloat16
 import numpy as np
-from scipy.io import wavfile
+from pydub import AudioSegment
 from scipy.fft import fft
 from scipy.signal import resample
 from .tools.ecc import ecc
@@ -72,14 +72,29 @@ class encode:
         data = np.ravel(np.column_stack((data_left, data_right)), order='C').tobytes()
         return data
 
-    def enc(filename, bits: int, out: str = None, apply_ecc: bool = False,
+    def enc(filename: str, bits: int, out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None, title: str = None, artist: str = None,
                 lyrics: str = None, album: str = None, track_number: int = None,
                 genre: str = None, date: str = None, description: str = None,
                 comment: str = None, composer: str = None, copyright: str = None,
                 license: str = None, organization: str = None, location: str = None,
                 performer: str = None, isrc: str = None, img: bytes = None):
-        sample_rate, data = wavfile.read(filename)
+
+        if filename.endswith('.flac'):
+            audio = AudioSegment.from_file(filename, format='flac')
+        elif filename.endswith('.aac') or filename.endswith('.m4a'):
+            audio = AudioSegment.from_file(filename, format='m4a')
+        elif filename.endswith('.ogg'):
+            audio = AudioSegment.from_ogg(filename)
+        elif filename.endswith('.mp3'):
+            audio = AudioSegment.from_mp3(filename)
+        elif filename.endswith('.wav'):
+            audio = AudioSegment.from_wav(filename)
+        elif filename.endswith('.wma'):
+            audio = AudioSegment.from_file(filename, format='wma')
+        else: raise ValueError('Unsupported format')
+        data = np.array(audio.get_array_of_samples()).reshape((-1, audio.channels))
+        sample_rate = audio.frame_rate
         sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')
 
         if data.dtype == np.uint8:
@@ -89,7 +104,7 @@ class encode:
         elif data.dtype == np.int32:
             pass
         else:
-            raise ValueError('Unsupported WAV bit depth')
+            raise ValueError('Unsupported bit depth')
 
         channel = len(data.shape)
 
@@ -112,11 +127,8 @@ class encode:
             copyright=copyright, license=license,
             organization=organization, location=location,
             performer=performer, isrc=isrc, img=img)
-        
-        fva_fra = out[-4:-1]+out[-1]
-        sine = out[-5:-1]+out[-1]
 
-        if out is not None and fva_fra != '.fva' and fva_fra != '.fra' and sine != '.sine':
+        if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
             out += '.fra'
 
         with open(out if out is not None else'fourierAnalogue.fra', 'wb') as f:

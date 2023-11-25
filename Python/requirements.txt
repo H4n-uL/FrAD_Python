@@ -1,5 +1,7 @@
+ffmpeg
 ml-dtypes
 numpy
+pydub
 reedsolo
 scipy
 sounddevice

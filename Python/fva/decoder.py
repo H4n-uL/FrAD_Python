@@ -1,7 +1,7 @@
 import hashlib
 from ml_dtypes import bfloat16
 import numpy as np
-from scipy.io import wavfile
+from pydub import AudioSegment
 from scipy.fft import ifft
 import struct
 from .tools.ecc import ecc
@@ -97,8 +97,23 @@ class decode:
             
             return restored, sample_rate
 
-    def dec(file_path, out: str = None, bits: int = 32):
+    def dec(file_path, out: str = None, bits: int = 32, file_format: str = 'flac'):
         restored, sample_rate = decode.internal(file_path, bits)
-        if out is not None and out[-4:-1]+out[-1] != '.wav':
-            out += '.wav'
-        wavfile.write(out if out is not None else'restored.wav', sample_rate, restored)
+        out = out if out is not None else 'restored'
+        channels = restored.shape[1] if len(restored.shape) > 1 else 1
+
+        if file_format in ['aac', 'm4a']:
+            file_format = 'mp4'
+        if file_format == 'vorbis':
+            file_format = 'ogg'
+
+        if file_format in ['flac', 'mp4', 'ogg', 'mp3', 'wav', 'opus', 'wma']:
+            audio = AudioSegment(
+                restored.tobytes(),
+                frame_rate=sample_rate,
+                sample_width=restored.dtype.itemsize,
+                channels=channels
+            )
+            audio.export(f'{out}.{file_format if file_format != "mp4" else "m4a"}', format=file_format, bitrate='500k')
+        else:
+            raise ValueError(f'Unsupported format: {file_format}')
