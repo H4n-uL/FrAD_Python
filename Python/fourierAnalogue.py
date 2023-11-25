@@ -6,7 +6,7 @@ from fva import repack
 
 wav_name = 'audio.flac'
 fra_name = 'fourierAnalogue.fra'
-restored_name = 'restored.flac'
+restored_name = 'restored'
 
 if __name__ == '__main__':
     encode.enc(wav_name, 32, out=fra_name)

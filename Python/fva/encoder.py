@@ -1,9 +1,10 @@
 import hashlib
+import json
 from ml_dtypes import bfloat16
 import numpy as np
-from pydub import AudioSegment
 from scipy.fft import fft
 from scipy.signal import resample
+import subprocess
 from .tools.ecc import ecc
 from .tools.header import header
 
@@ -71,30 +72,44 @@ class encode:
 
         data = np.ravel(np.column_stack((data_left, data_right)), order='C').tobytes()
         return data
+    
+    def get_info(file_path):
+        command = ['ffprobe', 
+                '-v', 'quiet', 
+                '-print_format', 'json', 
+                '-show_streams', 
+                file_path]
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        info = json.loads(result.stdout)
 
-    def enc(filename: str, bits: int, out: str = None, apply_ecc: bool = False,
+        for stream in info['streams']:
+            if stream['codec_type'] == 'audio':
+                return int(stream['channels']), int(stream['sample_rate'])
+        return None
+    
+    def get_pcm(file_path: str):
+        command = [
+            'ffmpeg',
+            '-i', file_path,
+            '-f', 's32le',
+            '-acodec', 'pcm_s32le',
+            '-vn',
+            'pipe:1'
+        ]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        pcm_data, _ = process.communicate()
+        channels, sample_rate = encode.get_info(file_path)
+        data = np.frombuffer(pcm_data, dtype=np.int32).reshape(-1, channels)
+        return data, sample_rate, channels
+
+    def enc(file_path: str, bits: int, out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None, title: str = None, artist: str = None,
                 lyrics: str = None, album: str = None, track_number: int = None,
                 genre: str = None, date: str = None, description: str = None,
                 comment: str = None, composer: str = None, copyright: str = None,
                 license: str = None, organization: str = None, location: str = None,
                 performer: str = None, isrc: str = None, img: bytes = None):
-
-        if filename.endswith('.flac'):
-            audio = AudioSegment.from_file(filename, format='flac')
-        elif filename.endswith('.aac') or filename.endswith('.m4a'):
-            audio = AudioSegment.from_file(filename, format='m4a')
-        elif filename.endswith('.ogg'):
-            audio = AudioSegment.from_ogg(filename)
-        elif filename.endswith('.mp3'):
-            audio = AudioSegment.from_mp3(filename)
-        elif filename.endswith('.wav'):
-            audio = AudioSegment.from_wav(filename)
-        elif filename.endswith('.wma'):
-            audio = AudioSegment.from_file(filename, format='wma')
-        else: raise ValueError('Unsupported format')
-        data = np.array(audio.get_array_of_samples()).reshape((-1, audio.channels))
-        sample_rate = audio.frame_rate
+        data, sample_rate, channel = encode.get_pcm(file_path)
         sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')
 
         if data.dtype == np.uint8:
@@ -106,11 +121,9 @@ class encode:
         else:
             raise ValueError('Unsupported bit depth')
 
-        channel = len(data.shape)
-
-        if len(data.shape) == 1:
+        if channel == 1:
             data = encode.mono(data, bits, sample_rate, new_sample_rate)
-        elif len(data.shape) == 2:
+        elif channel == 2:
             data = encode.stereo(data, bits, sample_rate, new_sample_rate)
         else:
             raise Exception('Fourier Analogue only supports Mono and Stereo.')

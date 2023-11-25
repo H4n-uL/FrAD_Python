@@ -1,9 +1,10 @@
 import hashlib
 from ml_dtypes import bfloat16
 import numpy as np
-from pydub import AudioSegment
+import os
 from scipy.fft import ifft
 import struct
+import subprocess
 from .tools.ecc import ecc
 
 class decode:
@@ -97,28 +98,26 @@ class decode:
             
             return restored, sample_rate
 
-    def dec(file_path, out: str = None, bits: int = 32, file_format: str = 'flac', bitrate: str = '500k'):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '500k'):
         restored, sample_rate = decode.internal(file_path, bits)
         out = out if out is not None else 'restored'
+        _, ext = os.path.splitext(out)
+        container = ext.lstrip('.').lower() if ext else codec
+
         channels = restored.shape[1] if len(restored.shape) > 1 else 1
+        raw_audio = restored.tobytes()
 
-        if file_format in ['aac', 'm4a']:
-            file_format = 'mp4'
-        if file_format == 'vorbis':
-            file_format = 'ogg'
-
-        if file_format in ['flac', 'mp4', 'ogg', 'mp3', 'wav', 'opus', 'wma']:
-            audio = AudioSegment(
-                restored.tobytes(),
-                frame_rate=sample_rate,
-                sample_width=restored.dtype.itemsize,
-                channels=channels
-            )
-            if file_format in ['mp4', 'mp3']:
-                if file_format == 'mp4': file_format = 'm4a'
-                audio.export(f'{out}.{file_format}', format=file_format, bitrate=bitrate)
-            else:
-                audio.export(f'{out}.{file_format}', format=file_format)
-
-        else:
-            raise ValueError(f'Unsupported format: {file_format}')
+        command = [
+            'ffmpeg', '-y',
+            '-loglevel', 'error',
+            '-f', 's32le',
+            '-ar', str(sample_rate),
+            '-ac', str(channels),
+            '-i', 'pipe:0',
+            '-c:a', codec
+        ]
+        if codec in ['aac', 'm4a', 'mp3']:
+            command.append('-b:a')
+            command.append(bitrate)
+        command.append(f'{out}.{container}')
+        subprocess.run(command, input=raw_audio)
