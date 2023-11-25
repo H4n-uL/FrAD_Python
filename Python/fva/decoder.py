@@ -97,7 +97,7 @@ class decode:
             
             return restored, sample_rate
 
-    def dec(file_path, out: str = None, bits: int = 32, file_format: str = 'flac'):
+    def dec(file_path, out: str = None, bits: int = 32, file_format: str = 'flac', bitrate: str = '500k'):
         restored, sample_rate = decode.internal(file_path, bits)
         out = out if out is not None else 'restored'
         channels = restored.shape[1] if len(restored.shape) > 1 else 1
@@ -114,6 +114,6 @@ class decode:
                 sample_width=restored.dtype.itemsize,
                 channels=channels
             )
-            audio.export(f'{out}.{file_format if file_format != "mp4" else "m4a"}', format=file_format, bitrate='500k')
+            audio.export(f'{out}.{file_format if file_format != "mp4" else "m4a"}', format=file_format, bitrate=bitrate)
         else:
             raise ValueError(f'Unsupported format: {file_format}')
