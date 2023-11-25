@@ -1,8 +1,8 @@
-from fva import encode
-from fva import decode
-from fva import header
-from fva import player
-from fva import repack
+from fra import encode
+from fra import decode
+from fra import header
+from fra import player
+from fra import repack
 
 wav_name = 'audio.flac'
 fra_name = 'fourierAnalogue.fra'
