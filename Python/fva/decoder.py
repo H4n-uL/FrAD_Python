@@ -114,6 +114,11 @@ class decode:
                 sample_width=restored.dtype.itemsize,
                 channels=channels
             )
-            audio.export(f'{out}.{file_format if file_format != "mp4" else "m4a"}', format=file_format, bitrate=bitrate)
+            if file_format in ['mp4', 'mp3']:
+                if file_format == 'mp4': file_format = 'm4a'
+                audio.export(f'{out}.{file_format}', format=file_format, bitrate=bitrate)
+            else:
+                audio.export(f'{out}.{file_format}', format=file_format)
+
         else:
             raise ValueError(f'Unsupported format: {file_format}')
