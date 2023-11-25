@@ -4,9 +4,9 @@ from fva import header
 from fva import player
 from fva import repack
 
-wav_name = 'mus.wav'
+wav_name = 'audio.flac'
 fra_name = 'fourierAnalogue.fra'
-restored_name = 'restored.wav'
+restored_name = 'restored.flac'
 
 if __name__ == '__main__':
     encode.enc(wav_name, 32, out=fra_name)
