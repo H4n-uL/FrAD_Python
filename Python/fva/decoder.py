@@ -98,7 +98,7 @@ class decode:
             
             return restored, sample_rate
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '5000k'):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '4096k', quality: int = 10):
         restored, sample_rate = decode.internal(file_path, bits)
         out = out if out is not None else 'restored'
         out, ext = os.path.splitext(out)
@@ -107,15 +107,15 @@ class decode:
         channels = restored.shape[1] if len(restored.shape) > 1 else 1
         raw_audio = restored.tobytes()
 
-        if codec == 'vorbis':
-            codec = 'libvorbis'
+        if codec == 'vorbis' or codec == 'opus':
+            codec = 'lib' + codec
 
         if bits == 32:
             f = 's32le'
         elif bits == 16:
             f = 's16le'
         elif bits == 8:
-            f = 'u8'
+            f = s = 'u8'
         else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
 
         command = [
@@ -124,10 +124,20 @@ class decode:
             '-f', f,
             '-ar', str(sample_rate),
             '-ac', str(channels),
-            '-i', 'pipe:0',
-            '-c:a', codec
+            '-i', 'pipe:0'
         ]
-        if codec in ['aac', 'm4a', 'mp3']:
+        if codec in ['pcm', 'wav', 'riff']:
+            command.append('-c:a')
+            command.append(f'pcm_{f}')
+        else:
+            command.append('-c:a')
+            command.append(codec)
+        if codec in ['libvorbis']:
+            command.append('-q:a')
+            command.append(str(quality))
+        if codec in ['aac', 'm4a', 'mp3', 'libopus']:
+            if codec == 'libopus' and int(bitrate.replace('k', '000')) > 512000:
+                bitrate = '512k'
             command.append('-b:a')
             command.append(bitrate)
         command.append(f'{out}.{container}')
