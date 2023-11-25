@@ -98,7 +98,7 @@ class decode:
             
             return restored, sample_rate
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '500k'):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '5000k'):
         restored, sample_rate = decode.internal(file_path, bits)
         out = out if out is not None else 'restored'
         _, ext = os.path.splitext(out)
@@ -107,10 +107,18 @@ class decode:
         channels = restored.shape[1] if len(restored.shape) > 1 else 1
         raw_audio = restored.tobytes()
 
+        if bits == 32:
+            f = 's32le'
+        elif bits == 16:
+            f = 's16le'
+        elif bits == 8:
+            f = 'u8'
+        else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
+
         command = [
             'ffmpeg', '-y',
             '-loglevel', 'error',
-            '-f', 's32le',
+            '-f', f,
             '-ar', str(sample_rate),
             '-ac', str(channels),
             '-i', 'pipe:0',
