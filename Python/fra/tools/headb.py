@@ -31,8 +31,9 @@ class headb:
 
         blocks = bytes()
 
-        for i in range(len(meta)):
-            blocks += cb.comment(meta[i][0], meta[i][1])
+        if meta is not None:
+            for i in range(len(meta)):
+                blocks += cb.comment(meta[i][0], meta[i][1])
         if img is not None: blocks += cb.image(img)
 
         length = struct.pack('<Q', (len(signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + md5 + blocks)))
