@@ -20,13 +20,14 @@ class header:
             d['headlen'] = struct.unpack('<Q', header[0xa:0x12])[0]
             d['samprate'] = int.from_bytes(header[0x12:0x15], 'little')
             cfb = struct.unpack('<B', header[0x15:0x16])[0]
-            d['channel'] = cfb >> 3
+            d['channel'] = (cfb >> 3) + 1
             d['bitrate'] = b3_to_bits.get(cfb & 0b111, None)
             d['isecc'] = struct.unpack('<B', header[0x16:0x17])[0] >> 7
             d['checksum'] = header[0xf0:0x100]
 
             blocks = f.read(d['headlen'] - 256)
             i = 0
+            image = b''
             while i < len(blocks):
                 block_type = blocks[i:i+2]
                 if block_type == b'\xfa\xaa':

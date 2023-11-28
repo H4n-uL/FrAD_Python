@@ -20,7 +20,7 @@ class headb:
             meta = None, img: bytes = None):
         b3 = bits_to_b3.get(bits, 0b000)
 
-        cfb = (channel << 3) | b3
+        cfb = ((channel-1) << 3) | b3
 
         signature = b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80'
         length = b'\x00'*8; sample_rate_bytes

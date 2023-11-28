@@ -8,35 +8,19 @@ import subprocess
 from .tools.ecc import ecc
 
 class decode:
-    def mono(data, bits):
-        data = data[:,0] * np.exp(1j * data[:,1])
-        wave = np.int32(np.real(ifft(data)))
-
+    def towave(data, bits: int, channels: int):
+        data = data.reshape(-1, channels*2)
+        freq = np.split(data, channels, axis=1)
+        wave_data = [np.int32(np.real(ifft(d[:, 0] * np.exp(1j * d[:, 1])))) for d in freq]
+        
         if bits == 32: pass
-        elif bits == 16: wave = np.int16(wave / 2**16)
-        elif bits == 8: wave = np.uint8(wave / 2**24 + 2**7)
-        else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
+        elif bits == 16: wave_data = [np.int16(wave / 2**16) for wave in wave_data]
+        elif bits == 8: wave_data = [np.uint8(wave / 2**24 + 2**7) for wave in wave_data]
+        else:
+            raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
 
-        return wave
+        return np.column_stack(wave_data)
 
-    def stereo(data, bits):
-        left_freq = data[:, 0] * np.exp(1j * data[:, 1])
-        right_freq = data[:, 2] * np.exp(1j * data[:, 3])
-
-        left_wave = np.int32(np.fft.ifft(left_freq).real)
-        right_wave = np.int32(np.fft.ifft(right_freq).real)
-        if bits == 32:
-            pass
-        elif bits == 16:
-            left_wave = np.int16(left_wave / 2**16)
-            right_wave = np.int16(right_wave / 2**16)
-        elif bits == 8:
-            left_wave = np.uint8(left_wave / 2**24 + 2**7)
-            right_wave = np.uint8(right_wave / 2**24 + 2**7)
-        else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
-
-        return np.column_stack((left_wave, right_wave))
-    
     def internal(file_path, bits: int = 32):
         with open(file_path, 'rb') as f:
             header = f.read(256)
@@ -48,7 +32,7 @@ class decode:
             header_length = struct.unpack('<Q', header[0xa:0x12])[0]
             sample_rate = int.from_bytes(header[0x12:0x15], 'little')
             cfb = struct.unpack('<B', header[0x15:0x16])[0]
-            cb = cfb >> 3
+            cb = (cfb >> 3) + 1
             fb = cfb & 0b111
             is_ecc_on = True if (struct.unpack('<B', header[0x16:0x17])[0] >> 7) == 0b1 else False
             checksum_header = header[0xf0:0x100]
@@ -72,30 +56,16 @@ class decode:
                     print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
                     data = ecc.decode(data)
 
-            # if b == 0b110:
-            #     data_numpy = np.frombuffer(data, dtype=np.float512)
-            # elif b == 0b101:
-            #     data_numpy = np.frombuffer(data, dtype=np.float256)
-            # elif b == 0b100:
-            #     data_numpy = np.frombuffer(data, dtype=np.float128)
-            if fb == 0b011:
-                data_numpy = np.frombuffer(data, dtype=np.float64)
-            elif fb == 0b010:
-                data_numpy = np.frombuffer(data, dtype=np.float32)
-            elif fb == 0b001:
-                data_numpy = np.frombuffer(data, dtype=bfloat16)
+            # if b == 0b110: data_numpy = np.frombuffer(data, dtype=np.float512)
+            # elif b == 0b101: data_numpy = np.frombuffer(data, dtype=np.float256)
+            # elif b == 0b100: data_numpy = np.frombuffer(data, dtype=np.float128)
+            if fb == 0b011: data_numpy = np.frombuffer(data, dtype=np.float64)
+            elif fb == 0b010: data_numpy = np.frombuffer(data, dtype=np.float32)
+            elif fb == 0b001: data_numpy = np.frombuffer(data, dtype=bfloat16)
             else:
                 raise Exception('Illegal bits value.')
 
-            if cb == 2:
-                data_numpy = data_numpy.reshape(-1, 4)
-                restored = decode.stereo(data_numpy, bits)
-            elif cb == 1:
-                data_numpy = data_numpy.reshape(-1, 2)
-                restored = decode.mono(data_numpy, bits)
-            else:
-                raise Exception('Fourier Analogue only supports Mono and Stereo.')
-            
+            restored = decode.towave(data_numpy, bits, cb)
             return restored, sample_rate
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '4096k', quality: int = 10):
@@ -126,11 +96,10 @@ class decode:
             '-ac', str(channels),
             '-i', 'pipe:0'
         ]
+        command.append('-c:a')
         if codec in ['pcm', 'wav', 'riff']:
-            command.append('-c:a')
             command.append(f'pcm_{f}')
         else:
-            command.append('-c:a')
             command.append(codec)
         if codec in ['libvorbis']:
             command.append('-q:a')
