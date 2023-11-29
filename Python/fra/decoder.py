@@ -56,15 +56,15 @@ class decode:
                     print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
                     data = ecc.decode(data)
 
-            # if b == 0b110: data_numpy = np.frombuffer(data, dtype=np.float512)
-            # elif b == 0b101: data_numpy = np.frombuffer(data, dtype=np.float256)
-            # elif b == 0b100: data_numpy = np.frombuffer(data, dtype=np.float128)
+            # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float512)
+            # elif fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float256)
+            # elif fb == 0b100: data_numpy = np.frombuffer(data, dtype=np.float128)
             if fb == 0b011: data_numpy = np.frombuffer(data, dtype=np.float64)
             elif fb == 0b010: data_numpy = np.frombuffer(data, dtype=np.float32)
             elif fb == 0b001: data_numpy = np.frombuffer(data, dtype=bfloat16)
             else:
                 raise Exception('Illegal bits value.')
-
+            bits = 32 if bits == 24 else bits
             restored = decode.towave(data_numpy, bits, cb)
             return restored, sample_rate
 
@@ -82,8 +82,13 @@ class decode:
 
         if bits == 32:
             f = 's32le'
+            s = 's32'
+        elif bits == 24:
+            f = 's24le'
+            s = 's24'
         elif bits == 16:
             f = 's16le'
+            s = 's16'
         elif bits == 8:
             f = s = 'u8'
         else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
@@ -101,6 +106,9 @@ class decode:
             command.append(f'pcm_{f}')
         else:
             command.append(codec)
+        if codec in ['pcm', 'wav', 'riff', 'flac']:
+            command.append('-sample_fmt')
+            command.append(s)
         if codec in ['libvorbis']:
             command.append('-q:a')
             command.append(str(quality))
