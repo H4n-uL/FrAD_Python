@@ -74,14 +74,6 @@ class encode:
             raise ValueError('Unsupported bit depth')
 
         data = encode.audio(data, bits, channel, sample_rate, new_sample_rate)
-
-        # if channel == 1:
-        #     data = encode.mono(data, bits, sample_rate, new_sample_rate)
-        # elif channel == 2:
-        #     data = encode.stereo(data, bits, sample_rate, new_sample_rate)
-        # else:
-        #     raise Exception('Fourier Analogue only supports Mono and Stereo.')
-
         data = ecc.encode(data, apply_ecc)
         checksum = hashlib.md5(data).digest()
 
