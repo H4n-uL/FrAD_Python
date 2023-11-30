@@ -1,10 +1,8 @@
-from . import fra
-
+from .ffpath import ff
 import hashlib
 import json
 from ml_dtypes import bfloat16
 import numpy as np
-import os
 from scipy.fft import fft
 from scipy.signal import resample
 import subprocess
@@ -33,7 +31,7 @@ class encode:
         return data
     
     def get_info(file_path):
-        command = [fra.ffprobe,
+        command = [ff.probe,
                 '-v', 'quiet', 
                 '-print_format', 'json', 
                 '-show_streams', 
@@ -48,7 +46,7 @@ class encode:
     
     def get_pcm(file_path: str):
         command = [
-            fra.ffmpeg,
+            ff.mpeg,
             '-i', file_path,
             '-f', 's32le',
             '-acodec', 'pcm_s32le',
