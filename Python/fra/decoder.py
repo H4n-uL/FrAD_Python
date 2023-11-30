@@ -1,3 +1,4 @@
+from . import fra
 import hashlib
 from ml_dtypes import bfloat16
 import numpy as np
@@ -94,7 +95,7 @@ class decode:
         else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
 
         command = [
-            'ffmpeg', '-y',
+            fra.ffmpeg, '-y',
             '-loglevel', 'error',
             '-f', f,
             '-ar', str(sample_rate),
