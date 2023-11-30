@@ -26,6 +26,8 @@ class header:
             d['checksum'] = header[0xf0:0x100]
 
             blocks = f.read(d['headlen'] - 256)
+            audiolen = len(f.read())
+            d['duration'] = (audiolen * (64/74) if d['isecc'] == 1 else audiolen) / d['channel'] / d['bitrate'] * 4 / d['samprate']
             i = 0
             image = b''
             while i < len(blocks):
@@ -42,7 +44,6 @@ class header:
                     data = blocks[i+10+title_length:i+block_length]
                     image = data
                     i += block_length
-
         return d, image
 
     def modify(file_path, meta = None, img: bytes = None):
