@@ -8,7 +8,7 @@ class player:
         start_time = time.time_ns()
         while sd.get_stream().active:
             print(f'{(time.time_ns() - start_time) / 10**9:.3f} s / {dur:.3f} s')
-            time.sleep(1/18)
+            time.sleep(1/60)
             print('\x1b[1A\x1b[2K', end='')
 
     def play(file_path, keys: float = None, speed_in_times: float = None):
