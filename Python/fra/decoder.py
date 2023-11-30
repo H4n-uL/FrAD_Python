@@ -11,7 +11,7 @@ class decode:
     def towave(data, bits: int, channels: int):
         data = data.reshape(-1, channels*2)
         freq = np.split(data, channels, axis=1)
-        wave_data = [np.int32(np.real(ifft(d[:, 0] * np.exp(1j * d[:, 1])))) for d in freq]
+        wave_data = [np.int32(np.clip(np.real(ifft(d[:, 0] * np.exp(1j * d[:, 1]))), -2**31, 2**31-1)) for d in freq]
         
         if bits == 32: pass
         elif bits == 16: wave_data = [np.int16(wave / 2**16) for wave in wave_data]
