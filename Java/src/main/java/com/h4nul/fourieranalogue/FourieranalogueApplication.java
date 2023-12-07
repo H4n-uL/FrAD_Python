@@ -1,0 +1,13 @@
+package com.h4nul.fourieranalogue;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class FourieranalogueApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(FourieranalogueApplication.class, args);
+    }
+
+}
