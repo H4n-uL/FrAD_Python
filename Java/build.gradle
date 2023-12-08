@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.python:jython:2.7.3'
     implementation 'com.github.wendykierp:JTransforms:3.1'
     implementation 'org.apache.commons:commons-math3:3.6.1'
     implementation 'ws.schild:jave-all-deps:3.4.0'
