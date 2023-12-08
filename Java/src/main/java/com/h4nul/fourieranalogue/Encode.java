@@ -1,16 +1,22 @@
 package com.h4nul.fourieranalogue;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import com.h4nul.fourieranalogue.tools.HeaderB;
 
-import java.io.BufferedReader;
+import ws.schild.jave.Encoder;
+import ws.schild.jave.EncoderException;
+import ws.schild.jave.InputFormatException;
+import ws.schild.jave.MultimediaObject;
+import ws.schild.jave.encode.AudioAttributes;
+import ws.schild.jave.encode.EncodingAttributes;
+import ws.schild.jave.info.AudioInfo;
+import ws.schild.jave.info.MultimediaInfo;
+
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Map;
 
@@ -48,54 +54,44 @@ public class Encode {
         }
     }
 
-    public static int[] getInfo(String filePath) throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder(
-                FFpath.ffprobe,
-                "-v", "quiet",
-                "-print_format", "json",
-                "-show_streams",
-                filePath
-        );
-        Process process = builder.start();
-        process.waitFor();
+    public static byte[] getPCM(String path) throws IllegalArgumentException, InputFormatException, EncoderException, IOException {
+        // Create a temporary file for output
+        File target = File.createTempFile("temp", ".pcm");
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        StringBuilder stringBuilder = new StringBuilder();
-        String line = null;
-        while ((line = reader.readLine()) != null) {
-            stringBuilder.append(line);
-        }
-        String output = stringBuilder.toString();
+        // Set audio attributes: PCM signed 32 bit, little endian
+        AudioAttributes audio = new AudioAttributes();
+        audio.setCodec("pcm_s32le");
 
-        JSONObject jsonOutput = new JSONObject(output);
-        JSONArray streams = jsonOutput.getJSONArray("streams");
+        // Set encoding attributes
+        EncodingAttributes attrs = new EncodingAttributes();
+        attrs.setOutputFormat("pcm_s32le");
+        attrs.setAudioAttributes(audio);
 
-        int channels = 0;
-        int sampleRate = 0;
+        // Encode source file to output stream
+        Encoder encoder = new Encoder();
+        encoder.encode(new MultimediaObject(new File(path)), target, attrs);
 
-        for (int i = 0; i < streams.length(); i++) {
-            JSONObject stream = streams.getJSONObject(i);
-            if (stream.getString("codec_type").equals("audio")) {
-                channels = stream.getInt("channels");
-                sampleRate = stream.getInt("sample_rate");
-                break;
-            }
-        }
+        // Read the temporary file into a byte array
+        byte[] audioBytes = Files.readAllBytes(target.toPath());
 
-        return new int[]{channels, sampleRate};
+        // Delete the temporary file
+        target.delete();
+
+        return audioBytes;
     }
 
-    public static byte[] getPCM(String filePath) throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder(
-                FFpath.ffmpeg,
-                "-i", filePath,
-                "-f", "s32le",
-                "-acodec", "pcm_s32le",
-                "-vn",
-                "pipe:1"
-        );
-        Process process = builder.start();
-        byte[] pcmData = process.getInputStream().readAllBytes();
-        return pcmData;
+    public static int[] getInfo(String path) throws InputFormatException, EncoderException {
+        // Get information about the source file
+        MultimediaObject multimediaObject = new MultimediaObject(new File(path));
+
+        // Get information about the source file
+        MultimediaInfo info = multimediaObject.getInfo();
+        AudioInfo audioInfo = info.getAudio();
+
+        // Get sample rate and channels
+        int sampleRate = audioInfo.getSamplingRate();
+        int channels = audioInfo.getChannels();
+
+        return new int[]{channels, sampleRate};
     }
 }
