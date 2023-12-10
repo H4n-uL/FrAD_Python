@@ -56,7 +56,7 @@ class header:
                 is_ecc_on = True if (struct.unpack('<B', head[0x16:0x17])[0] >> 7) == 0b1 else False
                 checksum_header = head[0xf0:0x100]
 
-                channel = cfb >> 3
+                channel = (cfb >> 3) + 1
                 bits = b3_to_bits.get(cfb & 0b111)
 
                 f.seek(header_length)
