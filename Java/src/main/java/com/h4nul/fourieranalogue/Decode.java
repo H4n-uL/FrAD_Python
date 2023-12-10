@@ -1,84 +1,74 @@
 package com.h4nul.fourieranalogue;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-// import java.io.OutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.util.Arrays;
-// import java.util.ArrayList;
-// import java.util.List;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Decode {
-    public void dec(String filePath, String out, int bits, String codec, String bitrate, Integer quality) throws Exception {
+    public void dec(String filePath, String out, int bits, String bitrate, Integer quality) throws Exception {
         if (bitrate == null) bitrate = "4096k";
         Decode decoder = new Decode();
     
         PCMRes PCM = decoder.internal(filePath, bits);
         byte[] restored = PCM.getPCMData();
-        try (FileOutputStream output = new FileOutputStream("output.pcm")) {
-            output.write(restored);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        // int sampleRate = PCM.getSampleRate();
-        // int channels = PCM.getChannels();
+        int sampleRate = PCM.getSampleRate();
+        int channels = PCM.getChannels();
     
-        // out = out != null ? out : "restored";
-        // String[] split = out.split("\\.");
-        // String container = split.length > 1 ? split[1].toLowerCase() : codec;
+        out = out != null ? out : "restored";
+        String[] split = out.split("\\.");
+        String codec = split.length > 1 ? split[split.length - 1].toLowerCase() : "flac";
+        String format;
+        String sampleFormat;
+        switch (bits) {
+            case 32: format = "s32le"; sampleFormat = "s32"; break;
+            case 24: format = "s24le"; sampleFormat = "s24"; break;
+            case 16: format = "s16le"; sampleFormat = "s16"; break;
+            case 8:  format = sampleFormat = "u8"; break;
+            default: throw new IllegalArgumentException("Illegal value " + bits + " for bits: only 8, 16, 24, and 32 bits are available for decoding.");
+        }
     
-        // String format;
-        // String sampleFormat;
-        // switch (bits) {
-        //     case 32: format = "s32le"; sampleFormat = "s32"; break;
-        //     case 24: format = "s24le"; sampleFormat = "s24"; break;
-        //     case 16: format = "s16le"; sampleFormat = "s16"; break;
-        //     case 8:  format = sampleFormat = "u8"; break;
-        //     default: throw new IllegalArgumentException("Illegal value " + bits + " for bits: only 8, 16, 24, and 32 bits are available for decoding.");
-        // }
+        if (codec.equals("vorbis") || codec.equals("opus")) {
+            codec = "lib" + codec;
+        }
     
-        // if (codec.equals("vorbis") || codec.equals("opus")) {
-        //     codec = "lib" + codec;
-        // }
+        List<String> command = new ArrayList<>();
+        command.add(FFpath.ffmpeg);
+        command.add("-y");
+        command.add("-f"); command.add(format);
+        command.add("-ar"); command.add(String.valueOf(sampleRate));
+        command.add("-ac"); command.add(String.valueOf(channels));
+        command.add("-i"); command.add("-");
+        command.add("-c:a"); command.add(codec);
     
-        // List<String> command = new ArrayList<>();
-        // command.add(FFpath.ffmpeg);
-        // command.add("-y");
-        // command.add("-f"); command.add(format);
-        // command.add("-ar"); command.add(String.valueOf(sampleRate));
-        // command.add("-ac"); command.add(String.valueOf(channels));
-        // command.add("-i"); command.add("-");
-        // command.add("-c:a"); command.add(codec);
+        if (Arrays.asList("pcm", "wav", "riff", "flac").contains(codec)) {
+            command.add("-sample_fmt"); command.add(sampleFormat);
+        }
     
-        // if (Arrays.asList("pcm", "wav", "riff", "flac").contains(codec)) {
-        //     command.add("-sample_fmt"); command.add(sampleFormat);
-        // }
+        if (codec.equals("libvorbis")) {
+            command.add("-q:a"); command.add(String.valueOf(quality));
+        }
     
-        // if (codec.equals("libvorbis")) {
-        //     command.add("-q:a"); command.add(String.valueOf(quality));
-        // }
+        if (Arrays.asList("aac", "m4a", "mp3", "libopus").contains(codec)) {
+            if (codec.equals("libopus") && Integer.parseInt(bitrate.replace("k", "")) > 512) {
+                bitrate = "512k";
+            }
+            command.add("-b:a"); command.add(bitrate);
+        }
     
-        // if (Arrays.asList("aac", "m4a", "mp3", "libopus").contains(codec)) {
-        //     if (codec.equals("libopus") && Integer.parseInt(bitrate.replace("k", "")) > 512) {
-        //         bitrate = "512k";
-        //     }
-        //     command.add("-b:a"); command.add(bitrate);
-        // }
+        command.add(out + "." + codec);
     
-        // command.add(out + "." + container);
-    
-        // ProcessBuilder processBuilder = new ProcessBuilder(command);
-        // Process process = processBuilder.start();
-        // OutputStream outputStream = process.getOutputStream();
-        // outputStream.write(restored);
-        // outputStream.close();
-        // process.waitFor();
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        Process process = processBuilder.start();
+        OutputStream outputStream = process.getOutputStream();
+        outputStream.write(restored);
+        outputStream.close();
     }
-    
 
     public PCMRes internal(String filePath, int bits) throws Exception {
         Fourier fourier = new Fourier();
@@ -91,7 +81,7 @@ public class Decode {
             }
 
             long headerLength = ByteBuffer.wrap(Arrays.copyOfRange(header, 0xa, 0x12)).order(ByteOrder.LITTLE_ENDIAN).getLong();
-            int sampleRate = ByteBuffer.wrap(Arrays.copyOfRange(header, 0x12, 0x15)).order(ByteOrder.LITTLE_ENDIAN).getShort();
+            int sampleRate = getInt24(ByteBuffer.wrap(Arrays.copyOfRange(header, 0x12, 0x16)).order(ByteOrder.LITTLE_ENDIAN).getInt());
             byte cfb = header[0x15];
             int channels = (cfb >> 3) + 1;
             int fb = cfb & 0b111;
@@ -124,5 +114,11 @@ public class Decode {
             // return restored, sampleRate;
             return new PCMRes(restored, sampleRate, channels);
         }
+    }
+
+    private int getInt24(int i) {
+        int value = 0;
+        value |= (i & 0x00FFFFFF);
+        return value;
     }
 }

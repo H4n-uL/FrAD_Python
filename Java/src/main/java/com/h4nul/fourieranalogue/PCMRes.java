@@ -8,9 +8,11 @@ import lombok.Setter;
 public class PCMRes {
     private byte[] PCMData;
     private int sampleRate;
+    private int channels;
 
-    PCMRes(byte[] PCMData, int sampleRate) {
+    PCMRes(byte[] PCMData, int sampleRate, int channels) {
         this.PCMData = PCMData;
         this.sampleRate = sampleRate;
+        this.channels = channels;
     }
 }
