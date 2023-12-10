@@ -71,14 +71,19 @@ public class FourierAnalogueApp {
         String[] metaValues = cmd.getOptionValues("meta");
 
         Map<String, byte[]> metaMap = new HashMap<>();
-        for (int i = 0; i < metaValues.length; i += 2) {
-            String key = metaValues[i];
-            byte[] value = metaValues[i+1].getBytes(StandardCharsets.UTF_8);
-            metaMap.put(key, value);
+        if (metaValues != null) {
+            for (int i = 0; i < metaValues.length; i += 2) {
+                String key = metaValues[i];
+                byte[] value = metaValues[i+1].getBytes(StandardCharsets.UTF_8);
+                metaMap.put(key, value);
+            }
         }
 
-        Path imagePath = Paths.get(imageFilePath);
-        byte[] imageBytes = Files.readAllBytes(imagePath);
+        byte[] imageBytes = null;
+        if (imageFilePath != null) {
+            Path imagePath = Paths.get(imageFilePath);
+            imageBytes = Files.readAllBytes(imagePath);
+        }
 
         if (args[0].equals("encode")) {
             Encode encode = new Encode();
