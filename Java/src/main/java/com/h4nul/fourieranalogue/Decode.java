@@ -79,6 +79,7 @@ public class Decode {
             command.add("-b:a"); command.add(quality);
         }
 
+        System.out.println("Output: "+out+container);
         command.add(out + container);
 
         ProcessBuilder processBuilder = new ProcessBuilder(command);

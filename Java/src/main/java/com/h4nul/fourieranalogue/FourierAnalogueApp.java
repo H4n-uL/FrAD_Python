@@ -21,19 +21,19 @@ public class FourierAnalogueApp {
         output.setRequired(false);
         options.addOption(output);
 
-        Option bits = new Option("b", "bits", true, "output file path");
+        Option bits = new Option("b", "bits", true, "output file bit depth");
         bits.setRequired(false);
         options.addOption(bits);
 
-        Option applyEcc = new Option("ecc", "applyecc", false, "output file path");
+        Option applyEcc = new Option("ecc", "applyecc", false, "apply ecc");
         applyEcc.setRequired(false);
         options.addOption(applyEcc);
 
-        Option img = new Option("img", "image", true, "output file path");
+        Option img = new Option("img", "image", true, "image file path");
         img.setRequired(false);
         options.addOption(img);
 
-        Option codec = new Option("c", "codec", true, "output file path");
+        Option codec = new Option("c", "codec", true, "codec type");
         codec.setRequired(false);
         options.addOption(codec);
 
