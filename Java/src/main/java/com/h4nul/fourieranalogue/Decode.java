@@ -16,16 +16,15 @@ public class Decode {
     
         PCMRes PCM = decoder.internal(filePath, bits);
         byte[] restored = PCM.getPCMData();
-
         int sampleRate = PCM.getSampleRate();
         int channels = PCM.getChannels();
     
         out = out != null ? out : "restored";
         String[] split = out.split("\\.");
         String container = split.length > 1 ? split[split.length - 1].toLowerCase() : "flac";
-        filePath = "";
+        out = "";
         for (int i = 0; i < split.length - 1; i++) {
-            filePath = filePath + split[i] + ".";
+            out = out + split[i] + ".";
         }
         String format;
         String sampleFormat;
@@ -72,6 +71,7 @@ public class Decode {
         OutputStream outputStream = process.getOutputStream();
         outputStream.write(restored);
         outputStream.close();
+        process.waitFor();
     }
 
     public PCMRes internal(String filePath, int bits) throws Exception {
