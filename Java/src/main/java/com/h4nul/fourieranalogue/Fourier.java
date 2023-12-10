@@ -65,7 +65,8 @@ public class Fourier {
     }
 
     public byte[] Digital(byte[] data, int fb, int bits, int channels) {
-        int numSamples = data.length / (channels * 2 * ((int) Math.pow(2, fb + 3) / 8));
+        int bi = (int) Math.pow(2, fb + 3);
+        int numSamples = data.length / (channels * 2 * (bi / 8));
         ByteBuffer buffer = ByteBuffer.wrap(data);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
 
@@ -73,10 +74,18 @@ public class Fourier {
 
         for (int i = 0; i < numSamples; i++) {
             for (int j = 0; j < channels; j++) {
-                double ampli = buffer.getDouble();
-                double phase = buffer.getDouble();
-                freqData[j][2 * i] = ampli * Math.cos(phase);
-                freqData[j][2 * i + 1] = ampli * Math.sin(phase);
+                if (bi == 64) {
+                    double ampli = buffer.getDouble();
+                    double phase = buffer.getDouble();
+                    freqData[j][2 * i] = ampli * Math.cos(phase);
+                    freqData[j][2 * i + 1] = ampli * Math.sin(phase);
+                }
+                if (bi == 32) {
+                    float ampli = buffer.getFloat();
+                    float phase = buffer.getFloat();
+                    freqData[j][2 * i] = ampli * Math.cos(phase);
+                    freqData[j][2 * i + 1] = ampli * Math.sin(phase);
+                }
             }
         }
 
