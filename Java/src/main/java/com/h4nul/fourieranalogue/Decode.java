@@ -1,7 +1,10 @@
 package com.h4nul.fourieranalogue;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -15,6 +18,7 @@ import com.h4nul.fourieranalogue.tools.ECC;
 public class Decode {
     public void dec(String filePath, String out, Integer bits, String codec, String quality) throws Exception {
         Decode decoder = new Decode();
+        codec = (codec != null) ? codec : "flac";
         bits = (bits != null) ? bits : 32;
 
         PCMRes PCM = decoder.internal(filePath, bits);
@@ -24,10 +28,15 @@ public class Decode {
 
         out = out != null ? out : "restored";
         String[] split = out.split("\\.");
-        String container = split.length > 1 ? split[split.length - 1].toLowerCase() : "flac";
+        String container = split.length > 1 ? split[split.length - 1].toLowerCase() : codec;
         out = "";
-        for (int i = 0; i < split.length - 1; i++) {
-            out = out + split[i] + ".";
+        if (split.length == 1) {
+            out = split[0] + ".";
+        }
+        else {
+            for (int i = 0; i < split.length - 1; i++) {
+                out = out + split[i] + ".";
+            }
         }
         String format;
         String sampleFormat;
@@ -46,6 +55,7 @@ public class Decode {
         List<String> command = new ArrayList<>();
         command.add(FFpath.ffmpeg);
         command.add("-y");
+        command.add("-loglevel"); command.add("error");
         command.add("-f"); command.add(format);
         command.add("-ar"); command.add(String.valueOf(sampleRate));
         command.add("-ac"); command.add(String.valueOf(channels));
@@ -73,10 +83,24 @@ public class Decode {
 
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         Process process = processBuilder.start();
+
+        Thread errorThread = new Thread(() -> {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        errorThread.start();
+
+        // 이제 데이터를 쓸 수 있습니다.
         OutputStream outputStream = process.getOutputStream();
         outputStream.write(restored);
-        outputStream.close();
         process.waitFor();
+        outputStream.close();
     }
 
     public PCMRes internal(String filePath, int bits) throws Exception {
@@ -110,7 +134,6 @@ public class Decode {
                 }
                 else {
                     byte[] restored = fourier.Digital(data, fb, bits, channels);
-                    // return restored, sampleRate;
                     return new PCMRes(restored, sampleRate, channels);
                 }
             } else {
