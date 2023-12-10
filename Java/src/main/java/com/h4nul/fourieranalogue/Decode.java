@@ -13,8 +13,9 @@ import java.util.List;
 import com.h4nul.fourieranalogue.tools.ECC;
 
 public class Decode {
-    public void dec(String filePath, String out, int bits, String codec, String quality) throws Exception {
+    public void dec(String filePath, String out, Integer bits, String codec, String quality) throws Exception {
         Decode decoder = new Decode();
+        bits = (bits != null) ? bits : 32;
 
         PCMRes PCM = decoder.internal(filePath, bits);
         byte[] restored = PCM.getPCMData();

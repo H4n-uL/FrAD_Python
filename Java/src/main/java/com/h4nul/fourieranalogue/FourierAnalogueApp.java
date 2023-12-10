@@ -60,7 +60,11 @@ public class FourierAnalogueApp {
 
         String inputFilePath = cmd.getOptionValue("input");
         String outputFilePath = cmd.getOptionValue("output");
-        int bitsValue = Integer.parseInt(cmd.getOptionValue("bits"));
+        String b = cmd.getOptionValue("bits");
+        Integer bitsValue = null;
+        if (b != null) {
+            bitsValue = Integer.parseInt(cmd.getOptionValue("bits"));
+        }
         boolean isecc = cmd.hasOption("ecc");
         String imageFilePath = cmd.getOptionValue("img");
         String codecType = cmd.getOptionValue("codec");
@@ -78,6 +82,7 @@ public class FourierAnalogueApp {
 
         if (args[0].equals("encode")) {
             Encode encode = new Encode();
+            if (bitsValue == null) throw new IllegalArgumentException();
             encode.enc(inputFilePath, bitsValue, outputFilePath, isecc, null, metaMap, imageBytes);
         }
         else if (args[0].equals("decode")) {
