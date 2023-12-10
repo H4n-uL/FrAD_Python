@@ -36,15 +36,13 @@ public class Encode {
         sampleRateBytes.put((byte) ((samp >> 8) & 0xFF));
         sampleRateBytes.put((byte) ((samp >> 16) & 0xFF));
 
-        // replace with actual Fourier transform
         data = fourier.Analogue(data, bits, channels, sampleRate, newSampleRate);
         // data = ecc.encode(data, applyEcc);
 
         MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(data);  // replace with actual byte array
+        md.update(data);
         byte[] checksum = md.digest();
 
-        // replace with actual header builder
         byte[] h = HeaderB.uild(sampleRateBytes.array(), channels, bits, applyEcc, checksum, meta, img);
 
         if (out != null && (!out.endsWith(".fra") && !out.endsWith(".fva") && !out.endsWith(".sine"))) {
@@ -58,40 +56,30 @@ public class Encode {
     }
 
     public byte[] getPCM(String path) throws IllegalArgumentException, InputFormatException, EncoderException, IOException {
-        // Create a temporary file for output
         File target = File.createTempFile("temp", ".pcm");
 
-        // Set audio attributes: PCM signed 32 bit, little endian
         AudioAttributes audio = new AudioAttributes();
         audio.setCodec("pcm_s32le");
 
-        // Set encoding attributes
         EncodingAttributes attrs = new EncodingAttributes();
         attrs.setOutputFormat("s32le");
         attrs.setAudioAttributes(audio);
 
-        // Encode source file to output stream
         Encoder encoder = new Encoder();
         encoder.encode(new MultimediaObject(new File(path)), target, attrs);
 
-        // Read the temporary file into a byte array
         byte[] audioBytes = Files.readAllBytes(target.toPath());
-
-        // Delete the temporary file
         target.delete();
 
         return audioBytes;
     }
 
     public int[] getInfo(String path) throws InputFormatException, EncoderException {
-        // Get information about the source file
         MultimediaObject multimediaObject = new MultimediaObject(new File(path));
 
-        // Get information about the source file
         MultimediaInfo info = multimediaObject.getInfo();
         AudioInfo audioInfo = info.getAudio();
 
-        // Get sample rate and channels
         int sampleRate = audioInfo.getSamplingRate();
         int channels = audioInfo.getChannels();
 

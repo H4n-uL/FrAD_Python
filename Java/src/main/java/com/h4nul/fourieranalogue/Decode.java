@@ -95,8 +95,6 @@ public class Decode {
             }
         });
         errorThread.start();
-
-        // 이제 데이터를 쓸 수 있습니다.
         OutputStream outputStream = process.getOutputStream();
         outputStream.write(restored);
         process.waitFor();

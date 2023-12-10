@@ -95,7 +95,7 @@ public class Fourier {
         for (int i = 0; i < channels; i++) {
             ifft.complexInverse(freqData[i], true);
             for (int j = 0; j < numSamples; j++) {
-                waveData[i][j] = freqData[i][2 * j];  // Ignore the imaginary part
+                waveData[i][j] = freqData[i][2 * j];
             }
         }
 
