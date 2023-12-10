@@ -5,9 +5,9 @@ public class FourierAnalogueApp {
         // Encode encode = new Encode();
         Decode decode = new Decode();
 
-        String fra = "fourierAnalogue.java.fra";
+        String fra = "Yasashisa_no_Kioku.fra";
         String flac = "restored.flac";
         // encode.enc("/Users/H4nUL/Desktop/cks.flac", 64, fra, false, null, null, null);
-        decode.dec(fra, flac, 32, "flac", null, null);
+        decode.dec(fra, flac, 32, "flac", null);
     }
 }

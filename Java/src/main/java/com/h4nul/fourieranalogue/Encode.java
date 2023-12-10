@@ -32,8 +32,8 @@ public class Encode {
         ByteBuffer sampleRateBytes = ByteBuffer.allocate(3);
         sampleRateBytes.order(ByteOrder.LITTLE_ENDIAN);
         int samp = (newSampleRate != null ? newSampleRate : sampleRate);
-        sampleRateBytes.put((byte) (samp & 0xFF)); 
-        sampleRateBytes.put((byte) ((samp >> 8) & 0xFF)); 
+        sampleRateBytes.put((byte) (samp & 0xFF));
+        sampleRateBytes.put((byte) ((samp >> 8) & 0xFF));
         sampleRateBytes.put((byte) ((samp >> 16) & 0xFF));
 
         // replace with actual Fourier transform

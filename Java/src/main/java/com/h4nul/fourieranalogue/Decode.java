@@ -1,5 +1,6 @@
 package com.h4nul.fourieranalogue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -9,16 +10,17 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.h4nul.fourieranalogue.tools.ECC;
+
 public class Decode {
-    public void dec(String filePath, String out, int bits, String codec, String bitrate, Integer quality) throws Exception {
-        if (bitrate == null) bitrate = "4096k";
+    public void dec(String filePath, String out, int bits, String codec, String quality) throws Exception {
         Decode decoder = new Decode();
-    
+
         PCMRes PCM = decoder.internal(filePath, bits);
         byte[] restored = PCM.getPCMData();
         int sampleRate = PCM.getSampleRate();
         int channels = PCM.getChannels();
-    
+
         out = out != null ? out : "restored";
         String[] split = out.split("\\.");
         String container = split.length > 1 ? split[split.length - 1].toLowerCase() : "flac";
@@ -35,11 +37,11 @@ public class Decode {
             case 8:  format = sampleFormat = "u8"; break;
             default: throw new IllegalArgumentException("Illegal value " + bits + " for bits: only 8, 16, 24, and 32 bits are available for decoding.");
         }
-    
+
         if (codec.equals("vorbis") || codec.equals("opus")) {
             codec = "lib" + codec;
         }
-    
+
         List<String> command = new ArrayList<>();
         command.add(FFpath.ffmpeg);
         command.add("-y");
@@ -48,24 +50,26 @@ public class Decode {
         command.add("-ac"); command.add(String.valueOf(channels));
         command.add("-i"); command.add("-");
         command.add("-c:a"); command.add(codec);
-    
+
         if (Arrays.asList("pcm", "wav", "riff", "flac").contains(codec)) {
             command.add("-sample_fmt"); command.add(sampleFormat);
         }
-    
+
         if (codec.equals("libvorbis")) {
+        if (quality == null) quality = "10";
             command.add("-q:a"); command.add(String.valueOf(quality));
         }
-    
+
         if (Arrays.asList("aac", "m4a", "mp3", "libopus").contains(codec)) {
-            if (codec.equals("libopus") && Integer.parseInt(bitrate.replace("k", "")) > 512) {
-                bitrate = "512k";
+            if (quality == null) quality = "4096k";
+            if (codec.equals("libopus") && Integer.parseInt(quality.replace("k", "")) > 512) {
+                quality = "512k";
             }
-            command.add("-b:a"); command.add(bitrate);
+            command.add("-b:a"); command.add(quality);
         }
-    
+
         command.add(out + container);
-    
+
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         Process process = processBuilder.start();
         OutputStream outputStream = process.getOutputStream();
@@ -103,20 +107,33 @@ public class Decode {
                     System.out.println("Checksum: on header[" + Arrays.toString(checksumHeader) + "] vs on data[" + Arrays.toString(checksumData) + "]");
                     throw new Exception("File has corrupted but it has no ECC option. Decoder halted.");
                 }
+                else {
+                    byte[] restored = fourier.Digital(data, fb, bits, channels);
+                    // return restored, sampleRate;
+                    return new PCMRes(restored, sampleRate, channels);
+                }
             } else {
                 if (!Arrays.equals(checksumData, checksumHeader)) {
                     System.out.println(filePath + " has been corrupted, Please repack your file for the best music experience.");
                     System.out.println("Checksum: on header[" + Arrays.toString(checksumHeader) + "] vs on data[" + Arrays.toString(checksumData) + "]");
-                    // replace with actual ECC decoding
-                    // data = ecc.decode(data);
+                    byte[] rawData = ECC.decode(data);
+                    byte[] restored = fourier.Digital(rawData, fb, bits, channels);
+                    return new PCMRes(restored, sampleRate, channels);
                 }
-                // replace with actual ECC decoding
-                // data = ecc.decode(data);
+                else {
+                    byte[][] splitData = ECC.splitData(data, 148);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    for (byte[] chunk : splitData) {
+                        byte[] subChunk;
+                        if (chunk.length >= 128) {subChunk = Arrays.copyOfRange(chunk, 0, 128);
+                        } else {subChunk = chunk;}
+                        outputStream.write(subChunk, 0, subChunk.length);
+                    }
+                    byte[] rawData = outputStream.toByteArray();
+                    byte[] restored = fourier.Digital(rawData, fb, bits, channels);
+                    return new PCMRes(restored, sampleRate, channels);
+                }
             }
-            // replace with actual inverse FFT
-            byte[] restored = fourier.Digital(data, fb, bits, channels);
-            // return restored, sampleRate;
-            return new PCMRes(restored, sampleRate, channels);
         }
     }
 

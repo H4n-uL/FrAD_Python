@@ -21,7 +21,7 @@ public class FFpath {
             ffmpeg = extractExecutable(os, arch, "ffmpeg");
             // ffprobe = extractExecutable(os, arch, "ffprobe");
         } catch (IOException e) {
-            throw new RuntimeException("Failed to extract FFmpeg executables", e);
+            throw new RuntimeException("Failed to extract FFmpeg executable", e);
         }
     }
 
