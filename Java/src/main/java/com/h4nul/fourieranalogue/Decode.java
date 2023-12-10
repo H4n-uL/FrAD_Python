@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Decode {
-    public void dec(String filePath, String out, int bits, String bitrate, Integer quality) throws Exception {
+    public void dec(String filePath, String out, int bits, String codec, String bitrate, Integer quality) throws Exception {
         if (bitrate == null) bitrate = "4096k";
         Decode decoder = new Decode();
     
@@ -22,7 +22,11 @@ public class Decode {
     
         out = out != null ? out : "restored";
         String[] split = out.split("\\.");
-        String codec = split.length > 1 ? split[split.length - 1].toLowerCase() : "flac";
+        String container = split.length > 1 ? split[split.length - 1].toLowerCase() : "flac";
+        filePath = "";
+        for (int i = 0; i < split.length - 1; i++) {
+            filePath = filePath + split[i] + ".";
+        }
         String format;
         String sampleFormat;
         switch (bits) {
@@ -61,7 +65,7 @@ public class Decode {
             command.add("-b:a"); command.add(bitrate);
         }
     
-        command.add(out + "." + codec);
+        command.add(out + container);
     
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         Process process = processBuilder.start();
