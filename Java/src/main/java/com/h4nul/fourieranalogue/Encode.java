@@ -1,5 +1,6 @@
 package com.h4nul.fourieranalogue;
 
+import com.h4nul.fourieranalogue.tools.ECC;
 import com.h4nul.fourieranalogue.tools.HeaderB;
 
 import ws.schild.jave.Encoder;
@@ -37,10 +38,10 @@ public class Encode {
         sampleRateBytes.put((byte) ((samp >> 16) & 0xFF));
 
         data = fourier.Analogue(data, bits, channels, sampleRate, newSampleRate);
-        // data = ecc.encode(data, applyEcc);
+        byte[] eccData = ECC.encode(data, applyEcc);
 
         MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(data);
+        md.update(eccData);
         byte[] checksum = md.digest();
 
         byte[] h = HeaderB.uild(sampleRateBytes.array(), channels, bits, applyEcc, checksum, meta, img);
@@ -51,7 +52,7 @@ public class Encode {
 
         try (FileOutputStream fos = new FileOutputStream(out != null ? out : "fourierAnalogue.fra")) {
             fos.write(h);
-            fos.write(data);
+            fos.write(eccData);
         }
     }
 
