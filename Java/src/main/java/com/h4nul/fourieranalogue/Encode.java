@@ -21,7 +21,9 @@ import java.security.MessageDigest;
 import java.util.Map;
 
 public class Encode {
-    public static void enc(String filePath, int bits, String out, boolean applyEcc, Integer newSampleRate, Map<String, byte[]> meta, byte[] img) throws Exception {
+    public void enc(String filePath, int bits, String out, boolean applyEcc, Integer newSampleRate, Map<String, byte[]> meta, byte[] img) throws Exception {
+        Fourier fourier = new Fourier();
+
         byte[] data = getPCM(filePath);
         int[] info = getInfo(filePath);
         int channels = info[0];
@@ -29,12 +31,13 @@ public class Encode {
 
         ByteBuffer sampleRateBytes = ByteBuffer.allocate(3);
         sampleRateBytes.order(ByteOrder.LITTLE_ENDIAN);
-        sampleRateBytes.putShort((short) (newSampleRate != null ? newSampleRate : sampleRate));
-        // replace with actual conversion to 32-bit integer PCM
-        // data = ...
+        int samp = (newSampleRate != null ? newSampleRate : sampleRate);
+        sampleRateBytes.put((byte) (samp & 0xFF)); 
+        sampleRateBytes.put((byte) ((samp >> 8) & 0xFF)); 
+        sampleRateBytes.put((byte) ((samp >> 16) & 0xFF));
 
         // replace with actual Fourier transform
-        data = Fourier.Analogue(data, bits, channels, sampleRate, newSampleRate);
+        data = fourier.Analogue(data, bits, channels, sampleRate, newSampleRate);
         // data = ecc.encode(data, applyEcc);
 
         MessageDigest md = MessageDigest.getInstance("MD5");
@@ -44,7 +47,7 @@ public class Encode {
         // replace with actual header builder
         byte[] h = HeaderB.uild(sampleRateBytes.array(), channels, bits, applyEcc, checksum, meta, img);
 
-        if (!out.endsWith(".fra") && !out.endsWith(".fva") && !out.endsWith(".sine")) {
+        if (out != null && (!out.endsWith(".fra") && !out.endsWith(".fva") && !out.endsWith(".sine"))) {
             out += ".fra";
         }
 
@@ -54,7 +57,7 @@ public class Encode {
         }
     }
 
-    public static byte[] getPCM(String path) throws IllegalArgumentException, InputFormatException, EncoderException, IOException {
+    public byte[] getPCM(String path) throws IllegalArgumentException, InputFormatException, EncoderException, IOException {
         // Create a temporary file for output
         File target = File.createTempFile("temp", ".pcm");
 
@@ -64,7 +67,7 @@ public class Encode {
 
         // Set encoding attributes
         EncodingAttributes attrs = new EncodingAttributes();
-        attrs.setOutputFormat("pcm_s32le");
+        attrs.setOutputFormat("s32le");
         attrs.setAudioAttributes(audio);
 
         // Encode source file to output stream
@@ -80,7 +83,7 @@ public class Encode {
         return audioBytes;
     }
 
-    public static int[] getInfo(String path) throws InputFormatException, EncoderException {
+    public int[] getInfo(String path) throws InputFormatException, EncoderException {
         // Get information about the source file
         MultimediaObject multimediaObject = new MultimediaObject(new File(path));
 

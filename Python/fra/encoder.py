@@ -1,35 +1,13 @@
 from .ffpath import ff
+from .fourier import fourier
 import hashlib
 import json
-from ml_dtypes import bfloat16
 import numpy as np
-from scipy.fft import fft
-from scipy.signal import resample
 import subprocess
 from .tools.ecc import ecc
 from .tools.headb import headb
 
 class encode:
-    def audio(data, bits: int, channels: int, osr: int, nsr: int = None):
-        if nsr and nsr != osr:
-            resdata = np.zeros((int(len(data) * nsr / osr), channels))
-            for i in range(channels):
-                resdata[:, i] = resample(data[:, i], int(len(data[:, i]) * nsr / osr))
-            data = resdata
-
-        fft_data = [fft(data[:, i]) for i in range(channels)]
-
-        # if bits == 512: freq = [np.column_stack((np.abs(d).astype(np.float512), np.angle(d).astype(np.float512))) for d in fft_data]
-        # elif bits == 256: freq = [np.column_stack((np.abs(d).astype(np.float256), np.angle(d).astype(np.float256))) for d in fft_data]
-        # elif bits == 128: freq = [np.column_stack((np.abs(d).astype(np.float128), np.angle(d).astype(np.float128))) for d in fft_data]
-        if bits == 64: freq = [np.column_stack((np.abs(d).astype(np.float64), np.angle(d).astype(np.float64))) for d in fft_data]
-        elif bits == 32: freq = [np.column_stack((np.abs(d).astype(np.float32), np.angle(d).astype(np.float32))) for d in fft_data]
-        elif bits == 16: freq = [np.column_stack((np.abs(d).astype(bfloat16), np.angle(d).astype(bfloat16))) for d in fft_data]
-        else: raise Exception('Illegal bits value.')
-        
-        data = np.column_stack(freq).ravel(order='C').tobytes()
-        return data
-    
     def get_info(file_path):
         command = [ff.probe,
                 '-v', 'quiet', 
@@ -65,16 +43,7 @@ class encode:
         data, sample_rate, channel = encode.get_pcm(file_path)
         sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')
 
-        if data.dtype == np.uint8:
-            data = (data.astype(np.int32) - 2**7) * 2**24
-        elif data.dtype == np.int16:
-            data = data.astype(np.int32) * 2**16
-        elif data.dtype == np.int32:
-            pass
-        else:
-            raise ValueError('Unsupported bit depth')
-
-        data = encode.audio(data, bits, channel, sample_rate, new_sample_rate)
+        data = fourier.analogue(data, bits, channel, sample_rate, new_sample_rate)
         data = ecc.encode(data, apply_ecc)
         checksum = hashlib.md5(data).digest()
 

@@ -1,27 +1,12 @@
 from .ffpath import ff
+from .fourier import fourier
 import hashlib
-from ml_dtypes import bfloat16
-import numpy as np
 import os
-from scipy.fft import ifft
 import struct
 import subprocess
 from .tools.ecc import ecc
 
 class decode:
-    def towave(data, bits: int, channels: int):
-        data = data.reshape(-1, channels*2)
-        freq = np.split(data, channels, axis=1)
-        wave_data = [np.int32(np.clip(np.real(ifft(d[:, 0] * np.exp(1j * d[:, 1]))), -2**31, 2**31-1)) for d in freq]
-        
-        if bits == 32: pass
-        elif bits == 16: wave_data = [np.int16(wave / 2**16) for wave in wave_data]
-        elif bits == 8: wave_data = [np.uint8(wave / 2**24 + 2**7) for wave in wave_data]
-        else:
-            raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
-
-        return np.column_stack(wave_data)
-
     def internal(file_path, bits: int = 32):
         with open(file_path, 'rb') as f:
             header = f.read(256)
@@ -57,16 +42,7 @@ class decode:
                     print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
                     data = ecc.decode(data)
 
-            # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float512)
-            # elif fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float256)
-            # elif fb == 0b100: data_numpy = np.frombuffer(data, dtype=np.float128)
-            if fb == 0b011: data_numpy = np.frombuffer(data, dtype=np.float64)
-            elif fb == 0b010: data_numpy = np.frombuffer(data, dtype=np.float32)
-            elif fb == 0b001: data_numpy = np.frombuffer(data, dtype=bfloat16)
-            else:
-                raise Exception('Illegal bits value.')
-            bits = 32 if bits == 24 else bits
-            restored = decode.towave(data_numpy, bits, cb)
+            restored = fourier.digital(data, fb, bits, cb)
             return restored, sample_rate
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '4096k', quality: int = 10):
