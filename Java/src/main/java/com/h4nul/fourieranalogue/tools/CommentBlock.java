@@ -11,7 +11,18 @@ public class CommentBlock {
     public static byte[] comment(String title, byte[] data) {
         int titleLength = title.length();
         byte[] dataComb = Global.concat(title.getBytes(StandardCharsets.UTF_8), data);
-        byte[] blockLength = ByteBuffer.allocate(6).order(ByteOrder.LITTLE_ENDIAN).putInt(dataComb.length + 12).array();
+
+        ByteBuffer blengthBuffer = ByteBuffer.allocate(6);
+        blengthBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        long blength = dataComb.length;
+        blengthBuffer.put((byte) (blength & 0xFF));
+        blengthBuffer.put((byte) ((blength >> 8) & 0xFF));
+        blengthBuffer.put((byte) ((blength >> 16) & 0xFF));
+        blengthBuffer.put((byte) ((blength >> 24) & 0xFF));
+        blengthBuffer.put((byte) ((blength >> 32) & 0xFF));
+        blengthBuffer.put((byte) ((blength >> 40) & 0xFF));
+        
+        byte[] blockLength = blengthBuffer.array();
         byte[] _block = Global.concat(COMMENT, blockLength, ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(titleLength).array(), dataComb);
         return _block;
     }
