@@ -14,14 +14,14 @@ public class CommentBlock {
 
         ByteBuffer blengthBuffer = ByteBuffer.allocate(6);
         blengthBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        long blength = dataComb.length;
+        long blength = dataComb.length + 12;
         blengthBuffer.put((byte) (blength & 0xFF));
         blengthBuffer.put((byte) ((blength >> 8) & 0xFF));
         blengthBuffer.put((byte) ((blength >> 16) & 0xFF));
         blengthBuffer.put((byte) ((blength >> 24) & 0xFF));
         blengthBuffer.put((byte) ((blength >> 32) & 0xFF));
         blengthBuffer.put((byte) ((blength >> 40) & 0xFF));
-        
+
         byte[] blockLength = blengthBuffer.array();
         byte[] _block = Global.concat(COMMENT, blockLength, ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(titleLength).array(), dataComb);
         return _block;
