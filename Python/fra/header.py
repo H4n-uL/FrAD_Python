@@ -47,7 +47,7 @@ class header:
         return d, image
 
     def modify(file_path, meta = None, img: bytes = None):
-        with open(file_path, 'r+b') as f:
+        with open(file_path, 'rb') as f:
                 head = f.read(256)
 
                 header_length = struct.unpack('<Q', head[0xa:0x12])[0]
@@ -65,5 +65,6 @@ class header:
                 head_new = headb.uilder(sample_rate, channel, bits, is_ecc_on, checksum_header,
                 meta, img)
 
+        with open(file_path, 'wb') as f:
                 f.write(head_new)
                 f.write(audio)
