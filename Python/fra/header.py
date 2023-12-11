@@ -16,18 +16,9 @@ class header:
         with open(file_path, 'rb') as f:
             header = f.read(256)
 
-            d['signature'] = header[0x0:0xa]
-            d['headlen'] = struct.unpack('<Q', header[0xa:0x12])[0]
-            d['samprate'] = int.from_bytes(header[0x12:0x15], 'little')
-            cfb = struct.unpack('<B', header[0x15:0x16])[0]
-            d['channel'] = (cfb >> 3) + 1
-            d['bitrate'] = b3_to_bits.get(cfb & 0b111, None)
-            d['isecc'] = struct.unpack('<B', header[0x16:0x17])[0] >> 7
-            d['checksum'] = header[0xf0:0x100]
-
-            blocks = f.read(d['headlen'] - 256)
-            audiolen = len(f.read())
-            d['duration'] = (audiolen * (64/74) if d['isecc'] == 1 else audiolen) / d['channel'] / d['bitrate'] * 4 / d['samprate']
+            signature = header[0x0:0xa]
+            headlen = struct.unpack('<Q', header[0xa:0x12])[0]
+            blocks = f.read(headlen - 256)
             i = 0
             image = b''
             while i < len(blocks):
@@ -37,11 +28,11 @@ class header:
                     title_length = int(struct.unpack('<I', blocks[i+8:i+12])[0])
                     title = blocks[i+12:i+12+title_length].decode('utf-8')
                     data = blocks[i+12+title_length:i+block_length]
-                    d[title] = data.decode('utf-8')
+                    d[title] = data
                     i += block_length
                 elif block_type == b'\xf5\x55':
                     block_length = int(struct.unpack('<Q', blocks[i+2:i+10])[0])
-                    data = blocks[i+10+title_length:i+block_length]
+                    data = blocks[i+10:i+block_length]
                     image = data
                     i += block_length
         return d, image

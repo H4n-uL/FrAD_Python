@@ -45,7 +45,7 @@ class decode:
             restored = fourier.digital(data, fb, bits, cb)
             return restored, sample_rate
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', bitrate: str = '4096k', quality: int = 10):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', quality: str = None):
         restored, sample_rate = decode.internal(file_path, bits)
         out = out if out is not None else 'restored'
         out, ext = os.path.splitext(out)
@@ -87,12 +87,14 @@ class decode:
             command.append('-sample_fmt')
             command.append(s)
         if codec in ['libvorbis']:
+            if quality == None: quality = '10'
             command.append('-q:a')
-            command.append(str(quality))
+            command.append(quality)
         if codec in ['aac', 'm4a', 'mp3', 'libopus']:
-            if codec == 'libopus' and int(bitrate.replace('k', '000')) > 512000:
-                bitrate = '512k'
+            if quality == None: quality = '4096k'
+            if codec == 'libopus' and int(quality.replace('k', '000')) > 512000:
+                quality = '512k'
             command.append('-b:a')
-            command.append(bitrate)
+            command.append(quality)
         command.append(f'{out}.{container}')
         subprocess.run(command, input=raw_audio)
