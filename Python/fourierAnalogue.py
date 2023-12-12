@@ -62,7 +62,7 @@ def main(action, args):
     elif action == 'ecc':
         repack.ecc(input)
     elif action == 'play':
-        player.play(input, keys=int(args.keys) if args.keys is not None else None, speed_in_times=int(args.speed) if args.speed is not None else None)
+        player.play(input, keys=int(args.keys) if args.keys is not None else None, speed_in_times=float(args.speed) if args.speed is not None else None)
     else:
         raise ValueError("Invalid action. Please choose 'encode' or 'decode'.")
 
