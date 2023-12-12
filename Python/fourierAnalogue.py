@@ -67,7 +67,7 @@ def main(action, args):
         raise ValueError("Invalid action. Please choose 'encode' or 'decode'.")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='FourierAnalogueApp')
+    parser = argparse.ArgumentParser(description='Fourier Analogue Codec')
     parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'], help='action to perform')
     parser.add_argument('-i', '--input', required=True, help='input file path')
     parser.add_argument('-o', '--output', required=False, help='output file path')
