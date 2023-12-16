@@ -33,7 +33,6 @@ class fourier:
         elif fb == 0b001: data_numpy = np.frombuffer(data, dtype=bfloat16)
         else:
             raise Exception('Illegal bits value.')
-        bits = 32 if bits == 24 else bits
 
         data_numpy = data_numpy.reshape(-1, channels*2)
         freq = np.split(data_numpy, channels, axis=1)

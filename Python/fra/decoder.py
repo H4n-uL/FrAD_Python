@@ -45,11 +45,15 @@ class decode:
             restored = fourier.digital(data, fb, bits, cb)
             return restored, sample_rate
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = 'flac', quality: str = None):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None):
         restored, sample_rate = decode.internal(file_path, bits)
         out = out if out is not None else 'restored'
+
         out, ext = os.path.splitext(out)
-        container = ext.lstrip('.').lower() if ext else codec
+        if ext is None and codec is None: codec = ext = 'flac'
+        elif ext == '': ext = codec
+        elif codec is None: codec = ext = ext.lstrip('.').lower()
+        ext = ext.lstrip('.').lower()
 
         channels = restored.shape[1] if len(restored.shape) > 1 else 1
         raw_audio = restored.tobytes()
@@ -60,9 +64,6 @@ class decode:
         if bits == 32:
             f = 's32le'
             s = 's32'
-        elif bits == 24:
-            f = 's24le'
-            s = 's24'
         elif bits == 16:
             f = 's16le'
             s = 's16'
@@ -78,23 +79,38 @@ class decode:
             '-ac', str(channels),
             '-i', 'pipe:0'
         ]
-        command.append('-c:a')
-        if codec in ['pcm', 'wav', 'riff']:
-            command.append(f'pcm_{f}')
-        else:
+        if codec not in ['pcm', 'raw']:
+            command.append('-c:a')
+            if codec == 'wav':
+                command.append(f'pcm_{f}')
+            else:
+                command.append(codec)
+
+            # WAV / fLaC Sample Format
+            if codec in ['wav', 'flac']:
+                command.append('-sample_fmt')
+                command.append(s)
+
+            # Vorbis quality
+            if codec in ['libvorbis']:
+                if quality == None: quality = '10'
+                command.append('-q:a')
+                command.append(quality)
+            
+            # AAC, MPEG, Opus bitrate
+            if codec in ['aac', 'm4a', 'mp3', 'libopus']:
+                if quality == None: quality = '4096k'
+                if codec == 'libopus' and int(quality.replace('k', '000')) > 512000:
+                    quality = '512k'
+                command.append('-b:a')
+                command.append(quality)
+
+            command.append('-f')
             command.append(codec)
-        if codec in ['pcm', 'wav', 'riff', 'flac']:
-            command.append('-sample_fmt')
-            command.append(s)
-        if codec in ['libvorbis']:
-            if quality == None: quality = '10'
-            command.append('-q:a')
-            command.append(quality)
-        if codec in ['aac', 'm4a', 'mp3', 'libopus']:
-            if quality == None: quality = '4096k'
-            if codec == 'libopus' and int(quality.replace('k', '000')) > 512000:
-                quality = '512k'
-            command.append('-b:a')
-            command.append(quality)
-        command.append(f'{out}.{container}')
-        subprocess.run(command, input=raw_audio)
+
+            # File name
+            command.append(f'{out}.{ext}')
+            subprocess.run(command, input=raw_audio)
+        else:
+            with open(f'{out}.{ext}', 'wb') as f:
+                f.write(raw_audio)
