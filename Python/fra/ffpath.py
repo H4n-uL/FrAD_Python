@@ -3,16 +3,17 @@ import platform
 
 class ff:
     dir = os.path.dirname(os.path.realpath(__file__))
-    arch = platform.machine()
+    oper = platform.uname()
+    arch = platform.machine().lower()
 
-    if os.name == 'nt':
+    if oper.system == 'Windows' and arch in ['amd64', 'x86_64']:
         mpeg = os.path.join(dir, 'tools', 'ffmpeg.Windows')
         probe = os.path.join(dir, 'tools', 'ffprobe.Windows')
-    elif os.name == 'posix':
+    elif oper.system == 'Darwin':
         mpeg = os.path.join(dir, 'tools', 'ffmpeg.macOS')
         probe = os.path.join(dir, 'tools', 'ffprobe.macOS')
     else:
-        if arch == 'AMD64':
+        if arch in ['amd64', 'x86_64']:
             mpeg = os.path.join(dir, 'tools', 'ffmpeg.AMD64')
             probe = os.path.join(dir, 'tools', 'ffprobe.AMD64')
         if arch == 'arm64':
