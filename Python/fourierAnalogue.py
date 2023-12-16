@@ -31,7 +31,7 @@ def main(action, args):
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
-        codec = args.codec if args.codec is not None else 'flac'
+        codec = args.codec if args.codec is not None else None
         decode.dec(input, out=args.output, bits=bits, codec=codec, quality=args.quality)
     elif action == 'parse':
         from fra import header
