@@ -47,13 +47,14 @@ class decode:
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None):
         restored, sample_rate = decode.internal(file_path, bits)
-        out = out if out is not None else 'restored'
 
-        out, ext = os.path.splitext(out)
-        if ext is None and codec is None: codec = ext = 'flac'
-        elif ext == '': ext = codec
-        elif codec is None: codec = ext = ext.lstrip('.').lower()
-        ext = ext.lstrip('.').lower()
+        if out is None and codec is None: codec = ext = 'flac'; out = 'restored'
+        else:
+            out, ext = os.path.splitext(out)
+            if ext is None and codec is None: codec = ext = 'flac'
+            elif ext == '': ext = codec
+            elif codec is None: codec = ext = ext.lstrip('.').lower()
+            else: ext = ext.lstrip('.').lower()
 
         channels = restored.shape[1] if len(restored.shape) > 1 else 1
         raw_audio = restored.tobytes()
