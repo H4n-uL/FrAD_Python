@@ -10,9 +10,9 @@ from .tools.headb import headb
 class encode:
     def get_info(file_path):
         command = [ff.probe,
-                '-v', 'quiet', 
-                '-print_format', 'json', 
-                '-show_streams', 
+                '-v', 'quiet',
+                '-print_format', 'json',
+                '-show_streams',
                 file_path]
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         info = json.loads(result.stdout)
@@ -21,7 +21,7 @@ class encode:
             if stream['codec_type'] == 'audio':
                 return int(stream['channels']), int(stream['sample_rate'])
         return None
-    
+
     def get_pcm(file_path: str):
         command = [
             ff.mpeg,
@@ -38,7 +38,7 @@ class encode:
         return data, sample_rate, channels
 
     def enc(file_path: str, bits: int, out: str = None, apply_ecc: bool = False,
-                new_sample_rate: int = None, 
+                new_sample_rate: int = None,
                 meta = None, img: bytes = None):
         data, sample_rate, channel = encode.get_pcm(file_path)
         sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')

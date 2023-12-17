@@ -97,7 +97,7 @@ class decode:
                 if quality == None: quality = '10'
                 command.append('-q:a')
                 command.append(quality)
-            
+
             # AAC, MPEG, Opus bitrate
             if codec in ['aac', 'm4a', 'mp3', 'libopus']:
                 if quality == None: quality = '4096k'

@@ -11,7 +11,7 @@ class cb:
         block_length = (len(data_comb) + 12).to_bytes(6, 'little')
         _block = cb.COMMENT + block_length + title_length + data_comb
         return _block
-    
+
     def image(data):
         block_length = struct.pack('<Q', len(data) + 10)
         _block = cb.IMAGE + block_length + data

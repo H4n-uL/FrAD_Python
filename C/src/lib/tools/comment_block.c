@@ -21,7 +21,7 @@ unsigned char* comment(char* title, unsigned char* data, int data_length) {
     for (int i = 0; i < 4; i++) {
         title_length_bytes[i] = (title_length >> (8 * i)) & 0xFF;
     }
-    
+
     unsigned char* _block = concat(4, (unsigned char*[]){(unsigned char*)COMMENT, block_length, title_length_bytes, data_comb},
                                    (int[]){2, 6, 4, title_length + data_length});
     free(data_comb);

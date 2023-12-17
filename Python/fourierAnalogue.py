@@ -20,7 +20,7 @@ def main(action, args):
     img = None
 
     if args.image:
-        with open(args.image, 'rb') as i: 
+        with open(args.image, 'rb') as i:
             img = i.read()
 
     if action == 'encode':
@@ -85,6 +85,6 @@ if __name__ == '__main__':
     parser.add_argument('-k',   '--keys',     required=False,       help='keys')
     parser.add_argument('-m',   '--meta',     action='append',      nargs=2, required=False, help='metadata in "key" "value" format')
     parser.add_argument('-jm',  '--jsonmeta', required=False,       help='metadata in json')
-    
+
     args = parser.parse_args()
     main(args.action, args)

@@ -20,7 +20,7 @@ class fourier:
         elif bits == 32: freq = [np.column_stack((np.abs(d).astype(np.float32), np.angle(d).astype(np.float32))) for d in fft_data]
         elif bits == 16: freq = [np.column_stack((np.abs(d).astype(bfloat16), np.angle(d).astype(bfloat16))) for d in fft_data]
         else: raise Exception('Illegal bits value.')
-        
+
         data = np.column_stack(freq).ravel(order='C').tobytes()
         return data
 
@@ -37,7 +37,7 @@ class fourier:
         data_numpy = data_numpy.reshape(-1, channels*2)
         freq = np.split(data_numpy, channels, axis=1)
         wave_data = [np.int32(np.clip(np.real(ifft(d[:, 0] * np.exp(1j * d[:, 1]))), -2**31, 2**31-1)) for d in freq]
-        
+
         if bits == 32: pass
         elif bits == 16: wave_data = [np.int16(wave / 2**16) for wave in wave_data]
         elif bits == 8: wave_data = [np.uint8(wave / 2**24 + 2**7) for wave in wave_data]
