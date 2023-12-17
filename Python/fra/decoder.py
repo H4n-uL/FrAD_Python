@@ -49,6 +49,8 @@ class decode:
         restored, sample_rate = decode.internal(file_path, bits)
 
         if out is None and codec is None: codec = ext = 'flac'; out = 'restored'
+        elif out is None:
+            out = 'restored'; ext = codec
         else:
             out, ext = os.path.splitext(out)
             if ext is None and codec is None: codec = ext = 'flac'
