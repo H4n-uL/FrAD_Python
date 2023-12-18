@@ -1,8 +1,6 @@
 #!/bin/bash
 
-python3 Python/main.py play \
-\
--i "path/to/audio.flac" \
+python3 Python/main.py play "path/to/audio.flac" \
 \
 -k keys \
 -s speed

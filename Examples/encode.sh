@@ -1,8 +1,6 @@
 #!/bin/bash
 
-python3 Python/main.py encode \
-\
--i "path/to/audio.flac" \
+python3 Python/main.py encode "path/to/audio.flac" \
 -b 32 \
 \
 -o "path/for/fourierAnalogue.fra" \

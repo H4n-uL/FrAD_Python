@@ -1,8 +1,6 @@
 #!/bin/bash
 
-python3 Python/main.py modify \
-\
--i "path/to/audio.flac" \
+python3 Python/main.py modify "path/to/audio.flac" \
 \
 -m "Metadata Title" "Metadata contents" \
 -jm "path/to/metadata.json" \
