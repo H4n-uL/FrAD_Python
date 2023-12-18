@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python3 Python/fourierAnalogue.py decode \
+python3 Python/main.py decode \
 \
 -i "path/to/audio.flac" \
 \

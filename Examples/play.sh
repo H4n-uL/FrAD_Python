@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python3 Python/fourierAnalogue.py play \
+python3 Python/main.py play \
 \
 -i "path/to/audio.flac" \
 \
