@@ -7,15 +7,15 @@ class ff:
     arch = platform.machine().lower()
 
     if oper.system == 'Windows' and arch in ['amd64', 'x86_64']:
-        mpeg = os.path.join(dir, 'tools', 'ffmpeg.Windows')
-        probe = os.path.join(dir, 'tools', 'ffprobe.Windows')
+        mpeg = os.path.join(dir, 'res', 'codec', 'ffmpeg.Windows')
+        probe = os.path.join(dir, 'res', 'parser', 'ffprobe.Windows')
     elif oper.system == 'Darwin':
-        mpeg = os.path.join(dir, 'tools', 'ffmpeg.macOS')
-        probe = os.path.join(dir, 'tools', 'ffprobe.macOS')
+        mpeg = os.path.join(dir, 'res', 'codec', 'ffmpeg.macOS')
+        probe = os.path.join(dir, 'res', 'parser', 'ffprobe.macOS')
     else:
         if arch in ['amd64', 'x86_64']:
-            mpeg = os.path.join(dir, 'tools', 'ffmpeg.AMD64')
-            probe = os.path.join(dir, 'tools', 'ffprobe.AMD64')
+            mpeg = os.path.join(dir, 'res', 'codec', 'ffmpeg.AMD64')
+            probe = os.path.join(dir, 'res', 'parser', 'ffprobe.AMD64')
         if arch == 'arm64':
-            mpeg = os.path.join(dir, 'tools', 'ffmpeg.AArch64')
-            probe = os.path.join(dir, 'tools', 'ffprobe.AArch64')
+            mpeg = os.path.join(dir, 'res', 'codec', 'ffmpeg.AArch64')
+            probe = os.path.join(dir, 'res', 'parser', 'ffprobe.AArch64')
