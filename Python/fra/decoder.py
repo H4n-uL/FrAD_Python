@@ -1,4 +1,4 @@
-from .ffpath import ff
+from .common import variables
 from .fourier import fourier
 import hashlib
 import numpy as np
@@ -44,7 +44,7 @@ class decode:
                     data = ecc.decode(data)
 
             sample_size = {0b011: 16*cb, 0b010: 8*cb, 0b001: 4*cb}[fb]
-            nperseg = 2048
+            nperseg = variables.nperseg
             restored_array = []
             for i in range(0, len(data), nperseg*sample_size):
                 block = data[i:i+nperseg*sample_size]
@@ -57,15 +57,18 @@ class decode:
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None):
         restored, sample_rate = decode.internal(file_path, bits)
 
-        if out is None and codec is None: codec = ext = 'flac'; out = 'restored'
-        elif out is None:
-            out = 'restored'; ext = codec
-        else:
+        if out:
             out, ext = os.path.splitext(out)
-            if ext is None and codec is None: codec = ext = 'flac'
-            elif ext == '': ext = codec
-            elif codec is None: codec = ext = ext.lstrip('.').lower()
-            else: ext = ext.lstrip('.').lower()
+            ext = ext.lstrip('.').lower()
+            if codec:
+                if ext: pass
+                else:   ext = codec
+            else:
+                if      ext: codec = ext
+                else:   codec = ext = 'flac'
+        else:
+            if codec:   out = 'restored'; ext = codec
+            else:       codec = ext = 'flac'; out = 'restored'
 
         channels = restored.shape[1] if len(restored.shape) > 1 else 1
         raw_audio = restored.tobytes()
@@ -84,7 +87,7 @@ class decode:
         else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
 
         command = [
-            ff.mpeg, '-y',
+            variables.ffmpeg, '-y',
             '-loglevel', 'error',
             '-f', f,
             '-ar', str(sample_rate),

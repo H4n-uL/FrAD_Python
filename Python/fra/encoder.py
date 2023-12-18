@@ -1,4 +1,4 @@
-from .ffpath import ff
+from .common import variables
 from .fourier import fourier
 import hashlib
 import json
@@ -10,7 +10,7 @@ from .tools.headb import headb
 
 class encode:
     def get_info(file_path):
-        command = [ff.probe,
+        command = [variables.ffprobe,
                 '-v', 'quiet',
                 '-print_format', 'json',
                 '-show_streams',
@@ -25,7 +25,7 @@ class encode:
 
     def get_pcm(file_path: str):
         command = [
-            ff.mpeg,
+            variables.ffmpeg,
             '-i', file_path,
             '-f', 's32le',
             '-acodec', 'pcm_s32le',
@@ -51,7 +51,7 @@ class encode:
 
         sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')
 
-        nperseg = 2048
+        nperseg = variables.nperseg
         fft_data = []
         for i in range(0, len(data), nperseg):
             block = data[i:i+nperseg]
