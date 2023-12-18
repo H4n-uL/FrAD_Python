@@ -9,13 +9,10 @@ def main(action, args):
         with open(args.jsonmeta, 'r') as f:
             jsonmeta = json.load(f)
         meta = []
-        # JSON의 각 키-값 쌍에 대해
         for item in jsonmeta:
             value = item["value"]
-            # type이 "base64"인 경우 value를 바이트로 변환
             if item["type"] == "base64":
                 value = base64.b64decode(value)
-            # [key, value]를 결과 리스트에 추가
             meta.append([item["key"], value])
     img = None
 
