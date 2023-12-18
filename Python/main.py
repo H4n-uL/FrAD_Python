@@ -70,7 +70,7 @@ def main(action, args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fourier Analogue Codec')
     parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'], help='action to perform')
-    parser.add_argument('-i',                                                                                    help='input file path')
+    parser.add_argument('input',                                                                                 help='input file path')
     parser.add_argument('-o',   '--output',   required=False,                                                    help='output file path')
     parser.add_argument('-b',   '--bits',     required=False,                                                    help='output file bit depth')
     parser.add_argument('-n',   '--nsr',      required=False,                                                    help='resample as new sample rate')
