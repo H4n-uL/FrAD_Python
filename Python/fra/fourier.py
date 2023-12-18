@@ -3,7 +3,7 @@ import numpy as np
 from scipy.fft import fft, ifft
 
 class fourier:
-    def analogue(data, bits: int, channels: int, osr: int, nsr: int = None):
+    def analogue(data, bits: int, channels: int):
         fft_data = [fft(data[:, i]) for i in range(channels)]
 
         # if bits == 512: freq = [np.column_stack((np.abs(d).astype(np.float512), np.angle(d).astype(np.float512))) for d in fft_data]
