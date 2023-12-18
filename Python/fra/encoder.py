@@ -55,7 +55,7 @@ class encode:
         fft_data = []
         for i in range(0, len(data), nperseg):
             block = data[i:i+nperseg]
-            segment = fourier.analogue(block, bits, channel, sample_rate, new_sample_rate)
+            segment = fourier.analogue(block, bits, channel)
             fft_data.append(segment)
 
         data = b''.join(fft_data)
