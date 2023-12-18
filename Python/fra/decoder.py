@@ -1,6 +1,7 @@
 from .ffpath import ff
 from .fourier import fourier
 import hashlib
+import numpy as np
 import os
 import struct
 import subprocess
@@ -42,7 +43,15 @@ class decode:
                     print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
                     data = ecc.decode(data)
 
-            restored = fourier.digital(data, fb, bits, cb)
+            sample_size = {0b011: 16*cb, 0b010: 8*cb, 0b001: 4*cb}[fb]
+            nperseg = 2048
+            restored_array = []
+            for i in range(0, len(data), nperseg*sample_size):
+                block = data[i:i+nperseg*sample_size]
+                segment = fourier.digital(block, fb, bits, cb)
+                restored_array.append(segment)
+
+            restored = np.concatenate(restored_array)
             return restored, sample_rate
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None):

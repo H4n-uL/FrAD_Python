@@ -3,6 +3,7 @@ from .fourier import fourier
 import hashlib
 import json
 import numpy as np
+from scipy.signal import resample
 import subprocess
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -41,9 +42,23 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None):
         data, sample_rate, channel = encode.get_pcm(file_path)
+
+        if new_sample_rate:
+            resdata = np.zeros((int(len(data) * new_sample_rate / sample_rate), channel))
+            for i in range(channel):
+                resdata[:, i] = resample(data[:, i], int(len(data[:, i]) * new_sample_rate / sample_rate))
+            data = resdata
+
         sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')
 
-        data = fourier.analogue(data, bits, channel, sample_rate, new_sample_rate)
+        nperseg = 2048
+        fft_data = []
+        for i in range(0, len(data), nperseg):
+            block = data[i:i+nperseg]
+            segment = fourier.analogue(block, bits, channel, sample_rate, new_sample_rate)
+            fft_data.append(segment)
+
+        data = b''.join(fft_data)
         data = ecc.encode(data, apply_ecc)
         checksum = hashlib.md5(data).digest()
 
