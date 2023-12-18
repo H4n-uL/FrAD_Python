@@ -1,16 +1,9 @@
 from ml_dtypes import bfloat16
 import numpy as np
 from scipy.fft import fft, ifft
-from scipy.signal import resample
 
 class fourier:
     def analogue(data, bits: int, channels: int, osr: int, nsr: int = None):
-        if nsr and nsr != osr:
-            resdata = np.zeros((int(len(data) * nsr / osr), channels))
-            for i in range(channels):
-                resdata[:, i] = resample(data[:, i], int(len(data[:, i]) * nsr / osr))
-            data = resdata
-
         fft_data = [fft(data[:, i]) for i in range(channels)]
 
         # if bits == 512: freq = [np.column_stack((np.abs(d).astype(np.float512), np.angle(d).astype(np.float512))) for d in fft_data]
