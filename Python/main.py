@@ -56,7 +56,6 @@ def main(action, args):
         with open(output+'.meta.image', 'wb') as m: m.write(img)
     elif action == 'modify' or action == 'meta-modify':
         from fra import header
-        print(meta)
         header.modify(input, meta=meta, img=img)
     elif action == 'ecc':
         from fra import repack
