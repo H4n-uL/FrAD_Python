@@ -121,7 +121,7 @@ class decode:
                 command.append(quality)
 
             command.append('-f')
-            command.append(codec)
+            command.append(ext)
 
             # File name
             command.append(f'{out}.{ext}')
