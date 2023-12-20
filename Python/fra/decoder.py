@@ -12,7 +12,7 @@ class decode:
         with open(file_path, 'rb') as f:
             header = f.read(256)
 
-            methods.signature(header[0x0:0xa])
+            methods.signature(header[0x0:0x3])
 
             header_length = struct.unpack('<Q', header[0xa:0x12])[0]
             sample_rate = int.from_bytes(header[0x12:0x15], 'little')

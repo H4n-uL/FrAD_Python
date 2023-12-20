@@ -24,5 +24,5 @@ class variables:
 
 class methods:
     def signature(sign):
-        if sign != b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80':
+        if sign != b'\x16\xb0\x03':
             raise Exception('This is not Fourier Analogue file.')

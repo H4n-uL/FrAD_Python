@@ -22,7 +22,8 @@ class headb:
 
         cfb = ((channel-1) << 3) | b3
 
-        signature = b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80'
+        signature = b'\x16\xb0\x03'
+
         length = b'\x00'*8; sample_rate_bytes
         cfb_struct = struct.pack('<B', cfb)
         isecc = (0b1 if isecc else 0b0) << 7
@@ -36,7 +37,7 @@ class headb:
                 blocks += cb.comment(meta[i][0], meta[i][1])
         if img is not None: blocks += cb.image(img)
 
-        length = struct.pack('<Q', (len(signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + md5 + blocks)))
+        length = struct.pack('<Q', (256 + len(blocks)))
 
-        header = signature + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + md5 + blocks
+        header = signature + (b'\x00'*7) + length + sample_rate_bytes + cfb_struct + ecc_bits + reserved + md5 + blocks
         return header
