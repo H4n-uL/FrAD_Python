@@ -23,7 +23,7 @@ class header:
             while i < len(blocks):
                 block_type = blocks[i:i+2]
                 if block_type == b'\xfa\xaa':
-                    block_length = int.from_bytes(blocks[i+2:i+8], 'little')
+                    block_length = int.from_bytes(blocks[i+2:i+8], 'big')
                     title_length = int(struct.unpack('<I', blocks[i+8:i+12])[0])
                     title = blocks[i+12:i+12+title_length].decode('utf-8')
                     data = blocks[i+12+title_length:i+block_length]
