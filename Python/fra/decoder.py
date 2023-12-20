@@ -75,6 +75,9 @@ class decode:
 
         if codec == 'vorbis' or codec == 'opus':
             codec = 'lib' + codec
+        if codec == 'ogg': codec = 'libvorbis'
+        if codec == 'mp3': codec = 'libmp3lame'
+        if codec == 'aac': print('FFmpeg doesn\'t support AAC Muxer. Switching to MP4...'); ext = 'mp4'
 
         if bits == 32:
             f = 's32le'
@@ -113,7 +116,7 @@ class decode:
                 command.append(quality)
 
             # AAC, MPEG, Opus bitrate
-            if codec in ['aac', 'm4a', 'mp3', 'libopus']:
+            if codec in ['aac', 'm4a', 'libmp3lame', 'libopus']:
                 if quality == None: quality = '4096k'
                 if codec == 'libopus' and int(quality.replace('k', '000')) > 512000:
                     quality = '512k'
