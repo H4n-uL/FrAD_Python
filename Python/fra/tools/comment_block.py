@@ -13,6 +13,6 @@ class cb:
         return _block
 
     def image(data):
-        block_length = struct.pack('<Q', len(data) + 10)
+        block_length = struct.pack('>Q', len(data) + 10)
         _block = cb.IMAGE + block_length + data
         return _block

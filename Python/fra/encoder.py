@@ -49,7 +49,7 @@ class encode:
                 resdata[:, i] = resample(data[:, i], int(len(data[:, i]) * new_sample_rate / sample_rate))
             data = resdata
 
-        sample_rate_bytes = (new_sample_rate if new_sample_rate is not None else sample_rate).to_bytes(3, 'little')
+        sample_rate = (new_sample_rate if new_sample_rate is not None else sample_rate)
 
         nperseg = variables.nperseg
         fft_data = []
@@ -62,7 +62,7 @@ class encode:
         data = ecc.encode(data, apply_ecc)
         checksum = hashlib.md5(data).digest()
 
-        h = headb.uilder(sample_rate_bytes, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
+        h = headb.uilder(sample_rate, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
             meta=meta, img=img)
 
         if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):

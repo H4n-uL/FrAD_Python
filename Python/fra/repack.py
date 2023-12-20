@@ -10,7 +10,7 @@ class repack:
 
             methods.signature(head[0x0:0x3])
 
-            header_length = struct.unpack('<Q', head[0xa:0x12])[0]
+            header_length = struct.unpack('>Q', head[0x8:0x10])[0]
             is_ecc_on = True if (struct.unpack('<B', head[0x16:0x17])[0] >> 7) == 0b1 else False
 
             f.seek(header_length)

@@ -14,12 +14,13 @@ class decode:
 
             methods.signature(header[0x0:0x3])
 
-            header_length = struct.unpack('<Q', header[0xa:0x12])[0]
-            sample_rate = int.from_bytes(header[0x12:0x15], 'little')
-            cfb = struct.unpack('<B', header[0x15:0x16])[0]
-            cb = (cfb >> 3) + 1
-            fb = cfb & 0b111
-            is_ecc_on = True if (struct.unpack('<B', header[0x16:0x17])[0] >> 7) == 0b1 else False
+            cb = struct.unpack('<B', header[0x3:0x4])[0] + 1
+            sample_rate = struct.unpack('>I', header[0x4:0x8])[0]
+
+            header_length = struct.unpack('>Q', header[0x8:0x10])[0]
+            efb = struct.unpack('<B', header[0x10:0x11])[0]
+            fb = efb & 0b111
+            is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False
             checksum_header = header[0xf0:0x100]
 
             f.seek(header_length)
