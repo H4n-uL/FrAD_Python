@@ -21,3 +21,8 @@ class variables:
         if arch == 'arm64':
             ffmpeg = os.path.join(dir, 'res', 'codec', 'ffmpeg.AArch64')
             ffprobe = os.path.join(dir, 'res', 'parser', 'ffprobe.AArch64')
+
+class methods:
+    def signature(sign):
+        if sign != b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80':
+            raise Exception('This is not Fourier Analogue file.')

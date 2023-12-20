@@ -1,4 +1,4 @@
-from .common import variables
+from .common import variables, methods
 from .fourier import fourier
 import hashlib
 import numpy as np
@@ -12,9 +12,7 @@ class decode:
         with open(file_path, 'rb') as f:
             header = f.read(256)
 
-            signature = header[0x0:0xa]
-            if signature != b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80':
-                raise Exception('This is not Fourier Analogue file.')
+            methods.signature(header[0x0:0xa])
 
             header_length = struct.unpack('<Q', header[0xa:0x12])[0]
             sample_rate = int.from_bytes(header[0x12:0x15], 'little')
@@ -77,7 +75,7 @@ class decode:
             codec = 'lib' + codec
         if codec == 'ogg': codec = 'libvorbis'
         if codec == 'mp3': codec = 'libmp3lame'
-        if codec == 'aac': print('FFmpeg doesn\'t support AAC Muxer. Switching to MP4...'); ext = 'mp4'
+        if ext in ['aac', 'm4a']: print('FFmpeg doesn\'t support AAC/M4A Muxer. Switching to MP4...'); ext = 'mp4'
 
         if bits == 32:
             f = 's32le'

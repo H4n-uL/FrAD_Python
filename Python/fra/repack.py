@@ -1,3 +1,4 @@
+from .common import methods
 import hashlib
 from .tools.ecc import ecc
 import struct
@@ -7,9 +8,7 @@ class repack:
         with open(file_path, 'r+b') as f:
             head = f.read(256)
 
-            signature = head[0x0:0xa]
-            if signature != b'\x7e\x8b\xab\x89\xea\xc0\x9d\xa9\x68\x80':
-                raise Exception('This is not Fourier Analogue file.')
+            methods.signature(head[0x0:0xa])
 
             header_length = struct.unpack('<Q', head[0xa:0x12])[0]
             is_ecc_on = True if (struct.unpack('<B', head[0x16:0x17])[0] >> 7) == 0b1 else False
