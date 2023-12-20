@@ -1,3 +1,4 @@
+from .common import methods
 import struct
 from .tools.headb import headb
 
@@ -12,14 +13,14 @@ b3_to_bits = {
 
 class header:
     def parse(file_path):
-        d = dict()
+        d = list()
         with open(file_path, 'rb') as f:
             header = f.read(256)
 
-            signature = header[0x0:0xa]
+            methods.signature(header[0x0:0xa])
             headlen = struct.unpack('<Q', header[0xa:0x12])[0]
             blocks = f.read(headlen - 256)
-            i = 0
+            i = j = 0
             image = b''
             while i < len(blocks):
                 block_type = blocks[i:i+2]
@@ -28,8 +29,8 @@ class header:
                     title_length = int(struct.unpack('<I', blocks[i+8:i+12])[0])
                     title = blocks[i+12:i+12+title_length].decode('utf-8')
                     data = blocks[i+12+title_length:i+block_length]
-                    d[title] = data
-                    i += block_length
+                    d.append([title, data])
+                    i += block_length; j += 1
                 elif block_type == b'\xf5\x55':
                     block_length = int(struct.unpack('<Q', blocks[i+2:i+10])[0])
                     data = blocks[i+10:i+block_length]

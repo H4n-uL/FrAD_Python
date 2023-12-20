@@ -35,7 +35,8 @@ def main(action, args):
         output = args.output if args.output is not None else 'metadata'
         head, img = header.parse(input)
         result_list = []
-        for key, value in head.items():
+        for item in head:
+            key, value = item
             item_dict = {"key": key}
             if isinstance(value, bytes):
                 try:
@@ -45,12 +46,6 @@ def main(action, args):
                 except UnicodeDecodeError:
                     item_dict["type"] = "base64"
                     item_dict["value"] = base64.b64encode(value).decode('utf-8')
-            elif isinstance(value, int):
-                item_dict["type"] = "integer"
-                item_dict["value"] = str(value)
-            elif isinstance(value, float):
-                item_dict["type"] = "float"
-                item_dict["value"] = str(value)
             result_list.append(item_dict)
         with open(output+'.meta.json', 'w') as m: m.write(json.dumps(result_list, ensure_ascii=False))
         with open(output+'.meta.image', 'wb') as m: m.write(img)
