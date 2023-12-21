@@ -59,7 +59,7 @@ def main(action, args):
         from fra import player
         player.play(input, keys=int(args.keys) if args.keys is not None else None, speed_in_times=float(args.speed) if args.speed is not None else None)
     else:
-        raise ValueError("Invalid action. Please choose 'encode' or 'decode'.")
+        raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fourier Analogue Codec')
