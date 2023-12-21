@@ -37,25 +37,24 @@ class header:
         return d, image
 
     def modify(file_path, meta = None, img: bytes = None):
-        with open(file_path, 'rb') as f:
-                head = f.read(256)
+        with open(file_path, 'r+b') as f:
+            head = f.read(256)
 
-                channel = struct.unpack('<B', head[0x3:0x4])[0] + 1
-                sample_rate = struct.unpack('>I', head[0x4:0x8])[0]
+            channel = struct.unpack('<B', head[0x3:0x4])[0] + 1
+            sample_rate = struct.unpack('>I', head[0x4:0x8])[0]
 
-                header_length = struct.unpack('>Q', head[0x8:0x10])[0]
-                efb = struct.unpack('<B', head[0x10:0x11])[0]
-                is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False
-                checksum_header = head[0xf0:0x100]
+            header_length = struct.unpack('>Q', head[0x8:0x10])[0]
+            efb = struct.unpack('<B', head[0x10:0x11])[0]
+            is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False
+            checksum_header = head[0xf0:0x100]
 
-                bits = b3_to_bits.get(efb & 0b111)
+            bits = b3_to_bits.get(efb & 0b111)
 
-                f.seek(header_length)
-                audio = f.read()
+            f.seek(header_length)
+            audio = f.read()
 
-                head_new = headb.uilder(sample_rate, channel, bits, is_ecc_on, checksum_header,
-                meta, img)
+            head_new = headb.uilder(sample_rate, channel, bits, is_ecc_on, checksum_header,
+            meta, img)
 
-        with open(file_path, 'wb') as f:
-                f.write(head_new)
-                f.write(audio)
+            file = head_new + audio
+            f.write(file)

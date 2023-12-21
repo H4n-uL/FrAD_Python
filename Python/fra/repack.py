@@ -27,8 +27,7 @@ class repack:
             head = bytearray(f.read(header_length))
             head[0xf0:0x100] = checksum
             head[0x16:0x17] = struct.pack('<B', 0b1 << 7)
-            head = bytes(head)
+            file = bytes(head) + data
 
             f.seek(0)
-            f.write(head)
-            f.write(data)
+            f.write(file)

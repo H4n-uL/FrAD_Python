@@ -68,6 +68,6 @@ class encode:
         if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
             out += '.fra'
 
+        file = h + data
         with open(out if out is not None else'fourierAnalogue.fra', 'wb') as f:
-            f.write(h)
-            f.write(data)
+            f.write(file)
