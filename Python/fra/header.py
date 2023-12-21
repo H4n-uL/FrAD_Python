@@ -37,25 +37,31 @@ class header:
         return d, image
 
     def modify(file_path, meta = None, img: bytes = None):
-        with open(file_path, 'r+b') as f:
+        with open(file_path, 'rb') as f:
+            # Fixed Header
             head = f.read(256)
 
-            channel = struct.unpack('<B', head[0x3:0x4])[0] + 1
-            sample_rate = struct.unpack('>I', head[0x4:0x8])[0]
+            # Taking Stream info
+            channel = struct.unpack('<B', head[0x3:0x4])[0] + 1    # 0x03:          Channel
+            sample_rate = struct.unpack('>I', head[0x4:0x8])[0]    # 0x04-4B:       Sample rate
 
-            header_length = struct.unpack('>Q', head[0x8:0x10])[0]
-            efb = struct.unpack('<B', head[0x10:0x11])[0]
-            is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False
-            checksum_header = head[0xf0:0x100]
+            header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B:       Total header size
+            efb = struct.unpack('<B', head[0x10:0x11])[0]          # 0x10:          ECC-Float Bit
+            is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
+            bits = b3_to_bits.get(efb & 0b111)                     # 0x10@0b011-3b: Stream bit depth
+            checksum_stream = head[0xf0:0x100]                     # 0xf0-16B:      Stream hash
 
-            bits = b3_to_bits.get(efb & 0b111)
-
+            # Backing up audio data
             f.seek(header_length)
             audio = f.read()
 
-            head_new = headb.uilder(sample_rate, channel, bits, is_ecc_on, checksum_header,
+            # Making new header
+            head_new = headb.uilder(sample_rate, channel, bits, is_ecc_on, checksum_stream,
             meta, img)
 
+            # Merging file
             file = head_new + audio
-        with open(file_path, 'wb') as f:
+
+        # Overwriting Fourier Analogue-in-Digital file
+        with open(file_path, 'wb') as f: # DO NEVER DELETE THIS
             f.write(file)
