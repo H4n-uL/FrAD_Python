@@ -57,4 +57,5 @@ class header:
             meta, img)
 
             file = head_new + audio
+        with open(file_path, 'wb') as f:
             f.write(file)
