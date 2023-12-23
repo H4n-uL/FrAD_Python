@@ -1,14 +1,16 @@
 from .common import variables, methods
 from .fourier import fourier
+import gc
 import hashlib
 import numpy as np
 import os
 import struct
+import sounddevice as sd
 import subprocess
 from .tools.ecc import ecc
 
 class decode:
-    def internal(file_path, bits: int = 32):
+    def internal(file_path, bits: int = 32, play: bool = False, speed: float = 1, e: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
             header = f.read(256)
@@ -29,39 +31,80 @@ class decode:
             # Reading Audio stream
             f.seek(header_length)
             data = f.read()
+            dlen = len(data)
 
-            # Verifying checksum
-            checksum_data = hashlib.md5(data).digest()
-            if is_ecc_on == False:
-                if checksum_data == checksum_header:
-                    pass
-                else:
-                    print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
-                    raise Exception('File has corrupted but it has no ECC option. Decoder halted.')
-            else:
-                if checksum_data == checksum_header:
-                    chunks = ecc.split_data(data, 148)
-                    data =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                else:
-                    print(f'{file_path} has been corrupted, Please repack your file for the best music experience.')
-                    print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
-                    data = ecc.decode(data)
+            if e:
+                # Verifying checksum
+                checksum_data = hashlib.md5(data).digest()
+                if checksum_data != checksum_header:
+                    if is_ecc_on == False:
+                        print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
+                        raise Exception(f'{file_path} has corrupted but it has no ECC option. Decoder halted.')
+                    else:
+                        print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
+                        raise Exception(f'{file_path} has been corrupted, Please repack your file for the best music experience.')
 
-            # Inverse Fourier Transform
+            del data
+            gc.collect()
+            f.seek(header_length)
+
             sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
             nperseg = variables.nperseg
-            restored_array = []
-            for i in range(0, len(data), nperseg*sample_size):
-                block = data[i:i+nperseg*sample_size]
-                segment = fourier.digital(block, float_bits, bits, channels)
-                restored_array.append(segment)
 
-            restored = np.concatenate(restored_array)
-            return restored, sample_rate
+            p = sample_size * sample_rate * speed
+            # Inverse Fourier Transform
+            if play == True: # When playing
+                stream = sd.OutputStream(samplerate=sample_rate*speed, channels=channels)
+                stream.start()
+                if is_ecc_on: # When ECC
+                    nperseg = nperseg // 128 * 148
+                    for i in range(0, dlen, nperseg*sample_size):
+                        print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s')
+                        print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
+                        block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
+                        chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
+                        block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
+                        segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        stream.write(segment)
+                        print('\x1b[1A\x1b[2K', end='')
+                        print('\x1b[1A\x1b[2K', end='')
+                else:         # When No ECC
+                    for i in range(0, dlen, nperseg*sample_size):
+                        print(f'{i / p:.3f} s / {dlen / p:.3f} s')
+                        print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
+                        block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
+                        segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        stream.write(segment)
+                        print('\x1b[1A\x1b[2K', end='')
+                        print('\x1b[1A\x1b[2K', end='')
+                stream.stop()
+                return
+            else:
+                restored_array = []
+                if is_ecc_on: # When ECC
+                    nperseg = nperseg // 128 * 148
+                    for i in range(0, dlen, nperseg*sample_size):
+                        print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
+                        block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
+                        chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
+                        block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
+                        segment = fourier.digital(block, float_bits, bits, channels) # Inversing
+                        restored_array.append(segment)
+                        print('\x1b[1A\x1b[2K', end='')
+                else:         # When No ECC
+                    for i in range(0, dlen, nperseg*sample_size):
+                        print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
+                        block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
+                        segment = fourier.digital(block, float_bits, bits, channels) # Inversing
+                        restored_array.append(segment)
+                        print('\x1b[1A\x1b[2K', end='')
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None):
+                restored = np.concatenate(restored_array)
+                return restored, sample_rate
+
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False):
         # Decoding
-        restored, sample_rate = decode.internal(file_path, bits)
+        restored, sample_rate = decode.internal(file_path, bits, e=e)
 
         # Checking name
         if out:
