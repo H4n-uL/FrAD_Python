@@ -29,7 +29,7 @@ def main(action, args):
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
         codec = args.codec if args.codec is not None else None
-        decode.dec(input, out=args.output, bits=bits, codec=codec, quality=args.quality)
+        decode.dec(input, out=args.output, bits=bits, codec=codec, quality=args.quality, e=args.ecc)
     elif action == 'parse':
         from fra import header
         output = args.output if args.output is not None else 'metadata'
@@ -57,7 +57,7 @@ def main(action, args):
         repack.ecc(input)
     elif action == 'play':
         from fra import player
-        player.play(input, keys=int(args.keys) if args.keys is not None else None, speed_in_times=float(args.speed) if args.speed is not None else None)
+        player.play(input, keys=int(args.keys) if args.keys is not None else None, speed_in_times=float(args.speed) if args.speed is not None else None, e=args.ecc)
     else:
         raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 

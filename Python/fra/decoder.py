@@ -29,11 +29,9 @@ class decode:
             checksum_header = header[0xf0:0x100]                     # 0xf0-16B:      Stream hash
 
             # Reading Audio stream
-            f.seek(header_length)
-            data = f.read()
-            dlen = len(data)
-
             if e:
+                f.seek(header_length)
+                data = f.read()
                 # Verifying checksum
                 checksum_data = hashlib.md5(data).digest()
                 if checksum_data != checksum_header:
@@ -43,9 +41,10 @@ class decode:
                     else:
                         print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
                         raise Exception(f'{file_path} has been corrupted, Please repack your file for the best music experience.')
+                del data
+                gc.collect()
 
-            del data
-            gc.collect()
+            dlen = os.path.getsize(file_path) - header_length
             f.seek(header_length)
 
             sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
