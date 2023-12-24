@@ -5,6 +5,7 @@ class variables:
     nperseg = 2048
 
     dir = os.path.dirname(os.path.realpath(__file__))
+    temp = os.path.join(dir, 'temp.swv')
     oper = platform.uname()
     arch = platform.machine().lower()
 
