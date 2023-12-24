@@ -42,7 +42,7 @@ class header:
             # Fixed Header
             head = f.read(256)
 
-            methods.signature(header[0x0:0x3])
+            methods.signature(head[0x0:0x3])
             # Taking Stream info
             channel = struct.unpack('<B', head[0x3:0x4])[0] + 1    # 0x03:          Channel
             sample_rate = struct.unpack('>I', head[0x4:0x8])[0]    # 0x04-4B:       Sample rate
