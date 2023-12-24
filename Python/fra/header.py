@@ -67,7 +67,7 @@ class header:
 
         # Overwriting Fourier Analogue-in-Digital file
         with open(file_path, 'wb') as f: # DO NEVER DELETE THIS
-            f.write(head)
+            f.write(head_new)
             with open(variables.temp, 'rb') as temp:
                 while True:
                     block = temp.read(variables.nperseg)
