@@ -1,4 +1,5 @@
-from .common import methods
+from .common import variables, methods
+import os
 import struct
 from .tools.headb import headb
 
@@ -41,6 +42,7 @@ class header:
             # Fixed Header
             head = f.read(256)
 
+            methods.signature(header[0x0:0x3])
             # Taking Stream info
             channel = struct.unpack('<B', head[0x3:0x4])[0] + 1    # 0x03:          Channel
             sample_rate = struct.unpack('>I', head[0x4:0x8])[0]    # 0x04-4B:       Sample rate
@@ -53,15 +55,22 @@ class header:
 
             # Backing up audio data
             f.seek(header_length)
-            audio = f.read()
+            with open(variables.temp, 'wb') as temp:
+                while True:
+                    block = f.read(variables.nperseg)
+                    if block: temp.write(block)
+                    else: break
 
             # Making new header
             head_new = headb.uilder(sample_rate, channel, bits, is_ecc_on, checksum_stream,
             meta, img)
 
-            # Merging file
-            file = head_new + audio
-
         # Overwriting Fourier Analogue-in-Digital file
         with open(file_path, 'wb') as f: # DO NEVER DELETE THIS
-            f.write(file)
+            f.write(head)
+            with open(variables.temp, 'rb') as temp:
+                while True:
+                    block = temp.read(variables.nperseg)
+                    if block: f.write(block)
+                    else: break
+            os.remove(variables.temp)

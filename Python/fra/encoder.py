@@ -3,6 +3,7 @@ from .fourier import fourier
 import hashlib
 import json
 import numpy as np
+import os
 from scipy.signal import resample
 import subprocess
 from .tools.ecc import ecc
@@ -56,17 +57,16 @@ class encode:
 
         # Fourier Transform
         nperseg = variables.nperseg
-        fft_data = []
-        for i in range(0, len(data), nperseg):
-            block = data[i:i+nperseg]
-            segment = fourier.analogue(block, bits, channel)
-            fft_data.append(segment)
-        data = b''.join(fft_data)
-
-        # Encoding Reed-Solomon ECC
-        data = ecc.encode(data, apply_ecc)
+        with open(variables.temp, 'wb') as temp:
+            for i in range(0, len(data), nperseg):
+                block = data[i:i+nperseg]
+                segment = fourier.analogue(block, bits, channel)
+                segment = ecc.encode(segment, apply_ecc) # Encoding Reed-Solomon ECC
+                temp.write(segment)
+            temp.seek(0)
         # Calculating MD5 hash
-        checksum = hashlib.md5(data).digest()
+        with open(variables.temp, 'rb') as temp:
+            checksum = hashlib.md5(temp.read()).digest()
 
         # Moulding header
         h = headb.uilder(sample_rate, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
@@ -76,9 +76,12 @@ class encode:
         if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
             out += '.fra'
 
-        # Merger
-        file = h + data
-
         # Creating Fourier Analogue-in-Digital File
-        with open(out if out is not None else'fourierAnalogue.fra', 'wb') as f:
-            f.write(file)
+        with open(out if out is not None else'fourierAnalogue.fra', 'wb') as file:
+            file.write(h)
+            with open(variables.temp, 'r+b') as swv:
+                while True:
+                    block = swv.read()
+                    if block: file.write(block)
+                    else: break
+            os.remove(variables.temp)
