@@ -62,7 +62,7 @@ class decode:
                         print('\x1b[1A\x1b[2K', end='')
                 else:         # When No ECC
                     for i in range(0, dlen, nperseg*sample_size):
-                        print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
+                        print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
                         block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
                         segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
