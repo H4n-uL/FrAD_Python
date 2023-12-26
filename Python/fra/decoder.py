@@ -1,15 +1,13 @@
 from .common import variables, methods
 from .fourier import fourier
-import gc
-import hashlib
+import hashlib, shutil, os, struct, subprocess
 import numpy as np
-import os
-import struct
 import sounddevice as sd
-import subprocess
 from .tools.ecc import ecc
 
 class decode:
+    pcm = os.path.join(variables.dir, 'temp.pcm')
+
     def internal(file_path, bits: int = 32, play: bool = False, speed: float = 1, e: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
@@ -55,7 +53,7 @@ class decode:
                 if is_ecc_on: # When ECC
                     nperseg = nperseg // 128 * 148
                     for i in range(0, dlen, nperseg*sample_size):
-                        print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
+                        print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
                         block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
                         chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                         block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
@@ -64,7 +62,7 @@ class decode:
                         print('\x1b[1A\x1b[2K', end='')
                 else:         # When No ECC
                     for i in range(0, dlen, nperseg*sample_size):
-                        print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
+                        print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
                         block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
                         segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
@@ -72,31 +70,29 @@ class decode:
                 stream.stop()
                 return
             else:
-                restored_array = []
-                if is_ecc_on: # When ECC
-                    nperseg = nperseg // 128 * 148
-                    for i in range(0, dlen, nperseg*sample_size):
-                        print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
-                        block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
-                        chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
-                        block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                        segment = fourier.digital(block, float_bits, bits, channels) # Inversing
-                        restored_array.append(segment)
-                        print('\x1b[1A\x1b[2K', end='')
-                else:         # When No ECC
-                    for i in range(0, dlen, nperseg*sample_size):
-                        print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
-                        block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
-                        segment = fourier.digital(block, float_bits, bits, channels) # Inversing
-                        restored_array.append(segment)
-                        print('\x1b[1A\x1b[2K', end='')
-
-                restored = np.concatenate(restored_array)
-                return restored, sample_rate
+                with open(decode.pcm, 'wb') as p:
+                    if is_ecc_on: # When ECC
+                        nperseg = nperseg // 128 * 148
+                        for i in range(0, dlen, nperseg*sample_size):
+                            print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
+                            block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
+                            chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
+                            block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
+                            segment = fourier.digital(block, float_bits, bits, channels) # Inversing
+                            p.write(segment)
+                            print('\x1b[1A\x1b[2K', end='')
+                    else:         # When No ECC
+                        for i in range(0, dlen, nperseg*sample_size):
+                            print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
+                            block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
+                            segment = fourier.digital(block, float_bits, bits, channels) # Inversing
+                            p.write(segment)
+                            print('\x1b[1A\x1b[2K', end='')
+                return sample_rate, channels
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False):
         # Decoding
-        restored, sample_rate = decode.internal(file_path, bits, e=e)
+        sample_rate, channels = decode.internal(file_path, bits, e=e)
 
         # Checking name
         if out:
@@ -111,9 +107,6 @@ class decode:
         else:
             if codec:   out = 'restored'; ext = codec
             else:       codec = ext = 'flac'; out = 'restored'
-
-        channels = restored.shape[1] if len(restored.shape) > 1 else 1
-        raw_audio = restored.tobytes()
 
         # Checking Codec and Muxers
         if codec == 'vorbis' or codec == 'opus':
@@ -138,7 +131,7 @@ class decode:
             '-f', f,
             '-ar', str(sample_rate),
             '-ac', str(channels),
-            '-i', 'pipe:0'
+            '-i', decode.pcm
         ]
         if codec not in ['pcm', 'raw']:
             command.append('-c:a')
@@ -166,13 +159,13 @@ class decode:
                 command.append('-b:a')
                 command.append(quality)
 
-            #Muxer
+            # Muxer
             command.append('-f')
             command.append(ext)
 
             # File name
             command.append(f'{out}.{ext}')
-            subprocess.run(command, input=raw_audio)
+            subprocess.run(command)
+            os.remove(decode.pcm)
         else:
-            with open(f'{out}.{ext}', 'wb') as f:
-                f.write(raw_audio)
+            shutil.move(decode.pcm, f'{out}.{ext}')
