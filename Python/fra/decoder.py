@@ -74,20 +74,16 @@ class decode:
                     if is_ecc_on: # When ECC
                         nperseg = nperseg // 128 * 148
                         for i in range(0, dlen, nperseg*sample_size):
-                            print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
                             block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
                             chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                             block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
                             segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
-                            print('\x1b[1A\x1b[2K', end='')
                     else:         # When No ECC
                         for i in range(0, dlen, nperseg*sample_size):
-                            print(f'Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames')
                             block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
                             segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
-                            print('\x1b[1A\x1b[2K', end='')
                 return sample_rate, channels
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False):
@@ -135,7 +131,7 @@ class decode:
         ]
         if codec not in ['pcm', 'raw']:
             command.append('-c:a')
-            if codec == 'wav':
+            if codec in ['wav', 'riff']:
                 command.append(f'pcm_{f}')
             else:
                 command.append(codec)
