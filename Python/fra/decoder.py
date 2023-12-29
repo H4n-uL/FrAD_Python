@@ -6,8 +6,6 @@ import sounddevice as sd
 from .tools.ecc import ecc
 
 class decode:
-    pcm = os.path.join(variables.dir, 'temp.pcm')
-
     def internal(file_path, bits: int = 32, play: bool = False, speed: float = 1, e: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
@@ -70,7 +68,7 @@ class decode:
                 stream.stop()
                 return
             else:
-                with open(decode.pcm, 'wb') as p:
+                with open(variables.temp_pcm, 'wb') as p:
                     if is_ecc_on: # When ECC
                         nperseg = nperseg // 128 * 148
                         for i in range(0, dlen, nperseg*sample_size):
@@ -127,7 +125,7 @@ class decode:
             '-f', f,
             '-ar', str(sample_rate),
             '-ac', str(channels),
-            '-i', decode.pcm
+            '-i', variables.temp_pcm
         ]
         if codec not in ['pcm', 'raw']:
             command.append('-c:a')
@@ -162,6 +160,6 @@ class decode:
             # File name
             command.append(f'{out}.{ext}')
             subprocess.run(command)
-            os.remove(decode.pcm)
+            os.remove(variables.temp_pcm)
         else:
-            shutil.move(decode.pcm, f'{out}.{ext}')
+            shutil.move(variables.temp_pcm, f'{out}.{ext}')

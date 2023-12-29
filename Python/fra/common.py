@@ -1,11 +1,14 @@
+import base64
 import os
 import platform
+import secrets
 
 class variables:
     nperseg = 2048
 
     dir = os.path.dirname(os.path.realpath(__file__))
-    temp = os.path.join(dir, 'temp.swv')
+    temp = os.path.join(dir, f'temp.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
+    temp_pcm = os.path.join(dir, f'temp.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.pcm')
     oper = platform.uname()
     arch = platform.machine().lower()
 
