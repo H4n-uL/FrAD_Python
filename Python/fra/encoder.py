@@ -38,6 +38,39 @@ class encode:
         channels, sample_rate = encode.get_info(file_path)
         data = np.frombuffer(pcm_data, dtype=np.int32).reshape(-1, channels)
         return data, sample_rate, channels
+    
+    def get_metadata(file_path: str):
+        excluded = ['major_brand', 'minor_version', 'compatible_brands', 'encoder']
+        command = [
+            variables.ffmpeg, '-v', 'quiet',
+            '-i', file_path,
+            '-f', 'ffmetadata',
+            variables.meta
+        ]
+        subprocess.run(command)
+        with open(variables.meta, 'r') as m:
+            meta = m.read()
+        metadata_lines = meta.split("\n")[1:]  # 첫 줄만 제외합니다.
+        metadata = []
+        current_key = None
+        current_value = []
+
+        for line in metadata_lines:
+            if "=" in line:  # '='이 있는 줄이면 새로운 항목이 시작된 것입니다.
+                if current_key:  # 이전에 처리하던 항목이 있으면 metadata에 추가합니다.
+                    metadata.append([current_key, "\n".join(current_value).replace("\n\\\n", "\n")])
+                current_key, value = line.split("=", 1)  # 새로운 항목의 키와 값을 분리합니다.
+                if current_key in excluded:  # 제외할 항목이면 current_key를 None으로 설정합니다.
+                    current_key = None
+                else:
+                    current_value = [value]
+            elif current_key:  # '='이 없는 줄이면 이전 항목의 값이 계속되는 것입니다.
+                current_value.append(line)
+
+        if current_key:  # 마지막에 처리하던 항목이 있으면 metadata에 추가합니다.
+            metadata.append([current_key, "\n".join(current_value)])
+        os.remove(variables.meta)
+        return metadata
 
     def enc(file_path: str, bits: int, out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None,
@@ -67,6 +100,8 @@ class encode:
         # Calculating MD5 hash
         with open(variables.temp, 'rb') as temp:
             checksum = hashlib.md5(temp.read()).digest()
+
+        if meta == None: meta = encode.get_metadata(file_path)
 
         # Moulding header
         h = headb.uilder(sample_rate, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
