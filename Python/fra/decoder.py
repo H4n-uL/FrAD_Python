@@ -1,6 +1,6 @@
 from .common import variables, methods
 from .fourier import fourier
-import hashlib, shutil, os, struct, subprocess
+import hashlib, shutil, os, platform, struct, subprocess
 import numpy as np
 import sounddevice as sd
 from .tools.ecc import ecc
@@ -83,6 +83,84 @@ class decode:
                             segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
                 return sample_rate, channels
+    
+    def setaacq(quality, channels):
+        if quality == None:
+            if channels == 1:
+                quality = 256000
+            elif channels == 2:
+                quality = 320000
+            else: quality = 160000 * channels
+        return quality
+
+    def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality):
+        if ext in ['aac', 'm4a']: print('FFmpeg doesn\'t support AAC/M4A Muxer. Switching to MP4...'); ext = 'mp4'
+        command = [
+            variables.ffmpeg, '-y',
+            '-loglevel', 'error',
+            '-f', f,
+            '-ar', str(sample_rate),
+            '-ac', str(channels),
+            '-i', variables.temp_pcm
+        ]
+        command.append('-c:a')
+        if codec in ['wav', 'riff']:
+            command.append(f'pcm_{f}')
+        else:
+            command.append(codec)
+
+        # WAV / fLaC Sample Format
+        if codec in ['wav', 'flac']:
+            command.append('-sample_fmt')
+            command.append(s)
+
+        # Vorbis quality
+        if codec in ['libvorbis']:
+            if quality == None: quality = '10'
+            command.append('-q:a')
+            command.append(quality)
+
+        # AAC, MPEG, Opus bitrate
+        if codec in ['aac', 'm4a', 'libmp3lame', 'libopus']:
+            if quality == None: quality = '4096000'
+            if codec == 'libopus' and int(quality) > 512000:
+                quality = '512k'
+            command.append('-b:a')
+            command.append(quality)
+
+        # Muxer
+        command.append('-f')
+        command.append(ext)
+
+        # File name
+        command.append(f'{out}.{ext}')
+        subprocess.run(command)
+        os.remove(variables.temp_pcm)
+
+    def AppleAAC(sample_rate, channels, f, s, out, quality):
+        quality = str(quality)
+        command = [
+            variables.ffmpeg, '-y',
+            '-loglevel', 'error',
+            '-f', f,
+            '-ar', str(sample_rate),
+            '-ac', str(channels),
+            '-i', variables.temp_pcm,
+            '-sample_fmt', s,
+            '-f', 'flac', variables.temp_flac
+        ]
+        subprocess.run(command)
+        os.remove(variables.temp_pcm)
+        command = [
+            variables.aac,
+            '-f', 'adts', '-d', 'aac',
+            variables.temp_flac,
+            '-b', quality,
+            f'{out}.aac',
+            '-s', '0'
+        ]
+        subprocess.run(command)
+        os.remove(variables.temp_flac)
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False):
         # Decoding
@@ -105,9 +183,9 @@ class decode:
         # Checking Codec and Muxers
         if codec == 'vorbis' or codec == 'opus':
             codec = 'lib' + codec
+            ext = 'ogg'
         if codec == 'ogg': codec = 'libvorbis'
         if codec == 'mp3': codec = 'libmp3lame'
-        if ext in ['aac', 'm4a']: print('FFmpeg doesn\'t support AAC/M4A Muxer. Switching to MP4...'); ext = 'mp4'
 
         if bits == 32:
             f = 's32le'
@@ -116,50 +194,15 @@ class decode:
             f = 's16le'
             s = 's16'
         elif bits == 8:
-            f = s = 'u8'
+            f = a = s = 'u8'
         else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
 
-        command = [
-            variables.ffmpeg, '-y',
-            '-loglevel', 'error',
-            '-f', f,
-            '-ar', str(sample_rate),
-            '-ac', str(channels),
-            '-i', variables.temp_pcm
-        ]
-        if codec not in ['pcm', 'raw']:
-            command.append('-c:a')
-            if codec in ['wav', 'riff']:
-                command.append(f'pcm_{f}')
-            else:
-                command.append(codec)
+        if quality: int(quality.replace('k', '000'))
 
-            # WAV / fLaC Sample Format
-            if codec in ['wav', 'flac']:
-                command.append('-sample_fmt')
-                command.append(s)
-
-            # Vorbis quality
-            if codec in ['libvorbis']:
-                if quality == None: quality = '10'
-                command.append('-q:a')
-                command.append(quality)
-
-            # AAC, MPEG, Opus bitrate
-            if codec in ['aac', 'm4a', 'libmp3lame', 'libopus']:
-                if quality == None: quality = '4096k'
-                if codec == 'libopus' and int(quality.replace('k', '000')) > 512000:
-                    quality = '512k'
-                command.append('-b:a')
-                command.append(quality)
-
-            # Muxer
-            command.append('-f')
-            command.append(ext)
-
-            # File name
-            command.append(f'{out}.{ext}')
-            subprocess.run(command)
-            os.remove(variables.temp_pcm)
+        if (codec == 'aac' and sample_rate <= 48000 and platform.system() == 'Darwin' and channels <= 2) or codec in ['appleaac', 'apple_aac']:
+            quality = decode.setaacq(quality, channels)
+            decode.AppleAAC(sample_rate, channels, f, s, out, quality)
+        elif codec not in ['pcm', 'raw']:
+            decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality)
         else:
             shutil.move(variables.temp_pcm, f'{out}.{ext}')
