@@ -103,7 +103,6 @@ class decode:
         return quality
 
     def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality):
-        if ext in ['aac', 'm4a']: print('FFmpeg doesn\'t support AAC/M4A Muxer. Switching to MP4...'); ext = 'mp4'
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
@@ -137,9 +136,10 @@ class decode:
             command.append('-b:a')
             command.append(quality)
 
-        # Muxer
-        command.append('-f')
-        command.append(ext)
+        if ext == 'ogg':
+            # Muxer
+            command.append('-f')
+            command.append(ext)
 
         # File name
         command.append(f'{out}.{ext}')
