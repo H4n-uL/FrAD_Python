@@ -1,11 +1,8 @@
 from .common import variables
 from .fourier import fourier
-import hashlib
-import json
+import hashlib, json, os, subprocess, sys
 import numpy as np
-import os
 from scipy.signal import resample
-import subprocess
 from .tools.ecc import ecc
 from .tools.headb import headb
 
@@ -77,46 +74,52 @@ class encode:
                 meta = None, img: bytes = None):
         # Getting Audio info w. ffmpeg & ffprobe
         data, sample_rate, channel = encode.get_pcm(file_path)
+        try:
+            # Resampling
+            if new_sample_rate:
+                resdata = np.zeros((int(len(data) * new_sample_rate / sample_rate), channel))
+                for i in range(channel):
+                    resdata[:, i] = resample(data[:, i], int(len(data[:, i]) * new_sample_rate / sample_rate))
+                data = resdata
 
-        # Resampling
-        if new_sample_rate:
-            resdata = np.zeros((int(len(data) * new_sample_rate / sample_rate), channel))
-            for i in range(channel):
-                resdata[:, i] = resample(data[:, i], int(len(data[:, i]) * new_sample_rate / sample_rate))
-            data = resdata
+            # Applying Sample rate
+            sample_rate = (new_sample_rate if new_sample_rate is not None else sample_rate)
 
-        # Applying Sample rate
-        sample_rate = (new_sample_rate if new_sample_rate is not None else sample_rate)
+            # Fourier Transform
+            nperseg = variables.nperseg
+        except KeyboardInterrupt: sys.exit(0)
+        try:
+            with open(variables.temp, 'wb') as temp:
+                for i in range(0, len(data), nperseg):
+                    block = data[i:i+nperseg]
+                    segment = fourier.analogue(block, bits, channel)
+                    segment = ecc.encode(segment, apply_ecc) # Encoding Reed-Solomon ECC
+                    temp.write(segment)
+                temp.seek(0)
+            # Calculating MD5 hash
+            with open(variables.temp, 'rb') as temp:
+                checksum = hashlib.md5(temp.read()).digest()
 
-        # Fourier Transform
-        nperseg = variables.nperseg
-        with open(variables.temp, 'wb') as temp:
-            for i in range(0, len(data), nperseg):
-                block = data[i:i+nperseg]
-                segment = fourier.analogue(block, bits, channel)
-                segment = ecc.encode(segment, apply_ecc) # Encoding Reed-Solomon ECC
-                temp.write(segment)
-            temp.seek(0)
-        # Calculating MD5 hash
-        with open(variables.temp, 'rb') as temp:
-            checksum = hashlib.md5(temp.read()).digest()
+            if meta == None: meta = encode.get_metadata(file_path)
 
-        if meta == None: meta = encode.get_metadata(file_path)
+            # Moulding header
+            h = headb.uilder(sample_rate, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
+                meta=meta, img=img)
 
-        # Moulding header
-        h = headb.uilder(sample_rate, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
-            meta=meta, img=img)
+            # Setting file extension
+            if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
+                out += '.fra'
 
-        # Setting file extension
-        if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
-            out += '.fra'
-
-        # Creating Fourier Analogue-in-Digital File
-        with open(out if out is not None else'fourierAnalogue.fra', 'wb') as file:
-            file.write(h)
-            with open(variables.temp, 'r+b') as swv:
-                while True:
-                    block = swv.read()
-                    if block: file.write(block)
-                    else: break
+            # Creating Fourier Analogue-in-Digital File
+            with open(out if out is not None else'fourierAnalogue.fra', 'wb') as file:
+                file.write(h)
+                with open(variables.temp, 'r+b') as swv:
+                    while True:
+                        block = swv.read()
+                        if block: file.write(block)
+                        else: break
+                os.remove(variables.temp)
+        except KeyboardInterrupt:
+            print('Aborting...')
             os.remove(variables.temp)
+            sys.exit(0)

@@ -1,6 +1,4 @@
-import argparse
-import base64
-import json
+import argparse, base64, json, os, sys
 
 def main(action, args):
     input = args.input
@@ -47,8 +45,13 @@ def main(action, args):
                     item_dict["type"] = "base64"
                     item_dict["value"] = base64.b64encode(value).decode('utf-8')
             result_list.append(item_dict)
-        with open(output+'.meta.json', 'w') as m: m.write(json.dumps(result_list, ensure_ascii=False))
-        with open(output+'.meta.image', 'wb') as m: m.write(img)
+        try:
+            with open(output+'.meta.json', 'w') as m: m.write(json.dumps(result_list, ensure_ascii=False))
+            with open(output+'.meta.image', 'wb') as m: m.write(img)
+        except KeyboardInterrupt:
+            os.remove(output+'.meta.json')
+            os.remove(output+'.meta.image')
+            sys.exit(0)
     elif action == 'modify' or action == 'meta-modify':
         from fra import header
         header.modify(input, meta=meta, img=img)
@@ -62,7 +65,7 @@ def main(action, args):
         raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Fourier Analogue Codec')
+    parser = argparse.ArgumentParser(description='Fourier Analogue-in-Digital Codec')
     parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'], help='action to perform')
     parser.add_argument('input',                                                                                 help='input file path')
     parser.add_argument('-o',   '--output',   required=False,                                                    help='output file path')
@@ -78,4 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('-jm',  '--jsonmeta', required=False,                                                    help='metadata in json')
 
     args = parser.parse_args()
-    main(args.action, args)
+    try:
+        main(args.action, args)
+    except KeyboardInterrupt:
+        sys.exit(0)
