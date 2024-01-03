@@ -54,23 +54,29 @@ class decode:
                 try:
                     stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
                     stream.start()
+                    i = 0
                     if is_ecc_on: # When ECC
                         nperseg = nperseg // 128 * 148
-                        for i in range(0, dlen, nperseg*sample_size):
+                        while True:
                             print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
                             block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
+                            if not block: break
                             chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                             block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
                             segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                             stream.write(segment)
+                            i += nperseg * sample_size
                             print('\x1b[1A\x1b[2K', end='')
                     else:         # When No ECC
-                        for i in range(0, dlen, nperseg*sample_size):
+                        while True:
                             print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
                             block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
+                            if not block: break
                             segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                             stream.write(segment)
+                            i += nperseg * sample_size
                             print('\x1b[1A\x1b[2K', end='')
+                    print('\x1b[1A\x1b[2K', end='')
                     stream.close()
                     sys.exit(0)
                 except KeyboardInterrupt:
@@ -81,15 +87,17 @@ class decode:
                     with open(variables.temp_pcm, 'wb') as p:
                         if is_ecc_on: # When ECC
                             nperseg = nperseg // 128 * 148
-                            for i in range(0, dlen, nperseg*sample_size):
+                            while True:
                                 block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
+                                if not block: break
                                 chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                                 block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
                                 segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                                 p.write(segment)
                         else:         # When No ECC
-                            for i in range(0, dlen, nperseg*sample_size):
+                            while True:
                                 block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
+                                if not block: break
                                 segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                                 p.write(segment)
                     return sample_rate, channels
