@@ -91,4 +91,3 @@ if __name__ == '__main__':
         if os.path.exists(variables.temp2_pcm): os.remove(variables.temp2_pcm)
         if os.path.exists(variables.temp_flac): os.remove(variables.temp_flac)
         if os.path.exists(variables.meta): os.remove(variables.meta)
-        sys.exit()
