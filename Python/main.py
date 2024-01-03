@@ -74,7 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('-n',   '--nsr', '--new_sample_rate',         required=False,                               help='resample as new sample rate')
     parser.add_argument('-img', '--image',                            required=False,                               help='image file path')
     parser.add_argument('-c',   '--codec',                            required=False,                               help='codec type')
-    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc',                          action='store_true', help='enable ecc')
+    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true', help='enable ecc')
     parser.add_argument('-s',   '--speed',                            required=False,                               help='play speed(in times)')
     parser.add_argument('-q',   '--quality',                          required=False,                               help='decode quality')
     parser.add_argument('-k',   '--keys',                             required=False,                               help='keys')
