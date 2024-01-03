@@ -1,4 +1,5 @@
 import argparse, base64, json, os, sys
+from fra.common import variables
 
 def main(action, args):
     input = args.input
@@ -83,5 +84,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     try:
         main(args.action, args)
-    except KeyboardInterrupt:
-        sys.exit(0)
+    except Exception:
+        if os.path.exists(variables.temp): os.remove(variables.temp)
+        if os.path.exists(variables.temp2): os.remove(variables.temp2)
+        if os.path.exists(variables.temp_pcm): os.remove(variables.temp_pcm)
+        if os.path.exists(variables.temp2_pcm): os.remove(variables.temp2_pcm)
+        if os.path.exists(variables.temp_flac): os.remove(variables.temp_flac)
+        if os.path.exists(variables.meta): os.remove(variables.meta)
+        sys.exit()
