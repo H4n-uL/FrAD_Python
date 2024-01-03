@@ -1,14 +1,14 @@
-import base64
-import os
-import platform
-import secrets
+import base64, os, platform, secrets
 
 class variables:
     nperseg = 2048
+    hash_block_size = 2**20
 
     dir = os.path.dirname(os.path.realpath(__file__))
     temp = os.path.join(dir, f'temp.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
+    temp2 = os.path.join(dir, f'temp.ecc.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
     temp_pcm = os.path.join(dir, f'temp.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.pcm')
+    temp2_pcm = os.path.join(dir, f'temp.rate.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.pcm')
     temp_flac = os.path.join(dir, f'temp.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.flac')
     meta = os.path.join(dir, f'{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.meta')
 
