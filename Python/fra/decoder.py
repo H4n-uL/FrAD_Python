@@ -52,7 +52,7 @@ class decode:
             # Inverse Fourier Transform
             if play == True: # When playing
                 try:
-                    stream = sd.OutputStream(samplerate=sample_rate*speed, channels=channels)
+                    stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
                     stream.start()
                     if is_ecc_on: # When ECC
                         nperseg = nperseg // 128 * 148
