@@ -28,7 +28,12 @@ class decode:
             if e:
                 f.seek(header_length)
                 # Verifying checksum
-                checksum_data = hashlib.md5(f.read()).digest()
+                md5 = hashlib.md5()
+                while True:
+                    d = f.read(variables.hash_block_size)
+                    if not d: break
+                    md5.update(d)
+                checksum_data = md5.digest()
                 if checksum_data != checksum_header:
                     if is_ecc_on == False:
                         print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
