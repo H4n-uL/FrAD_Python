@@ -1,10 +1,10 @@
 #!/bin/bash
 
 python3 Python/main.py encode "path/to/audio.flac" \
--b 32 \
+--bits 32 \
 \
--o "path/for/fourierAnalogue.fra" \
--n 48000 \
+-output "path/for/fourierAnalogue.fra" \
+--nsr 48000 \
 -e \
 -m "Metadata Title" "Metadata contents" \
 -jm "path/to/metadata.json" \

@@ -2,8 +2,8 @@
 
 python3 Python/main.py modify "path/to/audio.flac" \
 \
--m "Metadata Title" "Metadata contents" \
--jm "path/to/metadata.json" \
--img "path/to/image/file"
+--meta "Metadata Title" "Metadata contents" \
+--jsonmeta "path/to/metadata.json" \
+--image "path/to/image/file"
 
-# -jm goes prior comparing -m option.
+# JSON Metadata goes prior comparing Metadata option.
