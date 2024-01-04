@@ -159,7 +159,7 @@ class decode:
         subprocess.run(command)
         os.remove(variables.temp_pcm)
 
-    def AppleAAC(sample_rate, channels, f, s, out, quality):
+    def AppleAAC_macOS(sample_rate, channels, f, s, out, quality):
         try:
             quality = str(quality)
             command = [
@@ -195,6 +195,26 @@ class decode:
             os.remove(variables.temp_flac)
             sys.exit(0)
 
+    def AppleAAC_Windows(sample_rate, channels, a, out, quality):
+        try:
+            command = [
+                variables.aac,
+                '--raw', variables.temp_pcm,
+                '--raw-channels', str(channels),
+                '--raw-rate', str(sample_rate),
+                '--raw-format', a,
+                '--adts',
+                '-c', quality,
+                '-o', f'{out}.aac',
+                '-s'
+            ]
+            subprocess.run(command)
+            os.remove(variables.temp_pcm)
+        except KeyboardInterrupt:
+            print('Aborting...')
+            os.remove(variables.temp_pcm)
+            sys.exit(0)
+
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False):
         # Decoding
         sample_rate, channels = decode.internal(file_path, bits, e=e)
@@ -223,9 +243,11 @@ class decode:
 
             if bits == 32:
                 f = 's32le'
+                a = 's32l'
                 s = 's32'
             elif bits == 16:
                 f = 's16le'
+                a = 's16l'
                 s = 's16'
             elif bits == 8:
                 f = a = s = 'u8'
@@ -233,9 +255,10 @@ class decode:
 
             if quality: int(quality.replace('k', '000'))
 
-            if (codec == 'aac' and sample_rate <= 48000 and platform.system() == 'Darwin' and channels <= 2) or codec in ['appleaac', 'apple_aac']:
+            if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
                 quality = decode.setaacq(quality, channels)
-                decode.AppleAAC(sample_rate, channels, f, s, out, quality)
+                if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, f, s, out, quality)
+                elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, a, out, quality)
             elif codec not in ['pcm', 'raw']:
                 decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality)
             else:
