@@ -128,7 +128,7 @@ class encode:
                     if not block: break
                     segment = ecc.encode(block, apply_ecc) # Encoding Reed-Solomon ECC
                     enf.write(segment)
-                shutil.move(variables.temp2, variables.temp)
+            shutil.move(variables.temp2, variables.temp)
         except KeyboardInterrupt:
             print('Aborting...')
             os.remove(variables.temp2)
