@@ -113,7 +113,7 @@ class encode:
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channel)
                     segment = fourier.analogue(block, bits, channel)
                     swv.write(segment)
-                os.remove(variables.temp_pcm)
+            os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
             print('Aborting...')
             os.remove(variables.temp)
