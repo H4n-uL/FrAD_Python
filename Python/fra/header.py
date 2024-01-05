@@ -56,7 +56,7 @@ class header:
 
                 # Backing up audio data
                 f.seek(header_length)
-                with open(variables.temp, 'wb') as temp:
+                with open(variables.temp2, 'wb') as temp:
                     while True:
                         block = f.read(variables.nperseg)
                         if block: temp.write(block)
@@ -67,15 +67,16 @@ class header:
                 meta, img)
 
             # Overwriting Fourier Analogue-in-Digital file
-            with open(file_path, 'wb') as f: # DO NEVER DELETE THIS
+            with open(variables.temp, 'wb') as f: # DO NEVER DELETE THIS
                 f.write(head_new)
-                with open(variables.temp, 'rb') as temp:
+                with open(variables.temp2, 'rb') as temp:
                     while True:
                         block = temp.read(variables.nperseg)
                         if block: f.write(block)
                         else: break
+            os.remove(variables.temp2)
         except:
             os.remove(variables.temp)
+            os.remove(variables.temp2)
             sys.exit(0)
         shutil.move(variables.temp, file_path)
-        
