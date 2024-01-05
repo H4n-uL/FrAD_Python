@@ -35,7 +35,7 @@ class encode:
         subprocess.run(command)
         channels, sample_rate, codec = encode.get_info(file_path)
         return sample_rate, channels, codec
-    
+
     def get_metadata(file_path: str):
         excluded = ['major_brand', 'minor_version', 'compatible_brands', 'encoder']
         command = [
@@ -152,7 +152,7 @@ class encode:
                         if not block: break
                         segment = ecc.encode(block) # Encoding Reed-Solomon ECC
                         enf.write(segment)
-    
+
                         if verbose:
                             if total_bytes != 0:
                                 print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')

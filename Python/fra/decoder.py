@@ -110,7 +110,7 @@ class decode:
                     print('Aborting...')
                     os.remove(variables.temp_pcm)
                     sys.exit(0)
-    
+
     def setaacq(quality, channels):
         if quality == None:
             if channels == 1:
@@ -223,7 +223,7 @@ class decode:
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, verbose: bool = False):
         # Decoding
         sample_rate, channels = decode.internal(file_path, bits, e=e, verbose=verbose)
-        
+    
         try:
             # Checking name
             if out:
