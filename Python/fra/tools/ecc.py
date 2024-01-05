@@ -30,9 +30,8 @@ class ecc:
                 decoded_chunks = p.map(ecc.rdsl.decode_chunk, chunks)
             return b''.join(decoded_chunks)
 
-    def encode(data, is_ecc_on: bool):
-        if is_ecc_on == True: return ecc.rdsl.encode(data)
-        if is_ecc_on == False: return data
+    def encode(data):
+        return ecc.rdsl.encode(data)
 
     def decode(data):
         return ecc.rdsl.decode(data)

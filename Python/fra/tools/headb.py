@@ -26,8 +26,6 @@ class headb:
         length = b'\x00'*8
         ecc = (0b1 if isecc else 0b0) << 4
         efb_struct = struct.pack('<B', ecc | b3)
-        isecc = (0b1 if isecc else 0b0) << 7
-        ecc_bits = struct.pack('<B', isecc | 0b0000000)
 
         blocks = bytes()
 
@@ -38,5 +36,5 @@ class headb:
 
         length = struct.pack('>Q', (256 + len(blocks)))
 
-        header = signature + channel_block + sample_block + length + efb_struct + (b'\x00'*5) + ecc_bits + (b'\x00'*217) + md5 + blocks
+        header = signature + channel_block + sample_block + length + efb_struct + (b'\x00'*223) + md5 + blocks
         return header

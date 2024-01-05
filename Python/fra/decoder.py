@@ -1,12 +1,12 @@
 from .common import variables, methods
 from .fourier import fourier
-import hashlib, shutil, os, platform, struct, subprocess, sys
+import hashlib, shutil, os, platform, struct, subprocess, sys, time
 import numpy as np
 import sounddevice as sd
 from .tools.ecc import ecc
 
 class decode:
-    def internal(file_path, bits: int = 32, play: bool = False, speed: float = 1, e: bool = False):
+    def internal(file_path, bits: int = 32, play: bool = False, speed: float = 1, e: bool = False, verbose: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
             header = f.read(256)
@@ -50,33 +50,29 @@ class decode:
 
             p = sample_size * sample_rate * speed
             # Inverse Fourier Transform
+            i = 0
             if play == True: # When playing
                 try:
                     stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
                     stream.start()
-                    i = 0
                     if is_ecc_on: # When ECC
                         nperseg = nperseg // 128 * 148
-                        while True:
-                            print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
-                            block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
-                            if not block: break
+                    while True:
+                        block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
+                        if not block: break
+                        if is_ecc_on:
                             chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                             block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                            segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
-                            stream.write(segment)
-                            i += nperseg * sample_size
-                            print('\x1b[1A\x1b[2K', end='')
-                    else:         # When No ECC
-                        while True:
-                            print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
-                            block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
-                            if not block: break
-                            segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
-                            stream.write(segment)
-                            i += nperseg * sample_size
-                            print('\x1b[1A\x1b[2K', end='')
-                    print('\x1b[1A\x1b[2K', end='')
+                        segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        stream.write(segment)
+                        if verbose: 
+                            if is_ecc_on: print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
+                            else: print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
+                        else: 
+                            if is_ecc_on: print(f'{i // 148 * 128 / p:.3f} s')
+                            else: print(f'{i / p:.3f} s')
+                        i += nperseg * sample_size
+                        print('\x1b[1A\x1b[2K', end='')
                     stream.close()
                     sys.exit(0)
                 except KeyboardInterrupt:
@@ -84,22 +80,31 @@ class decode:
                     sys.exit(0)
             else:
                 try:
+                    start_time = time.time()
+                    total_bytes = 0
+                    cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
                         if is_ecc_on: # When ECC
                             nperseg = nperseg // 128 * 148
-                            while True:
-                                block = f.read(nperseg*sample_size) # Reading 2368 Bytes block
-                                if not block: break
+                        while True:
+                            block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
+                            if not block: break
+                            if is_ecc_on:
                                 chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                                 block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                                segment = fourier.digital(block, float_bits, bits, channels) # Inversing
-                                p.write(segment)
-                        else:         # When No ECC
-                            while True:
-                                block = f.read(nperseg*sample_size) # Reading 2048 Bytes block
-                                if not block: break
-                                segment = fourier.digital(block, float_bits, bits, channels) # Inversing
-                                p.write(segment)
+                            segment = fourier.digital(block, float_bits, bits, channels) # Inversing
+                            p.write(segment)
+                            if verbose:
+                                total_bytes += len(block)
+                                elapsed_time = time.time() - start_time
+                                bps = total_bytes / elapsed_time
+                                mult = bps / (sample_size * sample_rate)
+                                percent = total_bytes*100 / dlen
+                                if is_ecc_on: percent = percent / 128 * 148
+                                b = int(percent / 100 * cli_width)
+                                print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                                print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                     return sample_rate, channels
                 except KeyboardInterrupt:
                     print('Aborting...')
@@ -215,9 +220,9 @@ class decode:
             os.remove(variables.temp_pcm)
             sys.exit(0)
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, verbose: bool = False):
         # Decoding
-        sample_rate, channels = decode.internal(file_path, bits, e=e)
+        sample_rate, channels = decode.internal(file_path, bits, e=e, verbose=verbose)
         
         try:
             # Checking name

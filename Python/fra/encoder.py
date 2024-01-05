@@ -1,6 +1,6 @@
 from .common import variables
 from .fourier import fourier
-import hashlib, json, os, shutil, subprocess, sys
+import hashlib, json, os, shutil, subprocess, sys, time
 import numpy as np
 from scipy.signal import resample
 from .tools.ecc import ecc
@@ -19,7 +19,7 @@ class encode:
 
         for stream in info['streams']:
             if stream['codec_type'] == 'audio':
-                return int(stream['channels']), int(stream['sample_rate'])
+                return int(stream['channels']), int(stream['sample_rate']), stream['codec_name']
         return None
 
     def get_pcm(file_path: str):
@@ -33,8 +33,8 @@ class encode:
             variables.temp_pcm
         ]
         subprocess.run(command)
-        channels, sample_rate = encode.get_info(file_path)
-        return sample_rate, channels
+        channels, sample_rate, codec = encode.get_info(file_path)
+        return sample_rate, channels, codec
     
     def get_metadata(file_path: str):
         excluded = ['major_brand', 'minor_version', 'compatible_brands', 'encoder']
@@ -47,35 +47,37 @@ class encode:
         subprocess.run(command)
         with open(variables.meta, 'r') as m:
             meta = m.read()
-        metadata_lines = meta.split("\n")[1:]  # 첫 줄만 제외합니다.
+        metadata_lines = meta.split("\n")[1:]
         metadata = []
         current_key = None
         current_value = []
 
         for line in metadata_lines:
-            if "=" in line:  # '='이 있는 줄이면 새로운 항목이 시작된 것입니다.
-                if current_key:  # 이전에 처리하던 항목이 있으면 metadata에 추가합니다.
+            if "=" in line:
+                if current_key:
                     metadata.append([current_key, "\n".join(current_value).replace("\n\\\n", "\n")])
-                current_key, value = line.split("=", 1)  # 새로운 항목의 키와 값을 분리합니다.
-                if current_key in excluded:  # 제외할 항목이면 current_key를 None으로 설정합니다.
+                current_key, value = line.split("=", 1)
+                if current_key in excluded:
                     current_key = None
                 else:
                     current_value = [value]
-            elif current_key:  # '='이 없는 줄이면 이전 항목의 값이 계속되는 것입니다.
+            elif current_key:
                 current_value.append(line)
 
-        if current_key:  # 마지막에 처리하던 항목이 있으면 metadata에 추가합니다.
+        if current_key:
             metadata.append([current_key, "\n".join(current_value)])
         os.remove(variables.meta)
         return metadata
 
     def enc(file_path: str, bits: int, out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None,
-                meta = None, img: bytes = None):
+                meta = None, img: bytes = None,
+                verbose: bool = False):
         # Getting Audio info w. ffmpeg & ffprobe
-        sample_rate, channel = encode.get_pcm(file_path)
+        sample_rate, channel, codec = encode.get_pcm(file_path)
         try:
             # Resampling
+            if codec in ['dsd_lsbf_planar', 'dsd_msbf']: new_sample_rate = sample_rate * 8 // bits
             if new_sample_rate:
               try:
                 with open(variables.temp_pcm, 'rb') as pcmb:
@@ -105,6 +107,12 @@ class encode:
             sys.exit(1)
 
         try:
+            start_time = time.time()
+            total_bytes = 0
+            cli_width = 40
+            sample_size = bits // 4 * channel
+            dlen = os.path.getsize(variables.temp_pcm)
+
             with open(variables.temp_pcm, 'rb') as pcm:
               with open(variables.temp, 'wb') as swv:
                 while True:
@@ -113,27 +121,55 @@ class encode:
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channel)
                     segment = fourier.analogue(block, bits, channel)
                     swv.write(segment)
+                    if verbose:
+                        if total_bytes != 0:
+                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                        total_bytes += len(block) * sample_size
+                        elapsed_time = time.time() - start_time
+                        bps = total_bytes / elapsed_time
+                        mult = bps / sample_rate / sample_size
+                        percent = total_bytes / dlen / bits * 1600
+                        b = int(percent / 100 * cli_width)
+                        print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                        print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
             os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
             print('Aborting...')
             os.remove(variables.temp)
             os.remove(variables.temp_pcm)
             sys.exit(1)
-
-        try:
-            with open(variables.temp, 'rb') as swv:
-              with open(variables.temp2, 'wb') as enf:
-                while True:
-                    block = swv.read(16777216)
-                    if not block: break
-                    segment = ecc.encode(block, apply_ecc) # Encoding Reed-Solomon ECC
-                    enf.write(segment)
-            shutil.move(variables.temp2, variables.temp)
-        except KeyboardInterrupt:
-            print('Aborting...')
-            os.remove(variables.temp2)
-            os.remove(variables.temp)
-            sys.exit(1)
+        if apply_ecc:
+            try:
+                dlen = os.path.getsize(variables.temp)
+                start_time = time.time()
+                total_bytes = 0
+                cli_width = 40
+                with open(variables.temp, 'rb') as swv:
+                  with open(variables.temp2, 'wb') as enf:
+                    while True:
+                        block = swv.read(16777216)
+                        if not block: break
+                        segment = ecc.encode(block) # Encoding Reed-Solomon ECC
+                        enf.write(segment)
+    
+                        if verbose:
+                            if total_bytes != 0:
+                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                            total_bytes += len(block)
+                            elapsed_time = time.time() - start_time
+                            bps = total_bytes / elapsed_time
+                            percent = (total_bytes * 14800 // 128) / dlen
+                            b = int(percent / 100 * cli_width)
+                            print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
+                            print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                    if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                shutil.move(variables.temp2, variables.temp)
+            except KeyboardInterrupt:
+                print('Aborting...')
+                os.remove(variables.temp2)
+                os.remove(variables.temp)
+                sys.exit(1)
 
         try:
             # Calculating MD5 hash

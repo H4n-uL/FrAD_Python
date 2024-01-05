@@ -23,12 +23,12 @@ def main(action, args):
         from fra import encode
         output = args.output if args.output else 'fourierAnalogue.fra'
         nsr = None if args.nsr == None else int(args.nsr)
-        encode.enc(input, int(args.bits), out=output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img)
+        encode.enc(input, int(args.bits), out=output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img, verbose=args.verbose)
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
         codec = args.codec if args.codec is not None else None
-        decode.dec(input, out=args.output, bits=bits, codec=codec, quality=args.quality, e=args.ecc)
+        decode.dec(input, out=args.output, bits=bits, codec=codec, quality=args.quality, e=args.ecc, verbose=args.verbose)
     elif action == 'parse':
         from fra import header
         output = args.output if args.output is not None else 'metadata'
@@ -58,10 +58,10 @@ def main(action, args):
         header.modify(input, meta=meta, img=img)
     elif action == 'ecc':
         from fra import repack
-        repack.ecc(input)
+        repack.ecc(input, args.verbose)
     elif action == 'play':
         from fra import player
-        player.play(input, keys=int(args.keys) if args.keys is not None else None, speed_in_times=float(args.speed) if args.speed is not None else None, e=args.ecc)
+        player.play(input, keys=int(args.keys) if args.keys is not None else None, speed_in_times=float(args.speed) if args.speed is not None else None, e=args.ecc, verbose=args.verbose)
     else:
         raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 
@@ -80,6 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('-k',   '--keys', '--key',                          required=False,                               help='keys')
     parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',     help='metadata in "key" "value" format')
     parser.add_argument('-jm',  '--jsonmeta',                               required=False,                               help='metadata in json')
+    parser.add_argument('-v',   '--verbose',                                                         action='store_true', help='verbose cli')
 
     args = parser.parse_args()
     try:
