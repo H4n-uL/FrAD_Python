@@ -67,7 +67,7 @@ class header:
                 meta, img)
 
             # Overwriting Fourier Analogue-in-Digital file
-            with open(variables.temp, 'wb') as f: # DO NEVER DELETE THIS
+            with open(file_path, 'wb') as f: # DO NEVER DELETE THIS
                 f.write(head_new)
                 with open(variables.temp, 'rb') as temp:
                     while True:
