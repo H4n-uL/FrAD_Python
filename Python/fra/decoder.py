@@ -83,38 +83,33 @@ class decode:
                     stream.close()
                     sys.exit(0)
             else:
-                try:
-                    start_time = time.time()
-                    total_bytes = 0
-                    cli_width = 40
-                    with open(variables.temp_pcm, 'wb') as p:
-                        if is_ecc_on: # When ECC
-                            nperseg = nperseg // 128 * 148
-                        while True:
-                            block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
-                            if not block: break
-                            if is_ecc_on:
-                                chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
-                                block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                            if is_cosine: segment = cosine.digital(block, float_bits, bits, channels) # Inversing
-                            else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
-                            p.write(segment)
-                            if verbose:
-                                total_bytes += len(block)
-                                elapsed_time = time.time() - start_time
-                                bps = total_bytes / elapsed_time
-                                mult = bps / (sample_size * sample_rate)
-                                percent = total_bytes*100 / dlen
-                                if is_ecc_on: percent = percent / 128 * 148
-                                b = int(percent / 100 * cli_width)
-                                print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
-                                print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                    return sample_rate, channels
-                except KeyboardInterrupt:
-                    print('Aborting...')
-                    os.remove(variables.temp_pcm)
-                    sys.exit(0)
+                start_time = time.time()
+                total_bytes = 0
+                cli_width = 40
+                with open(variables.temp_pcm, 'wb') as p:
+                    if is_ecc_on: # When ECC
+                        nperseg = nperseg // 128 * 148
+                    while True:
+                        block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
+                        if not block: break
+                        if is_ecc_on:
+                            chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
+                            block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
+                        if is_cosine: segment = cosine.digital(block, float_bits, bits, channels) # Inversing
+                        else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
+                        p.write(segment)
+                        if verbose:
+                            total_bytes += len(block)
+                            elapsed_time = time.time() - start_time
+                            bps = total_bytes / elapsed_time
+                            mult = bps / (sample_size * sample_rate)
+                            percent = total_bytes*100 / dlen
+                            if is_ecc_on: percent = percent / 128 * 148
+                            b = int(percent / 100 * cli_width)
+                            print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                            print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                return sample_rate, channels
 
     def setaacq(quality, channels):
         if quality == None:
@@ -170,111 +165,89 @@ class decode:
         os.remove(variables.temp_pcm)
 
     def AppleAAC_macOS(sample_rate, channels, f, s, out, quality):
-        try:
-            quality = str(quality)
-            command = [
-                variables.ffmpeg, '-y',
-                '-loglevel', 'error',
-                '-f', f,
-                '-ar', str(sample_rate),
-                '-ac', str(channels),
-                '-i', variables.temp_pcm,
-                '-sample_fmt', s,
-                '-f', 'flac', variables.temp_flac
-            ]
-            subprocess.run(command)
-            os.remove(variables.temp_pcm)
-        except KeyboardInterrupt:
-            print('Aborting...')
-            os.remove(variables.temp_pcm)
-            os.remove(variables.temp_flac)
-            sys.exit(0)
-        try:
-            command = [
-                variables.aac,
-                '-f', 'adts', '-d', 'aac',
-                variables.temp_flac,
-                '-b', quality,
-                f'{out}.aac',
-                '-s', '0'
-            ]
-            subprocess.run(command)
-            os.remove(variables.temp_flac)
-        except KeyboardInterrupt:
-            print('Aborting...')
-            os.remove(variables.temp_flac)
-            sys.exit(0)
+        quality = str(quality)
+        command = [
+            variables.ffmpeg, '-y',
+            '-loglevel', 'error',
+            '-f', f,
+            '-ar', str(sample_rate),
+            '-ac', str(channels),
+            '-i', variables.temp_pcm,
+            '-sample_fmt', s,
+            '-f', 'flac', variables.temp_flac
+        ]
+        subprocess.run(command)
+        os.remove(variables.temp_pcm)
+        command = [
+            variables.aac,
+            '-f', 'adts', '-d', 'aac',
+            variables.temp_flac,
+            '-b', quality,
+            f'{out}.aac',
+            '-s', '0'
+        ]
+        subprocess.run(command)
+        os.remove(variables.temp_flac)
 
     def AppleAAC_Windows(sample_rate, channels, a, out, quality):
-        try:
-            command = [
-                variables.aac,
-                '--raw', variables.temp_pcm,
-                '--raw-channels', str(channels),
-                '--raw-rate', str(sample_rate),
-                '--raw-format', a,
-                '--adts',
-                '-c', quality,
-                '-o', f'{out}.aac',
-                '-s'
-            ]
-            subprocess.run(command)
-            os.remove(variables.temp_pcm)
-        except KeyboardInterrupt:
-            print('Aborting...')
-            os.remove(variables.temp_pcm)
-            sys.exit(0)
+        command = [
+            variables.aac,
+            '--raw', variables.temp_pcm,
+            '--raw-channels', str(channels),
+            '--raw-rate', str(sample_rate),
+            '--raw-format', a,
+            '--adts',
+            '-c', quality,
+            '-o', f'{out}.aac',
+            '-s'
+        ]
+        subprocess.run(command)
+        os.remove(variables.temp_pcm)
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, verbose: bool = False):
         # Decoding
         sample_rate, channels = decode.internal(file_path, bits, e=e, verbose=verbose)
-    
-        try:
-            # Checking name
-            if out:
-                out, ext = os.path.splitext(out)
-                ext = ext.lstrip('.').lower()
-                if codec:
-                    if ext: pass
-                    else:   ext = codec
-                else:
-                    if      ext: codec = ext
-                    else:   codec = ext = 'flac'
+
+        # Checking name
+        if out:
+            out, ext = os.path.splitext(out)
+            ext = ext.lstrip('.').lower()
+            if codec:
+                if ext: pass
+                else:   ext = codec
             else:
-                if codec:   out = 'restored'; ext = codec
-                else:       codec = ext = 'flac'; out = 'restored'
+                if      ext: codec = ext
+                else:   codec = ext = 'flac'
+        else:
+            if codec:   out = 'restored'; ext = codec
+            else:       codec = ext = 'flac'; out = 'restored'
 
-            # Checking Codec and Muxers
-            if codec == 'vorbis' or codec == 'opus':
-                codec = 'lib' + codec
-                ext = 'ogg'
-            if codec == 'ogg': codec = 'libvorbis'
-            if codec == 'mp3': codec = 'libmp3lame'
+        # Checking Codec and Muxers
+        if codec == 'vorbis' or codec == 'opus':
+            codec = 'lib' + codec
+            ext = 'ogg'
+        if codec == 'ogg': codec = 'libvorbis'
+        if codec == 'mp3': codec = 'libmp3lame'
 
-            if bits == 32:
-                f = 's32le'
-                a = 's32l'
-                s = 's32'
-            elif bits == 16:
-                f = 's16le'
-                a = 's16l'
-                s = 's16'
-            elif bits == 8:
-                f = a = s = 'u8'
-            else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
+        if bits == 32:
+            f = 's32le'
+            a = 's32l'
+            s = 's32'
+        elif bits == 16:
+            f = 's16le'
+            a = 's16l'
+            s = 's16'
+        elif bits == 8:
+            f = a = s = 'u8'
+        else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
 
-            if quality: int(quality.replace('k', '000'))
+        if quality: int(quality.replace('k', '000'))
 
-            if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
-                quality = decode.setaacq(quality, channels)
-                if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, f, s, out, quality)
-                elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, a, out, quality)
-            elif codec not in ['pcm', 'raw']:
-                decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality)
-            else:
-                shutil.move(variables.temp_pcm, f'{out}.{ext}')
-
-        except KeyboardInterrupt:
-            print('Aborting...')
-            os.remove(variables.temp_pcm)
-            sys.exit(0)
+        if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
+            quality = decode.setaacq(quality, channels)
+            if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, f, s, out, quality)
+            elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, a, out, quality)
+        elif codec not in ['pcm', 'raw']:
+            decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality)
+        else:
+            shutil.move(variables.temp_pcm, f'{out}.{ext}')
