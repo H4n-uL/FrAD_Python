@@ -76,11 +76,13 @@ class encode:
                 verbose: bool = False):
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)
-        # Resampling
-        if codec in ['dsd_lsbf_planar', 'dsd_msbf']: new_sample_rate = sample_rate * 8 // bits
-        if new_sample_rate:
-            with open(variables.temp_pcm, 'rb') as pcmb:
-                with open(variables.temp2_pcm, 'wb') as pcma:
+        try:
+            # Resampling
+            if codec in ['dsd_lsbf_planar', 'dsd_msbf']: new_sample_rate = sample_rate * 8 // bits
+            if new_sample_rate:
+              try:
+                with open(variables.temp_pcm, 'rb') as pcmb:
+                  with open(variables.temp2_pcm, 'wb') as pcma:
                     while True:
                         wv = pcmb.read(sample_rate * channel * 4)
                         if not wv: break
@@ -89,21 +91,31 @@ class encode:
                         for i in range(channel):
                             resdata[:, i] = resample(block[:, i], new_sample_rate)
                         pcma.write(resdata.astype(np.int32).tobytes())
-            shutil.move(variables.temp2_pcm, variables.temp_pcm)
+                shutil.move(variables.temp2_pcm, variables.temp_pcm)
+              except KeyboardInterrupt:
+                os.remove(variables.temp_pcm)
+                os.remove(variables.temp2_pcm)
+                sys.exit(1)
 
-        # Applying Sample rate
-        sample_rate = (new_sample_rate if new_sample_rate is not None else sample_rate)
+            # Applying Sample rate
+            sample_rate = (new_sample_rate if new_sample_rate is not None else sample_rate)
 
-        # Fourier Transform
-        nperseg = variables.nperseg
-        start_time = time.time()
-        total_bytes = 0
-        cli_width = 40
-        sample_size = bits // 4 * channel
-        dlen = os.path.getsize(variables.temp_pcm)
+            # Fourier Transform
+            nperseg = variables.nperseg
+        except KeyboardInterrupt: 
+            print('Aborting...')
+            os.remove(variables.temp_pcm)
+            sys.exit(1)
 
-        with open(variables.temp_pcm, 'rb') as pcm:
-            with open(variables.temp, 'wb') as swv:
+        try:
+            start_time = time.time()
+            total_bytes = 0
+            cli_width = 40
+            sample_size = bits // 4 * channel
+            dlen = os.path.getsize(variables.temp_pcm)
+
+            with open(variables.temp_pcm, 'rb') as pcm:
+              with open(variables.temp, 'wb') as swv:
                 while True:
                     p = pcm.read(nperseg * 4 * channel)
                     if not p: break
@@ -122,15 +134,21 @@ class encode:
                         b = int(percent / 100 * cli_width)
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-            if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-        os.remove(variables.temp_pcm)
+                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+            os.remove(variables.temp_pcm)
+        except KeyboardInterrupt:
+            print('Aborting...')
+            os.remove(variables.temp)
+            os.remove(variables.temp_pcm)
+            sys.exit(1)
         if apply_ecc:
-            dlen = os.path.getsize(variables.temp)
-            start_time = time.time()
-            total_bytes = 0
-            cli_width = 40
-            with open(variables.temp, 'rb') as swv:
-                with open(variables.temp2, 'wb') as enf:
+            try:
+                dlen = os.path.getsize(variables.temp)
+                start_time = time.time()
+                total_bytes = 0
+                cli_width = 40
+                with open(variables.temp, 'rb') as swv:
+                  with open(variables.temp2, 'wb') as enf:
                     while True:
                         block = swv.read(16777216)
                         if not block: break
@@ -148,33 +166,43 @@ class encode:
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                     if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-            shutil.move(variables.temp2, variables.temp)
+                shutil.move(variables.temp2, variables.temp)
+            except KeyboardInterrupt:
+                print('Aborting...')
+                os.remove(variables.temp2)
+                os.remove(variables.temp)
+                sys.exit(1)
 
-        # Calculating MD5 hash
-        with open(variables.temp, 'rb') as temp:
-            md5 = hashlib.md5()
-            while True:
-                d = temp.read(variables.hash_block_size)
-                if not d: break
-                md5.update(d)
-            checksum = md5.digest()
-
-        if meta == None: meta = encode.get_metadata(file_path)
-
-        # Moulding header
-        h = headb.uilder(sample_rate, channel=channel, cosine=mdct, bits=bits, isecc=apply_ecc, md5=checksum,
-            meta=meta, img=img)
-
-        # Setting file extension
-        if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
-            out += '.fra'
-
-        # Creating Fourier Analogue-in-Digital File
-        with open(out if out is not None else'fourierAnalogue.fra', 'wb') as file:
-            file.write(h)
-            with open(variables.temp, 'r+b') as swv:
+        try:
+            # Calculating MD5 hash
+            with open(variables.temp, 'rb') as temp:
+                md5 = hashlib.md5()
                 while True:
-                    block = swv.read()
-                    if block: file.write(block)
-                    else: break
+                    d = temp.read(variables.hash_block_size)
+                    if not d: break
+                    md5.update(d)
+                checksum = md5.digest()
+
+            if meta == None: meta = encode.get_metadata(file_path)
+
+            # Moulding header
+            h = headb.uilder(sample_rate, channel=channel, cosine=mdct, bits=bits, isecc=apply_ecc, md5=checksum,
+                meta=meta, img=img)
+
+            # Setting file extension
+            if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
+                out += '.fra'
+
+            # Creating Fourier Analogue-in-Digital File
+            with open(out if out is not None else'fourierAnalogue.fra', 'wb') as file:
+                file.write(h)
+                with open(variables.temp, 'r+b') as swv:
+                    while True:
+                        block = swv.read()
+                        if block: file.write(block)
+                        else: break
+                os.remove(variables.temp)
+        except KeyboardInterrupt:
+            print('Aborting...')
             os.remove(variables.temp)
+            sys.exit(1)

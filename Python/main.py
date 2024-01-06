@@ -94,7 +94,7 @@ if __name__ == '__main__':
         if os.path.exists(variables.temp_flac): os.remove(variables.temp_flac)
         if os.path.exists(variables.meta): os.remove(variables.meta)
         if type(e) == KeyboardInterrupt:
-            print('Aborting...')
+            sys.exit(0)
         else:
             print(traceback.format_exc())
-        sys.exit(1)
+            sys.exit(1)
