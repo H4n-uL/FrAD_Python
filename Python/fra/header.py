@@ -50,6 +50,7 @@ class header:
 
                 header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B:       Total header size
                 efb = struct.unpack('<B', head[0x10:0x11])[0]          # 0x10:          ECC-Float Bit
+                is_cosine = True if (efb >> 7 & 0b1) == 0b1 else False   # 0x10@0b111:    MDCT Toggle(Enabled if 1)
                 is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
                 bits = b3_to_bits.get(efb & 0b111)                     # 0x10@0b011-3b: Stream bit depth
                 checksum_stream = head[0xf0:0x100]                     # 0xf0-16B:      Stream hash
@@ -63,7 +64,7 @@ class header:
                         else: break
 
                 # Making new header
-                head_new = headb.uilder(sample_rate, channel, bits, is_ecc_on, checksum_stream,
+                head_new = headb.uilder(sample_rate, channel, is_cosine, is_ecc_on, bits, checksum_stream,
                 meta, img)
 
             # Overwriting Fourier Analogue-in-Digital file
