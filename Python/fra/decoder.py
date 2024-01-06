@@ -1,4 +1,5 @@
 from .common import variables, methods
+from .cosine import cosine
 from .fourier import fourier
 import hashlib, shutil, os, platform, struct, subprocess, sys, time
 import numpy as np
@@ -20,6 +21,7 @@ class decode:
 
             header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B:       Total header size
             efb = struct.unpack('<B', header[0x10:0x11])[0]          # 0x10:          ECC-Float Bit
+            is_cosine = True if (efb >> 7 & 0b1) == 0b1 else False   # 0x10@0b111:    MDCT Toggle(Enabled if 1)
             is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False   # 0x10@0b100:    ECC Toggle(Enabled if 1)
             float_bits = efb & 0b111                                 # 0x10@0b011-3b: Stream bit depth
             checksum_header = header[0xf0:0x100]                     # 0xf0-16B:      Stream hash
@@ -45,7 +47,8 @@ class decode:
             dlen = os.path.getsize(file_path) - header_length
             f.seek(header_length)
 
-            sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
+            if is_cosine: sample_size = {0b011: 8*channels, 0b010: 4*channels, 0b001: 2*channels}[float_bits]
+            else: sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
             nperseg = variables.nperseg
 
             p = sample_size * sample_rate * speed
@@ -63,7 +66,8 @@ class decode:
                         if is_ecc_on:
                             chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                             block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                        segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
                         if verbose: 
                             if is_ecc_on: print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
@@ -92,7 +96,8 @@ class decode:
                             if is_ecc_on:
                                 chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                                 block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                            segment = fourier.digital(block, float_bits, bits, channels) # Inversing
+                            if is_cosine: segment = cosine.digital(block, float_bits, bits, channels) # Inversing
+                            else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
                             if verbose:
                                 total_bytes += len(block)

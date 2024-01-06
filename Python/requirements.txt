@@ -1,4 +1,5 @@
 ffmpeg
+mdctn
 ml-dtypes
 numpy
 reedsolo

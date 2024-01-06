@@ -12,7 +12,7 @@ class headb:
     def uilder(
             # Fixed Header
             sample_rate: bytes, channel: int, 
-            bits: int, isecc: bool, md5: bytes,
+            cosine: bool, isecc: bool, bits: int, md5: bytes,
 
             # Metadata
             meta = None, img: bytes = None):
@@ -24,8 +24,9 @@ class headb:
         sample_block = struct.pack('>I', sample_rate)
 
         length = b'\x00'*8
+        cos = (0b1 if cosine else 0b0) << 7
         ecc = (0b1 if isecc else 0b0) << 4
-        efb_struct = struct.pack('<B', ecc | b3)
+        efb_struct = struct.pack('<B', cos | ecc | b3)
 
         blocks = bytes()
 

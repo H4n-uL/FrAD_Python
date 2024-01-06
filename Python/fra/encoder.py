@@ -1,4 +1,5 @@
 from .common import variables
+from .cosine import cosine
 from .fourier import fourier
 import hashlib, json, os, shutil, subprocess, sys, time
 import numpy as np
@@ -69,7 +70,7 @@ class encode:
         os.remove(variables.meta)
         return metadata
 
-    def enc(file_path: str, bits: int, out: str = None, apply_ecc: bool = False,
+    def enc(file_path: str, bits: int, mdct: bool, out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
@@ -119,7 +120,8 @@ class encode:
                     p = pcm.read(nperseg * 4 * channel)
                     if not p: break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channel)
-                    segment = fourier.analogue(block, bits, channel)
+                    if mdct: segment = cosine.analogue(block, bits, channel)
+                    else: segment = fourier.analogue(block, bits, channel)
                     swv.write(segment)
                     if verbose:
                         if total_bytes != 0:
@@ -184,7 +186,7 @@ class encode:
             if meta == None: meta = encode.get_metadata(file_path)
 
             # Moulding header
-            h = headb.uilder(sample_rate, channel=channel, bits=bits, isecc=apply_ecc, md5=checksum,
+            h = headb.uilder(sample_rate, channel=channel, cosine=mdct, bits=bits, isecc=apply_ecc, md5=checksum,
                 meta=meta, img=img)
 
             # Setting file extension
