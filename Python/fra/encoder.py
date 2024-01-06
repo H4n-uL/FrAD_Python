@@ -70,7 +70,7 @@ class encode:
         os.remove(variables.meta)
         return metadata
 
-    def enc(file_path: str, bits: int, mdct: bool, out: str = None, apply_ecc: bool = False,
+    def enc(file_path: str, bits: int, mdct: bool = True, out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):

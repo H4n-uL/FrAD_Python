@@ -23,7 +23,7 @@ def main(action, args):
         from fra import encode
         output = args.output if args.output else 'fourierAnalogue.fra'
         nsr = None if args.nsr == None else int(args.nsr)
-        encode.enc(input, int(args.bits), args.cosine, out=output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img, verbose=args.verbose)
+        encode.enc(input, int(args.bits), args.legacy, out=output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img, verbose=args.verbose)
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
@@ -67,21 +67,21 @@ def main(action, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fourier Analogue-in-Digital Codec')
-    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'],          help='action to perform')
-    parser.add_argument('input',                                                                                          help='input file path')
-    parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                               help='output file path')
-    parser.add_argument('-cos', '--cosine', '--mdct',                                                action='store_true', help='enable modified discrete cosine transform')
-    parser.add_argument('-b',   '--bits', '--bit',                          required=False,                               help='output file bit depth')
-    parser.add_argument('-n',   '--nsr', '--new_sample_rate',               required=False,                               help='resample as new sample rate')
-    parser.add_argument('-img', '--image',                                  required=False,                               help='image file path')
-    parser.add_argument('-c',   '--codec',                                  required=False,                               help='codec type')
-    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true', help='enable ecc')
-    parser.add_argument('-s',   '--speed',                                  required=False,                               help='play speed(in times)')
-    parser.add_argument('-q',   '--quality',                                required=False,                               help='decode quality')
-    parser.add_argument('-k',   '--keys', '--key',                          required=False,                               help='keys')
-    parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',     help='metadata in "key" "value" format')
-    parser.add_argument('-jm',  '--jsonmeta',                               required=False,                               help='metadata in json')
-    parser.add_argument('-v',   '--verbose',                                                         action='store_true', help='verbose cli')
+    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'],           help='action to perform')
+    parser.add_argument('input',                                                                                           help='input file path')
+    parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                                help='output file path')
+    parser.add_argument('-l',   '--legacy', '--fourier',                                             action='store_false', help='disable modified discrete cosine transform')
+    parser.add_argument('-b',   '--bits', '--bit',                          required=False,                                help='output file bit depth')
+    parser.add_argument('-n',   '--nsr', '--new_sample_rate',               required=False,                                help='resample as new sample rate')
+    parser.add_argument('-img', '--image',                                  required=False,                                help='image file path')
+    parser.add_argument('-c',   '--codec',                                  required=False,                                help='codec type')
+    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true',  help='enable ecc')
+    parser.add_argument('-s',   '--speed',                                  required=False,                                help='play speed(in times)')
+    parser.add_argument('-q',   '--quality',                                required=False,                                help='decode quality')
+    parser.add_argument('-k',   '--keys', '--key',                          required=False,                                help='keys')
+    parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',      help='metadata in "key" "value" format')
+    parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                help='metadata in json')
+    parser.add_argument('-v',   '--verbose',                                                         action='store_true',  help='verbose cli')
 
     args = parser.parse_args()
     try:
