@@ -84,12 +84,12 @@ class decode:
                     sys.exit(0)
             else:
                 try:
-                    start_time = time.time()
                     total_bytes = 0
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
                         if is_ecc_on: # When ECC
                             nperseg = nperseg // 128 * 148
+                        start_time = time.time()
                         while True:
                             block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
                             if not block: break
