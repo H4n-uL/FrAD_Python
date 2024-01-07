@@ -70,8 +70,8 @@ class decode:
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
                         if verbose: 
-                            if is_ecc_on: print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
-                            else: print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames, Sample #{i * 2048 // nperseg // sample_size} / {dlen * 2048 // nperseg // sample_size} Samples)')
+                            if is_ecc_on: print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
+                            else: print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
                         else: 
                             if is_ecc_on: print(f'{i // 148 * 128 / p:.3f} s')
                             else: print(f'{i / p:.3f} s')
