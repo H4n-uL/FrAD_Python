@@ -108,6 +108,7 @@ class encode:
             sys.exit(1)
 
         try:
+            odd = False
             start_time = time.time()
             total_bytes = 0
             cli_width = 40
@@ -120,7 +121,7 @@ class encode:
                     p = pcm.read(nperseg * 4 * channel)
                     if not p: break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channel)
-                    if mdct: segment = cosine.analogue(block, bits, channel)
+                    if mdct: segment, odd = cosine.analogue(block, bits, channel)
                     else: segment = fourier.analogue(block, bits, channel)
                     swv.write(segment)
                     if verbose:
@@ -183,7 +184,7 @@ class encode:
             if meta == None: meta = encode.get_metadata(file_path)
 
             # Moulding header
-            h = headb.uilder(sample_rate, channel=channel, cosine=mdct, bits=bits, isecc=apply_ecc, md5=checksum,
+            h = headb.uilder(sample_rate, channel=channel, cosine=mdct, odd=odd, bits=bits, isecc=apply_ecc, md5=checksum,
                 meta=meta, img=img)
 
             # Setting file extension
