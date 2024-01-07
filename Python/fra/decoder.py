@@ -52,15 +52,16 @@ class decode:
             else: sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
             nperseg = variables.nperseg
 
-            p = sample_size * sample_rate * speed
             # Inverse Fourier Transform
             i = 0
             if play == True: # When playing
                 try:
                     stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
                     stream.start()
+                    p = sample_size * sample_rate * speed
                     if is_ecc_on: # When ECC
                         nperseg = nperseg // 128 * 148
+                        p = p // 128 * 148
                     while True:
                         block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
                         if not block: break
@@ -73,11 +74,9 @@ class decode:
                         stream.write(segment)
                         if (i // nperseg * variables.nperseg != len(block)): print('\x1b[1A\x1b[2K', end='')
                         if verbose: 
-                            if is_ecc_on: print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
-                            else: print(f'{i / p:.3f} s / {dlen / p:3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
+                            print(f'{(i / p):.3f} s / {(dlen / p):.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
                         else: 
-                            if is_ecc_on: print(f'{i // 148 * 128 / p:.3f} s')
-                            else: print(f'{i / p:.3f} s')
+                            print(f'{(i / p):.3f} s')
                     print('\x1b[1A\x1b[2K', end='')
                     stream.close()
                     sys.exit(0)
