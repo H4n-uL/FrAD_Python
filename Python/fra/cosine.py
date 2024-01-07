@@ -30,7 +30,6 @@ class cosine:
             raise Exception('Illegal bits value.')
 
         freq = [data_numpy[i::channels] for i in range(channels)]
-        print(len(freq[0]))
         if unpad:
             wave_data = [np.int32(np.clip(imdct(d, N=len(d))[:-1], -2**31, 2**31-1)) for d in freq]
         else:
