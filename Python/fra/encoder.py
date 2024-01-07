@@ -152,8 +152,7 @@ class encode:
                     while True:
                         block = swv.read(16777216)
                         if not block: break
-                        segment = ecc.encode(block) # Encoding Reed-Solomon ECC
-                        enf.write(segment)
+                        enf.write(ecc.encode(block)) # Encoding Reed-Solomon ECC
 
                         if verbose:
                             if total_bytes != 0:
@@ -161,7 +160,7 @@ class encode:
                             total_bytes += len(block)
                             elapsed_time = time.time() - start_time
                             bps = total_bytes / elapsed_time
-                            percent = (total_bytes * 14800 // 128) / dlen
+                            percent = total_bytes * 100 / dlen
                             b = int(percent / 100 * cli_width)
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
