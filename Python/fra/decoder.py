@@ -68,7 +68,7 @@ class decode:
                         i += len(block)
                         if is_ecc_on:
                             chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
-                            block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
+                            block =  b''.join([bytes(chunk[:-20]) for chunk in chunks])
                         if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, (i==dlen and is_odd)) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
@@ -96,7 +96,7 @@ class decode:
                             if not block: break
                             if is_ecc_on:
                                 chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
-                                block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
+                                block =  b''.join([bytes(chunk[:-20]) for chunk in chunks])
                             if is_cosine: segment = cosine.digital(block, float_bits, bits, channels, (i==dlen and is_odd)) # Inversing
                             else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
