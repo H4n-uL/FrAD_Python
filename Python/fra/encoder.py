@@ -130,7 +130,7 @@ class encode:
                         mult = bps / sample_rate / sample_size
                         percent = total_bytes / dlen / bits * 1600
                         b = int(percent / 100 * cli_width)
-                        if total_bytes != len(block): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                        if total_bytes != len(block)*sample_size: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
