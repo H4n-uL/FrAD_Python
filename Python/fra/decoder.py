@@ -64,20 +64,20 @@ class decode:
                     while True:
                         block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
                         if not block: break
+                        i += len(block)
                         if is_ecc_on:
                             chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                             block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                        if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, (total_bytes==dlen and is_odd)) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, (i==dlen and is_odd)) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
-                        if i != 0: print('\x1b[1A\x1b[2K', end='')
+                        if (i // nperseg * variables.nperseg != len(block)): print('\x1b[1A\x1b[2K', end='')
                         if verbose: 
                             if is_ecc_on: print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
-                            else: print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
+                            else: print(f'{i / p:.3f} s / {dlen / p:3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
                         else: 
                             if is_ecc_on: print(f'{i // 148 * 128 / p:.3f} s')
                             else: print(f'{i / p:.3f} s')
-                        i += nperseg * sample_size
                     print('\x1b[1A\x1b[2K', end='')
                     stream.close()
                     sys.exit(0)
@@ -86,7 +86,6 @@ class decode:
                     sys.exit(0)
             else:
                 try:
-                    total_bytes = 0
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
                         if is_ecc_on: # When ECC
@@ -94,22 +93,21 @@ class decode:
                         start_time = time.time()
                         while True:
                             block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
-                            total_bytes += len(block)
+                            i += len(block)
                             if not block: break
                             if is_ecc_on:
                                 chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
                                 block =  b''.join([bytes(chunk[:128]) for chunk in chunks])
-                            if is_cosine: segment = cosine.digital(block, float_bits, bits, channels, (total_bytes==dlen and is_odd)) # Inversing
+                            if is_cosine: segment = cosine.digital(block, float_bits, bits, channels, (i==dlen and is_odd)) # Inversing
                             else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
                             if verbose:
                                 elapsed_time = time.time() - start_time
-                                bps = total_bytes / elapsed_time
+                                bps = i / elapsed_time
                                 mult = bps / (sample_size * sample_rate)
-                                percent = total_bytes*100 / dlen
-                                if is_ecc_on: percent = percent / 128 * 148
+                                percent = i*100 / dlen
                                 b = int(percent / 100 * cli_width)
-                                if total_bytes != len(block): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                                if (i // nperseg * variables.nperseg != len(block)): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                                 print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                         if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
