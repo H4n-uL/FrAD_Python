@@ -6,7 +6,7 @@ import numpy as np
 class cosine:
     def analogue(data, bits: int, channels: int):
         odd = len(data[:, 0]) % 2 != 0
-        fft_data = [mdct(np.concatenate((data[:, i], [0])) if odd else data[:, i], N=math.ceil(len(data)/2)*4) for i in range(channels)]
+        fft_data = [mdct(np.concatenate((data[:, i], [0])) if odd else data[:, i], N=math.ceil(len(data)/2)*2) for i in range(channels)]
 
         # if bits == 512: freq = [d.astype(np.float512) for d in fft_data]
         # elif bits == 256: freq = [d.astype(np.float256) for d in fft_data]
@@ -32,9 +32,9 @@ class cosine:
         freq = [data_numpy[i::channels] for i in range(channels)]
         print(len(freq[0]))
         if unpad:
-            wave_data = [np.int32(np.clip(imdct(d, N=len(d)*2)[:-1], -2**31, 2**31-1)) for d in freq]
+            wave_data = [np.int32(np.clip(imdct(d, N=len(d))[:-1], -2**31, 2**31-1)) for d in freq]
         else:
-            wave_data = [np.int32(np.clip(imdct(d, N=len(d)*2), -2**31, 2**31-1)) for d in freq]
+            wave_data = [np.int32(np.clip(imdct(d, N=len(d)), -2**31, 2**31-1)) for d in freq]
 
         if bits == 32: pass
         elif bits == 16: wave_data = [np.int16(wave / 2**16) for wave in wave_data]
