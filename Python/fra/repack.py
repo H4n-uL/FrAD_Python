@@ -12,7 +12,7 @@ class repack:
 
                 header_length = struct.unpack('>Q', head[0x8:0x10])[0]
                 efb = struct.unpack('<B', head[0x10:0x11])[0]
-                is_ecc_on = True if (efb >> 4) == 0b1 else False
+                is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False
 
                 f.seek(header_length)
                 nperseg = (variables.nperseg if not is_ecc_on else variables.nperseg // 32 * 37) * 16384

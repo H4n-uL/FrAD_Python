@@ -17,7 +17,7 @@ class cosine:
         else: raise Exception('Illegal bits value.')
 
         data = np.column_stack(freq).ravel(order='C').tobytes()
-        return data, odd
+        return data
 
     def digital(data, fb: int, bits: int, channels: int, unpad: bool):
         # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float512)

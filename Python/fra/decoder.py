@@ -22,7 +22,6 @@ class decode:
             header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B:       Total header size
             efb = struct.unpack('<B', header[0x10:0x11])[0]          # 0x10:          ECC-Float Bit
             is_cosine = True if (efb >> 7 & 0b1) == 0b1 else False   # 0x10@0b111:    MDCT Toggle(Enabled if 1)
-            is_odd = True if (efb >> 6 & 0b1) == 0b1 else False      # 0x10@0b110:    Odd Toggle(Yes if 1)
             is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False   # 0x10@0b100:    ECC Toggle(Enabled if 1)
             float_bits = efb & 0b111                                 # 0x10@0b011-3b: Stream bit depth
             checksum_header = header[0xf0:0x100]                     # 0xf0-16B:      Stream hash
@@ -52,7 +51,7 @@ class decode:
             else: sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
             nperseg = variables.nperseg
 
-            # Inverse Fourier Transform
+            # Inverse Fourier Transform #
             i = 0
             if play == True: # When playing
                 try:
@@ -60,8 +59,6 @@ class decode:
                     stream.start()
                     p = sample_size * sample_rate * speed
                     if is_ecc_on: # When ECC
-                        # nperseg = nperseg // 128 * 148
-                        # p = p // 128 * 148
                         nperseg = nperseg // 32 * 37
                         p = p // 32 * 37
                     while True:
@@ -69,11 +66,9 @@ class decode:
                         if not block: break
                         i += len(block)
                         if is_ecc_on:
-                            # chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
-                            # block =  b''.join([bytes(chunk[:-20]) for chunk in chunks])
                             chunks = ecc.split_data(block, 37) # Carrying first 32 Bytes data from 37 Bytes chunk
                             block =  b''.join([bytes(chunk[:-5]) for chunk in chunks])
-                        if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, (i==dlen and is_odd)) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, len(block)//sample_size % 2 == 1) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
                         if (i // nperseg * variables.nperseg != len(block)): print('\x1b[1A\x1b[2K', end='')
@@ -92,22 +87,19 @@ class decode:
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
                         if is_ecc_on: # When ECC
-                            # nperseg = nperseg // 128 * 148
                             nperseg = nperseg // 32 * 37
                         start_time = time.time()
                         while True:
                             block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
-                            i += len(block)
                             if not block: break
                             if is_ecc_on:
-                                # chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
-                                # block =  b''.join([bytes(chunk[:-20]) for chunk in chunks])
                                 chunks = ecc.split_data(block, 37) # Carrying first 32 Bytes data from 37 Bytes chunk
                                 block =  b''.join([bytes(chunk[:-5]) for chunk in chunks])
-                            if is_cosine: segment = cosine.digital(block, float_bits, bits, channels, (i==dlen and is_odd)) # Inversing
+                            if is_cosine: segment = cosine.digital(block, float_bits, bits, channels, len(block)//sample_size % 2 == 1) # Inversing
                             else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
                             if verbose:
+                                i += len(block)
                                 elapsed_time = time.time() - start_time
                                 bps = i / elapsed_time
                                 mult = bps / (sample_size * sample_rate)
