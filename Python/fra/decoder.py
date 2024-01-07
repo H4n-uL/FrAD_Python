@@ -69,6 +69,7 @@ class decode:
                         if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
+                        if i != 0: print('\x1b[1A\x1b[2K', end='')
                         if verbose: 
                             if is_ecc_on: print(f'{(i // 148 * 128) / p:.3f} s / {(dlen // 148 * 128) / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
                             else: print(f'{i / p:.3f} s / {dlen / p:.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
@@ -76,7 +77,7 @@ class decode:
                             if is_ecc_on: print(f'{i // 148 * 128 / p:.3f} s')
                             else: print(f'{i / p:.3f} s')
                         i += nperseg * sample_size
-                        print('\x1b[1A\x1b[2K', end='')
+                    print('\x1b[1A\x1b[2K', end='')
                     stream.close()
                     sys.exit(0)
                 except KeyboardInterrupt:
@@ -107,9 +108,10 @@ class decode:
                                 percent = total_bytes*100 / dlen
                                 if is_ecc_on: percent = percent / 128 * 148
                                 b = int(percent / 100 * cli_width)
+                                if total_bytes != len(block): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                                 print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                        if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                     return sample_rate, channels
                 except KeyboardInterrupt:
                     print('Aborting...')

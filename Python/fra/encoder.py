@@ -124,14 +124,13 @@ class encode:
                     else: segment = fourier.analogue(block, bits, channel)
                     swv.write(segment)
                     if verbose:
-                        if total_bytes != 0:
-                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         total_bytes += len(block) * sample_size
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / sample_rate / sample_size
                         percent = total_bytes / dlen / bits * 1600
                         b = int(percent / 100 * cli_width)
+                        if total_bytes != len(block): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
@@ -155,13 +154,12 @@ class encode:
                         enf.write(ecc.encode(block)) # Encoding Reed-Solomon ECC
 
                         if verbose:
-                            if total_bytes != 0:
-                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             total_bytes += len(block)
                             elapsed_time = time.time() - start_time
                             bps = total_bytes / elapsed_time
                             percent = total_bytes * 100 / dlen
                             b = int(percent / 100 * cli_width)
+                            if total_bytes != len(block): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                     if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
