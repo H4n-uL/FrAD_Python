@@ -4,7 +4,7 @@ from mdctn import mdct, imdct
 
 class cosine:
     def analogue(data, bits: int, channels: int):
-        fft_data = [mdct(data[:, i], N=len(data)) for i in range(channels)]
+        fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
         # if bits == 512: freq = [d.astype(np.float512) for d in fft_data]
         # elif bits == 256: freq = [d.astype(np.float256) for d in fft_data]
@@ -28,7 +28,7 @@ class cosine:
             raise Exception('Illegal bits value.')
 
         freq = [data_numpy[i::channels] for i in range(channels)]
-        wave_data = [np.int32(np.clip(imdct(d, N=len(d)), -2**31, 2**31-1)) for d in freq]
+        wave_data = [np.int32(np.clip(imdct(d, N=len(d)*2), -2**31, 2**31-1)) for d in freq]
 
         if bits == 32: pass
         elif bits == 16: wave_data = [np.int16(wave / 2**16) for wave in wave_data]
