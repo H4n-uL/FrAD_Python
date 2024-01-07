@@ -60,15 +60,19 @@ class decode:
                     stream.start()
                     p = sample_size * sample_rate * speed
                     if is_ecc_on: # When ECC
-                        nperseg = nperseg // 128 * 148
-                        p = p // 128 * 148
+                        # nperseg = nperseg // 128 * 148
+                        # p = p // 128 * 148
+                        nperseg = nperseg // 32 * 37
+                        p = p // 32 * 37
                     while True:
                         block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
                         if not block: break
                         i += len(block)
                         if is_ecc_on:
-                            chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
-                            block =  b''.join([bytes(chunk[:-20]) for chunk in chunks])
+                            # chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
+                            # block =  b''.join([bytes(chunk[:-20]) for chunk in chunks])
+                            chunks = ecc.split_data(block, 37) # Carrying first 32 Bytes data from 37 Bytes chunk
+                            block =  b''.join([bytes(chunk[:-5]) for chunk in chunks])
                         if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, (i==dlen and is_odd)) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
@@ -88,15 +92,18 @@ class decode:
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
                         if is_ecc_on: # When ECC
-                            nperseg = nperseg // 128 * 148
+                            # nperseg = nperseg // 128 * 148
+                            nperseg = nperseg // 32 * 37
                         start_time = time.time()
                         while True:
                             block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
                             i += len(block)
                             if not block: break
                             if is_ecc_on:
-                                chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
-                                block =  b''.join([bytes(chunk[:-20]) for chunk in chunks])
+                                # chunks = ecc.split_data(block, 148) # Carrying first 128 Bytes data from 148 Bytes chunk
+                                # block =  b''.join([bytes(chunk[:-20]) for chunk in chunks])
+                                chunks = ecc.split_data(block, 37) # Carrying first 32 Bytes data from 37 Bytes chunk
+                                block =  b''.join([bytes(chunk[:-5]) for chunk in chunks])
                             if is_cosine: segment = cosine.digital(block, float_bits, bits, channels, (i==dlen and is_odd)) # Inversing
                             else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)

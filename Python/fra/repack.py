@@ -15,7 +15,7 @@ class repack:
                 is_ecc_on = True if (efb >> 4) == 0b1 else False
 
                 f.seek(header_length)
-                nperseg = (variables.nperseg if not is_ecc_on else variables.nperseg // 128 * 148) * 16384
+                nperseg = (variables.nperseg if not is_ecc_on else variables.nperseg // 32 * 37) * 16384
             except KeyboardInterrupt:
                 sys.exit(1)
             try:
@@ -35,7 +35,7 @@ class repack:
                             total_bytes += len(block)
                             elapsed_time = time.time() - start_time
                             bps = total_bytes / elapsed_time
-                            percent = (total_bytes * 100 // (1 if is_ecc_on else (128/148))) / dlen
+                            percent = (total_bytes * 100 // (1 if is_ecc_on else (32/37))) / dlen
                             b = int(percent / 100 * cli_width)
                             if total_bytes != len(block): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
