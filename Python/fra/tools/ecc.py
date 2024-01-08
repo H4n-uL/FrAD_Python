@@ -1,6 +1,8 @@
 from multiprocessing import Pool, cpu_count
 from reedsolo import RSCodec, ReedSolomonError
 
+rs = RSCodec(20, 148)
+
 class ecc:
     def unecc(data):
         blocksize, dsize = 148, 128
@@ -13,14 +15,12 @@ class ecc:
         for i in range(0, len(data), chunk_size): yield data[i:i+chunk_size]
 
     class rdsl:
-        rs = RSCodec(20, 148)
-
         def encode_chunk(chunk):
-            return bytes(ecc.rdsl.rs.encode(chunk))
+            return bytes(rs.encode(chunk))
 
         def decode_chunk(chunk):
             try:
-                return bytes(ecc.rdsl.rs.decode(chunk)[0])
+                return bytes(rs.decode(chunk)[0])
             except ReedSolomonError as e:
                 print(f'Error: {e}')
                 return None

@@ -60,7 +60,7 @@ class decode:
                     p = sample_size * sample_rate * speed
                     if is_ecc_on: # When ECC
                         nperseg = nperseg // 128 * 148
-                        p = p // 127 * 148
+                        p = p // 128 * 148
                     while True:
                         block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
                         if not block: break
