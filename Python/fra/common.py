@@ -4,6 +4,11 @@ class variables:
     nperseg = 2048
     hash_block_size = 2**20
 
+    class ecc:
+        block_size = 148
+        data_size = 128
+        code_size = block_size - data_size
+
     dir = os.path.dirname(os.path.realpath(__file__))
     temp = os.path.join(dir, f'temp.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
     temp2 = os.path.join(dir, f'temp.ecc.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
