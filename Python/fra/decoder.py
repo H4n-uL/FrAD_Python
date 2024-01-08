@@ -59,8 +59,8 @@ class decode:
                     stream.start()
                     p = sample_size * sample_rate * speed
                     if is_ecc_on: # When ECC
-                        nperseg = nperseg // 32 * 37
-                        p = p // 32 * 37
+                        nperseg = nperseg // 128 * 148
+                        p = p // 127 * 148
                     while True:
                         block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
                         if not block: break
@@ -86,7 +86,7 @@ class decode:
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
                         if is_ecc_on: # When ECC
-                            nperseg = nperseg // 32 * 37
+                            nperseg = nperseg // 128 * 148
                         start_time = time.time()
                         while True:
                             block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
@@ -102,7 +102,7 @@ class decode:
                                 bps = i / elapsed_time
                                 mult = bps / (sample_size * sample_rate)
                                 percent = i*100 / dlen
-                                if is_ecc_on: percent = percent / 32 * 37
+                                if is_ecc_on: percent = percent / 128 * 148
                                 b = int(percent / 100 * cli_width)
                                 if (i != len(block)): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
@@ -226,7 +226,7 @@ class decode:
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, verbose: bool = False):
         # Decoding
         sample_rate, channels = decode.internal(file_path, bits, e=e, verbose=verbose)
-    
+
         try:
             # Checking name
             if out:
