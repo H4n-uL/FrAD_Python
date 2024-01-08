@@ -20,7 +20,6 @@ class cosine:
         return data
 
     def digital(data, fb: int, bits: int, channels: int, unpad: bool):
-        print(len(data))
         # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float512)
         # elif fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float256)
         # elif fb == 0b100: data_numpy = np.frombuffer(data, dtype=np.float128)
