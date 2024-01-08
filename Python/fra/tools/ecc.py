@@ -2,8 +2,15 @@ from multiprocessing import Pool, cpu_count
 from reedsolo import RSCodec, ReedSolomonError
 
 class ecc:
+    def unecc(data):
+        blocksize, dsize = 37, 32
+        block = bytearray()
+        for i in range(0, len(data), blocksize):
+            block.extend(data[i:i+dsize]) # Carrying first 32 Bytes data from 37 Bytes chunk
+        return bytes(block)
+
     def split_data(data, chunk_size):
-        return [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
+        for i in range(0, len(data), chunk_size): yield data[i:i+chunk_size]
 
     class rdsl:
         rs = RSCodec(5, 37)
