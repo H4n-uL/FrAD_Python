@@ -104,8 +104,9 @@ class decode:
                                 bps = i / elapsed_time
                                 mult = bps / (sample_size * sample_rate)
                                 percent = i*100 / dlen
+                                if is_ecc_on: percent = percent / 32 * 37
                                 b = int(percent / 100 * cli_width)
-                                if (i // nperseg * variables.nperseg != len(block)): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                                if (i != len(block)): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                                 print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                         if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
