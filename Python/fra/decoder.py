@@ -1,4 +1,4 @@
-from .common import variables, methods
+from .common import variables, ecc_v, methods
 from .cosine import cosine
 from .fourier import fourier
 import hashlib, shutil, os, platform, struct, subprocess, sys, time
@@ -22,8 +22,10 @@ class decode:
             header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B:       Total header size
             efb = struct.unpack('<B', header[0x10:0x11])[0]          # 0x10:          ECC-Float Bit
             is_cosine = True if (efb >> 7 & 0b1) == 0b1 else False   # 0x10@0b111:    MDCT Toggle(Enabled if 1)
+            is_secure = True if (efb >> 5 & 0b1) == 0b1 else False   # 0x10@0b101:    Secure frame Toggle(Enabled if 1)
             is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False   # 0x10@0b100:    ECC Toggle(Enabled if 1)
             float_bits = efb & 0b111                                 # 0x10@0b011-3b: Stream bit depth
+            fsize = struct.unpack('<B', header[0x11:0x12])[0]        # 0x11@0b111-4b: Frame size
             checksum_header = header[0xf0:0x100]                     # 0xf0-16B:      Stream hash
 
             # Reading Audio stream
@@ -49,7 +51,7 @@ class decode:
 
             if is_cosine: sample_size = {0b011: 8*channels, 0b010: 4*channels, 0b001: 2*channels}[float_bits]
             else: sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
-            nperseg = variables.nperseg
+            variables.nperseg = 64 * (fsize + 1)
 
             # Inverse Fourier Transform #
             i = 0
@@ -59,10 +61,11 @@ class decode:
                     stream.start()
                     p = sample_size * sample_rate * speed
                     if is_ecc_on: # When ECC
-                        nperseg = nperseg // variables.ecc.data_size * variables.ecc.block_size
-                        p = p // variables.ecc.data_size * variables.ecc.block_size
+                        variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
+                        p = p // ecc_v.data_size * ecc_v.block_size
+
                     while True:
-                        block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
+                        block = f.read(variables.nperseg*sample_size) # Reading 2048/2368 Bytes block
                         if not block: break
                         i += len(block)
                         if is_ecc_on:
@@ -70,9 +73,9 @@ class decode:
                         if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, len(block)//sample_size % 2 == 1) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
-                        if (i // nperseg * variables.nperseg != len(block)): print('\x1b[1A\x1b[2K', end='')
+                        if (i != len(block)): print('\x1b[1A\x1b[2K', end='')
                         if verbose: 
-                            print(f'{(i / p):.3f} s / {(dlen / p):.3f} s (Frame #{i // nperseg // sample_size} / {dlen // nperseg // sample_size} Frames)')
+                            print(f'{(i / p):.3f} s / {(dlen / p):.3f} s (Frame #{i // variables.nperseg // sample_size} / {dlen // variables.nperseg // sample_size} Frames)')
                         else: 
                             print(f'{(i / p):.3f} s')
                     print('\x1b[1A\x1b[2K', end='')
@@ -86,10 +89,10 @@ class decode:
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
                         if is_ecc_on: # When ECC
-                            nperseg = nperseg // variables.ecc.data_size * variables.ecc.block_size
+                            variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
                         start_time = time.time()
                         while True:
-                            block = f.read(nperseg*sample_size) # Reading 2048/2368 Bytes block
+                            block = f.read(variables.nperseg*sample_size) # Reading 2048/2368 Bytes block
                             if not block: break
                             if is_ecc_on:
                                 block = ecc.unecc(block)
@@ -102,7 +105,7 @@ class decode:
                                 bps = i / elapsed_time
                                 mult = bps / (sample_size * sample_rate)
                                 percent = i*100 / dlen
-                                if is_ecc_on: percent = percent / variables.ecc.data_size * variables.ecc.block_size
+                                if is_ecc_on: percent = percent / ecc_v.data_size * ecc_v.block_size
                                 b = int(percent / 100 * cli_width)
                                 if (i != len(block)): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')

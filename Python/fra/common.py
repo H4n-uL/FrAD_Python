@@ -1,13 +1,8 @@
-import base64, os, platform, secrets
+import base64, math, os, platform, secrets
 
 class variables:
     nperseg = 2048
     hash_block_size = 2**20
-
-    class ecc:
-        block_size = 148
-        data_size = 128
-        code_size = block_size - data_size
 
     dir = os.path.dirname(os.path.realpath(__file__))
     temp = os.path.join(dir, f'temp.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
@@ -36,7 +31,16 @@ class variables:
             ffmpeg = os.path.join(dir, 'res', 'codec', 'ffmpeg.AArch64')
             ffprobe = os.path.join(dir, 'res', 'parser', 'ffprobe.AArch64')
 
+class ecc_v:
+    data_size = max(i for i in range(1, 193) if variables.nperseg % i == 0)
+    block_size = math.ceil(1.15*data_size)
+    code_size = block_size - data_size
+    data_size = None if data_size < 16 or data_size % 4 != 0 else data_size
+
 class methods:
     def signature(sign):
         if sign != b'\x16\xb0\x03':
             raise Exception('This is not Fourier Analogue file.')
+
+    def get_ecc():
+        pass

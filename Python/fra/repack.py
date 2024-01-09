@@ -1,4 +1,4 @@
-from .common import variables, methods
+from .common import variables, ecc_v, methods
 import hashlib, os, struct, sys, time
 from .tools.ecc import ecc
 
@@ -12,10 +12,12 @@ class repack:
 
                 header_length = struct.unpack('>Q', head[0x8:0x10])[0]
                 efb = struct.unpack('<B', head[0x10:0x11])[0]
-                is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False
+                is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
+                fsize = struct.unpack('<B', head[0x11:0x12])[0]        # 0x11@0b111-4b: Frame size
 
                 f.seek(header_length)
-                nperseg = (variables.nperseg if not is_ecc_on else variables.nperseg // variables.ecc.data_size * variables.ecc.block_size) * 16384
+                variables.nperseg = 64 * (fsize + 1)
+                nperseg = (variables.nperseg if not is_ecc_on else variables.nperseg // ecc_v.data_size * ecc_v.block_size) * 16384
             except KeyboardInterrupt:
                 sys.exit(1)
             try:

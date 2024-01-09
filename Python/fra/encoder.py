@@ -74,6 +74,8 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
+        # variables.nperseg = 2048
+        if variables.nperseg % 64 != 0 or variables.nperseg > 16384: raise Exception
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)
         try:
@@ -108,7 +110,6 @@ class encode:
             sys.exit(1)
 
         try:
-            odd = False
             start_time = time.time()
             total_bytes = 0
             cli_width = 40
@@ -184,7 +185,7 @@ class encode:
             if meta == None: meta = encode.get_metadata(file_path)
 
             # Moulding header
-            h = headb.uilder(sample_rate, channel=channel, cosine=mdct, bits=bits, isecc=apply_ecc, md5=checksum,
+            h = headb.uilder(sample_rate, channel=channel, fsize=variables.nperseg, cosine=mdct, bits=bits, isecc=apply_ecc, md5=checksum,
                 meta=meta, img=img)
 
             # Setting file extension
