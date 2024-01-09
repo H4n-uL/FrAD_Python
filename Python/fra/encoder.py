@@ -192,8 +192,9 @@ class encode:
                 meta=meta, img=img)
 
             # Setting file extension
-            if not (out.endswith('.fra') or out.endswith('.fva') or out.endswith('.sine')):
-                out += '.fra'
+            if not (out.endswith('.frad') or out.endswith('.dsin') or out.endswith('.fra') or out.endswith('.dsn')):
+                if len(out) <= 8: out += '.fra'
+                else: out += '.frad'
 
             # Creating Fourier Analogue-in-Digital File
             with open(out if out is not None else'fourierAnalogue.fra', 'wb') as file:
