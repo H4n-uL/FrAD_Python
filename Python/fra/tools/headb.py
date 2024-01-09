@@ -1,5 +1,5 @@
 from .comment_block import cb
-import struct
+import math, struct
 
 bits_to_b3 = {
     128: 0b100,
@@ -27,7 +27,7 @@ class headb:
         cos = (0b1 if cosine else 0b0) << 7
         ecc = (0b1 if isecc else 0b0) << 4
         efb_struct = struct.pack('<B', cos | ecc | b3)
-        fs = struct.pack('<B', (fsize // 64) - 1)
+        fs = struct.pack('<B', (int(math.log2(fsize)) - 7) << 5)
 
         blocks = bytes()
 

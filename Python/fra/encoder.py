@@ -1,7 +1,7 @@
 from .common import variables
 from .cosine import cosine
 from .fourier import fourier
-import hashlib, json, os, shutil, subprocess, sys, time
+import hashlib, json, math, os, shutil, subprocess, sys, time
 import numpy as np
 from scipy.signal import resample
 from .tools.ecc import ecc
@@ -74,8 +74,9 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        # variables.nperseg = 2048
-        if variables.nperseg % 64 != 0 or variables.nperseg > 16384: raise Exception
+        variables.nperseg = 128
+        log2 = math.log2(variables.nperseg)
+        if not log2.is_integer() or log2 > 7 or log2 < 0: raise ValueError
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)
         try:
@@ -118,6 +119,7 @@ class encode:
 
             with open(variables.temp_pcm, 'rb') as pcm:
               with open(variables.temp, 'wb') as swv:
+                if verbose: print('\n')
                 while True:
                     p = pcm.read(nperseg * 4 * channel)
                     if not p: break
@@ -132,7 +134,7 @@ class encode:
                         mult = bps / sample_rate / sample_size
                         percent = total_bytes / dlen / bits * 1600
                         b = int(percent / 100 * cli_width)
-                        if total_bytes != len(block)*sample_size: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                        print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
@@ -150,6 +152,7 @@ class encode:
                 cli_width = 40
                 with open(variables.temp, 'rb') as swv:
                   with open(variables.temp2, 'wb') as enf:
+                    if verbose: print('\n')
                     while True:
                         block = swv.read(16777216)
                         if not block: break
@@ -161,7 +164,7 @@ class encode:
                             bps = total_bytes / elapsed_time
                             percent = total_bytes * 100 / dlen
                             b = int(percent / 100 * cli_width)
-                            if total_bytes != len(block): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                     if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')

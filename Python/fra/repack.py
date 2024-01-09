@@ -1,5 +1,5 @@
 from .common import variables, ecc_v, methods
-import hashlib, os, struct, sys, time
+import hashlib, math, os, struct, sys, time
 from .tools.ecc import ecc
 
 class repack:
@@ -13,10 +13,10 @@ class repack:
                 header_length = struct.unpack('>Q', head[0x8:0x10])[0]
                 efb = struct.unpack('<B', head[0x10:0x11])[0]
                 is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
-                fsize = struct.unpack('<B', head[0x11:0x12])[0]        # 0x11@0b111-4b: Frame size
+                fsize = struct.unpack('<B', head[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
 
                 f.seek(header_length)
-                variables.nperseg = 64 * (fsize + 1)
+                variables.nperseg = int(math.pow(2, fsize + 7))
                 nperseg = (variables.nperseg if not is_ecc_on else variables.nperseg // ecc_v.data_size * ecc_v.block_size) * 16384
             except KeyboardInterrupt:
                 sys.exit(1)
@@ -26,6 +26,7 @@ class repack:
                 total_bytes = 0
                 cli_width = 40
                 with open(variables.temp, 'wb') as t:
+                    if verbose: print()
                     while True:
                         block = f.read(nperseg)
                         if not block: break
@@ -39,7 +40,7 @@ class repack:
                             bps = total_bytes / elapsed_time
                             percent = (total_bytes * 100 // (1 if is_ecc_on else (32/37))) / dlen
                             b = int(percent / 100 * cli_width)
-                            if total_bytes != len(block): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                     if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')

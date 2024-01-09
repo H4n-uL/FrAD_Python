@@ -1,5 +1,5 @@
 from .common import variables, methods
-import os, shutil, struct, sys
+import math, os, shutil, struct, sys
 from .tools.headb import headb
 
 b3_to_bits = {
@@ -54,10 +54,10 @@ class header:
                 is_secure = True if (efb >> 5 & 0b1) == 0b1 else False # 0x10@0b101:    Secure frame Toggle(Enabled if 1)
                 is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
                 bits = b3_to_bits.get(efb & 0b111)                     # 0x10@0b011-3b: Stream bit depth
-                fsize = struct.unpack('<B', head[0x11:0x12])[0]        # 0x11@0b111-4b: Frame size
+                fsize = struct.unpack('<B', head[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
                 checksum_stream = head[0xf0:0x100]                     # 0xf0-16B:      Stream hash
 
-                fsize = 64 * (fsize + 1)
+                fsize = int(math.pow(2, fsize + 7))
 
                 # Backing up audio data
                 f.seek(header_length)

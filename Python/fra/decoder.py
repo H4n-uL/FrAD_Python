@@ -1,7 +1,7 @@
 from .common import variables, ecc_v, methods
 from .cosine import cosine
 from .fourier import fourier
-import hashlib, shutil, os, platform, struct, subprocess, sys, time
+import hashlib, math, os, platform, shutil, struct, subprocess, sys, time
 import numpy as np
 import sounddevice as sd
 from .tools.ecc import ecc
@@ -25,7 +25,7 @@ class decode:
             is_secure = True if (efb >> 5 & 0b1) == 0b1 else False   # 0x10@0b101:    Secure frame Toggle(Enabled if 1)
             is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False   # 0x10@0b100:    ECC Toggle(Enabled if 1)
             float_bits = efb & 0b111                                 # 0x10@0b011-3b: Stream bit depth
-            fsize = struct.unpack('<B', header[0x11:0x12])[0]        # 0x11@0b111-4b: Frame size
+            fsize = struct.unpack('<B', header[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
             checksum_header = header[0xf0:0x100]                     # 0xf0-16B:      Stream hash
 
             # Reading Audio stream
@@ -51,7 +51,7 @@ class decode:
 
             if is_cosine: sample_size = {0b011: 8*channels, 0b010: 4*channels, 0b001: 2*channels}[float_bits]
             else: sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
-            variables.nperseg = 64 * (fsize + 1)
+            variables.nperseg = int(math.pow(2, fsize + 7))
 
             # Inverse Fourier Transform #
             i = 0
@@ -63,7 +63,7 @@ class decode:
                     if is_ecc_on: # When ECC
                         variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
                         p = p // ecc_v.data_size * ecc_v.block_size
-
+                    print()
                     while True:
                         block = f.read(variables.nperseg*sample_size) # Reading 2048/2368 Bytes block
                         if not block: break
@@ -91,6 +91,7 @@ class decode:
                         if is_ecc_on: # When ECC
                             variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
                         start_time = time.time()
+                        if verbose: print('\n')
                         while True:
                             block = f.read(variables.nperseg*sample_size) # Reading 2048/2368 Bytes block
                             if not block: break
@@ -107,7 +108,7 @@ class decode:
                                 percent = i*100 / dlen
                                 if is_ecc_on: percent = percent / ecc_v.data_size * ecc_v.block_size
                                 b = int(percent / 100 * cli_width)
-                                if (i != len(block)): print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                                 print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                         if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')

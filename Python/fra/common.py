@@ -36,6 +36,7 @@ class ecc_v:
     block_size = math.ceil(1.15*data_size)
     code_size = block_size - data_size
     data_size = None if data_size < 16 or data_size % 4 != 0 else data_size
+    # print(data_size, block_size, code_size)
 
 class methods:
     def signature(sign):
