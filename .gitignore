@@ -8,8 +8,10 @@
 music/*
 
 # Music files #
+*.frad
 *.fra
-*.fva
+*.dsin
+*.dsn
 *.sine
 
 *.wav
