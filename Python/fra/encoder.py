@@ -75,7 +75,7 @@ class encode:
                 meta = None, img: bytes = None,
                 verbose: bool = False):
         variables.nperseg = 2048
-        log2 = math.log2(variables.nperseg)
+        log2 = math.log2(variables.nperseg) - 7
         if not log2.is_integer() or log2 > 7 or log2 < 0: raise ValueError
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)
