@@ -18,7 +18,7 @@ class header:
             methods.signature(header[0x0:0x3])
             headlen = struct.unpack('>Q', header[0x8:0x10])[0]
             blocks = f.read(headlen - 256)
-            i = j = 0
+            i = 0
             image = b''
             while i < len(blocks):
                 block_type = blocks[i:i+2]
@@ -28,8 +28,8 @@ class header:
                     title = blocks[i+12:i+12+title_length].decode('utf-8')
                     data = blocks[i+12+title_length:i+block_length]
                     d.append([title, data])
-                    i += block_length; j += 1
-                elif block_type == b'\xf5\x55':
+                    i += block_length
+                elif block_type[0] == 0xf5:
                     block_length = int(struct.unpack('>Q', blocks[i+2:i+10])[0])
                     data = blocks[i+10:i+block_length]
                     image = data
