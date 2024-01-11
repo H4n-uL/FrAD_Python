@@ -24,7 +24,7 @@ class decode:
             is_cosine = True if (efb >> 7 & 0b1) == 0b1 else False   # 0x10@0b111:    MDCT Toggle(Enabled if 1)
             is_secure = True if (efb >> 5 & 0b1) == 0b1 else False   # 0x10@0b101:    Secure frame Toggle(Enabled if 1)
             is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False   # 0x10@0b100:    ECC Toggle(Enabled if 1)
-            float_bits = efb & 0b111                                 # 0x10@0b011-3b: Stream bit depth
+            float_bits = efb & 0b111                                 # 0x10@0b010-3b: Stream bit depth
             fsize = struct.unpack('<B', header[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
             checksum_header = header[0xf0:0x100]                     # 0xf0-16B:      Stream hash
 
@@ -49,8 +49,8 @@ class decode:
             dlen = os.path.getsize(file_path) - header_length
             f.seek(header_length)
 
-            if is_cosine: sample_size = {0b011: 8*channels, 0b010: 4*channels, 0b001: 2*channels}[float_bits]
-            else: sample_size = {0b011: 16*channels, 0b010: 8*channels, 0b001: 4*channels}[float_bits]
+            if is_cosine: sample_size = {0b110: 16*channels, 0b101: 8*channels, 0b100: 6*channels, 0b011: 4*channels, 0b010: 3*channels, 0b001: 2*channels}[float_bits]
+            else: sample_size = {0b110: 32*channels, 0b101: 16*channels, 0b100: 12*channels, 0b011: 8*channels, 0b010: 6*channels, 0b001: 4*channels}[float_bits]
             variables.nperseg = int(math.pow(2, fsize + 7))
 
             # Inverse Fourier Transform #

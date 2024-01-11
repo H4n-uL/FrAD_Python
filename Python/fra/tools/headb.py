@@ -2,9 +2,11 @@ from .comment_block import cb
 import math, struct
 
 bits_to_b3 = {
-    128: 0b100,
-    64: 0b011,
-    32: 0b010,
+    128: 0b110,
+    64: 0b101,
+    48: 0b100,
+    32: 0b011,
+    24: 0b010,
     16: 0b001
 }
 

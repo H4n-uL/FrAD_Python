@@ -1,6 +1,6 @@
-import math
-from ml_dtypes import bfloat16
+import math, struct
 from mdctn import mdct, imdct
+from ml_dtypes import bfloat16
 import numpy as np
 
 class cosine:
@@ -11,20 +11,31 @@ class cosine:
         # if bits == 512: freq = [d.astype(np.float512) for d in fft_data]
         # elif bits == 256: freq = [d.astype(np.float256) for d in fft_data]
         # elif bits == 128: freq = [d.astype(np.float128) for d in fft_data]
-        if bits == 64: freq = [d.astype(np.float64) for d in fft_data]
-        elif bits == 32: freq = [d.astype(np.float32) for d in fft_data]
-        elif bits == 16: freq = [d.astype(bfloat16) for d in fft_data]
+        if bits == 64: data = np.column_stack([d.astype(np.float64) for d in fft_data]).ravel(order='C').tobytes()
+        elif bits == 48:
+            freq = [d.astype(np.float64) for d in fft_data]
+            data = b''.join([struct.pack('<d', d)[2:] for d in np.column_stack(freq).ravel(order='C')])
+        elif bits == 32: data = np.column_stack([d.astype(np.float32) for d in fft_data]).ravel(order='C').tobytes()
+        elif bits == 24:
+            freq = [d.astype(np.float32) for d in fft_data]
+            data = b''.join([struct.pack('<f', d)[1:] for d in np.column_stack(freq).ravel(order='C')])
+        elif bits == 16: data = np.column_stack([d.astype(bfloat16) for d in fft_data]).ravel(order='C').tobytes()
         else: raise Exception('Illegal bits value.')
 
-        data = np.column_stack(freq).ravel(order='C').tobytes()
         return data
 
     def digital(data, fb: int, bits: int, channels: int, unpad: bool):
         # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float512)
         # elif fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float256)
         # elif fb == 0b100: data_numpy = np.frombuffer(data, dtype=np.float128)
-        if fb == 0b011: data_numpy = np.frombuffer(data, dtype=np.float64)
-        elif fb == 0b010: data_numpy = np.frombuffer(data, dtype=np.float32)
+        if fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float64)
+        elif fb == 0b100:
+            data = b''.join([b'\x00\x00'+data[i:i+6] for i in range(0, len(data), 6)])
+            data_numpy = np.frombuffer(data, dtype='<d')
+        elif fb == 0b011: data_numpy = np.frombuffer(data, dtype=np.float32)
+        elif fb == 0b010:
+            data = b''.join([b'\x00'+data[i:i+3] for i in range(0, len(data), 3)])
+            data_numpy = np.frombuffer(data, dtype='<f')
         elif fb == 0b001: data_numpy = np.frombuffer(data, dtype=bfloat16)
         else:
             raise Exception('Illegal bits value.')
