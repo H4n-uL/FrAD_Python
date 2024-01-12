@@ -8,9 +8,7 @@ class cosine:
         odd = len(data[:, 0]) % 2 != 0
         fft_data = [mdct(np.concatenate((data[:, i], [0])) if odd else data[:, i], N=math.ceil(len(data)/2)*2) for i in range(channels)]
 
-        # if bits == 512: freq = [d.astype(np.float512) for d in fft_data]
-        # elif bits == 256: freq = [d.astype(np.float256) for d in fft_data]
-        # elif bits == 128: freq = [d.astype(np.float128) for d in fft_data]
+        # if bits == 128: freq = [d.astype(np.float128) for d in fft_data]
         if bits == 64: data = np.column_stack([d.astype(np.float64) for d in fft_data]).ravel(order='C').tobytes()
         elif bits == 48:
             freq = [d.astype(np.float64) for d in fft_data]
@@ -25,9 +23,7 @@ class cosine:
         return data
 
     def digital(data, fb: int, bits: int, channels: int, unpad: bool):
-        # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float512)
-        # elif fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float256)
-        # elif fb == 0b100: data_numpy = np.frombuffer(data, dtype=np.float128)
+        # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float128)
         if fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float64)
         elif fb == 0b100:
             data = b''.join([b'\x00\x00'+data[i:i+6] for i in range(0, len(data), 6)])
