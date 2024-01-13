@@ -63,7 +63,6 @@ class decode:
                     if is_ecc_on: # When ECC
                         variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
                         p = p // ecc_v.data_size * ecc_v.block_size
-                    print()
                     while True:
                         block = f.read(variables.nperseg*sample_size) # Reading 2048/2368 Bytes block
                         if not block: break
