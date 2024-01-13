@@ -57,6 +57,7 @@ class decode:
             i = 0
             if play == True: # When playing
                 try:
+                    print()
                     stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
                     stream.start()
                     p = sample_size * sample_rate * speed
@@ -72,7 +73,7 @@ class decode:
                         if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, len(block)//sample_size % 2 == 1) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
-                        if (i != len(block)): print('\x1b[1A\x1b[2K', end='')
+                        print('\x1b[1A\x1b[2K', end='')
                         if verbose: 
                             print(f'{(i / p):.3f} s / {(dlen / p):.3f} s (Frame #{i // variables.nperseg // sample_size} / {dlen // variables.nperseg // sample_size} Frames)')
                         else: 
