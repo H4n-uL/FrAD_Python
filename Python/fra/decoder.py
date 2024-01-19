@@ -247,9 +247,10 @@ class decode:
                 else:       codec = ext = 'flac'; out = 'restored'
 
             # Checking Codec and Muxers
-            if codec == 'vorbis' or codec == 'opus':
+            if codec in ['vorbis', 'opus', 'speex']:
                 codec = 'lib' + codec
-                ext = 'ogg'
+                if codec in ['vorbis', 'speex']:
+                    ext = 'ogg'
             if codec == 'ogg': codec = 'libvorbis'
             if codec == 'mp3': codec = 'libmp3lame'
 
