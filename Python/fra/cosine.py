@@ -22,7 +22,7 @@ class cosine:
 
         return data
 
-    def digital(data, fb: int, bits: int, channels: int, unpad: bool):
+    def digital(data, fb: int, bits: int, channels: int):
         # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float128)
         if fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float64)
         elif fb == 0b100:
@@ -37,10 +37,7 @@ class cosine:
             raise Exception('Illegal bits value.')
 
         freq = [data_numpy[i::channels] for i in range(channels)]
-        if unpad:
-            wave_data = [np.int32(np.clip(imdct(d, N=len(d))[:-1], -2**31, 2**31-1)) for d in freq]
-        else:
-            wave_data = [np.int32(np.clip(imdct(d, N=len(d)), -2**31, 2**31-1)) for d in freq]
+        wave_data = [np.int32(np.clip(imdct(d, N=len(d)), -2**31, 2**31-1)) for d in freq]
 
         if bits == 32: pass
         elif bits == 16: wave_data = [np.int16(wave / 2**16) for wave in wave_data]

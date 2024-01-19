@@ -70,7 +70,7 @@ class decode:
                         i += len(block)
                         if is_ecc_on:
                             block = ecc.unecc(block)
-                        if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels, len(block)//sample_size % 2 == 1) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
                         print('\x1b[1A\x1b[2K', end='')
@@ -97,7 +97,7 @@ class decode:
                             if not block: break
                             if is_ecc_on:
                                 block = ecc.unecc(block)
-                            if is_cosine: segment = cosine.digital(block, float_bits, bits, channels, len(block)//sample_size % 2 == 1) # Inversing
+                            if is_cosine: segment = cosine.digital(block, float_bits, bits, channels) # Inversing
                             else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
                             if verbose:
