@@ -70,6 +70,16 @@ class encode:
         os.remove(variables.meta)
         return metadata
 
+    def get_image(file_path: str):
+        command = [
+            variables.ffmpeg, '-v', 'quiet', '-i', file_path, 
+            '-an', '-vcodec', 'copy', 
+            '-f', 'image2pipe', '-'
+        ]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        image, _ = process.communicate()
+        return image
+
     def enc(file_path: str, bits: int, mdct: bool = True, out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
@@ -186,6 +196,7 @@ class encode:
                 checksum = md5.digest()
 
             if meta == None: meta = encode.get_metadata(file_path)
+            if img == None: img = encode.get_image(file_path)
 
             # Moulding header
             h = headb.uilder(sample_rate, channel=channel, fsize=variables.nperseg, cosine=mdct, bits=bits, isecc=apply_ecc, md5=checksum,
