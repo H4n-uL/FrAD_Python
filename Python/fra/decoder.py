@@ -209,7 +209,7 @@ class decode:
 
             command = [
                 variables.aac,
-                '-f', 'adts', '-d', 'aac' if int(quality) < 64000 else 'aach',
+                '-f', 'adts', '-d', 'aac' if int(quality) > 64000 else 'aach',
                 variables.temp_flac,
                 '-b', quality,
                 f'{out}.aac',
