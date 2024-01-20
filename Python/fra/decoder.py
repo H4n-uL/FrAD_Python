@@ -205,7 +205,6 @@ class decode:
         try:
             if strategy in ['c', '', None]: strategy = '0'
             elif strategy == 'a': strategy = '1'
-            elif strategy == 'v': strategy = '3'
             else: raise ValueError()
 
             command = [
