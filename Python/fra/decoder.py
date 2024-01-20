@@ -118,6 +118,15 @@ class decode:
                     os.remove(variables.temp_pcm)
                     sys.exit(0)
 
+    def split_q(s):
+        if s == None: 
+            return None, None
+        if not s[0].isdigit():
+            raise ValueError('Quality format should be [{Positive integer}{c/v/a}]')
+        number = ''.join(filter(str.isdigit, s))
+        strategy = ''.join(filter(str.isalpha, s))
+        return number, strategy
+
     def setaacq(quality, channels):
         if quality == None:
             if channels == 1:
@@ -126,8 +135,10 @@ class decode:
                 quality = 320000
             else: quality = 160000 * channels
         return quality
+    
+    ffmpeg_lossless = ['wav', 'flac', 'wavpack', 'tta', 'truehd', 'alac', 'dts', 'mlp']
 
-    def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality):
+    def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
@@ -142,24 +153,24 @@ class decode:
         else:
             command.append(codec)
 
-        # WAV / fLaC Sample Format
-        if codec in ['wav', 'flac']:
+        # Lossy VS Lossless
+        if codec in decode.ffmpeg_lossless:
             command.append('-sample_fmt')
             command.append(s)
+        else:
+            # Variable bitrate quality
+            if strategy == 'v' or codec == 'libvorbis':
+                if quality == None: quality = '10' if codec == 'libvorbis' else '0'
+                command.append('-q:a')
+                command.append(quality)
 
-        # Vorbis quality
-        if codec in ['libvorbis']:
-            if quality == None: quality = '10'
-            command.append('-q:a')
-            command.append(quality)
-
-        # AAC, MPEG, Opus bitrate
-        if codec in ['aac', 'm4a', 'libmp3lame', 'libopus']:
-            if quality == None: quality = '4096000'
-            if codec == 'libopus' and int(quality) > 512000:
-                quality = '512000'
-            command.append('-b:a')
-            command.append(quality)
+            # Constant bitrate quality
+            if strategy in ['c', '', None] and codec != 'libvorbis':
+                if quality == None: quality = '4096000'
+                if codec == 'libopus' and int(quality) > 512000:
+                    quality = '512000'
+                command.append('-b:a')
+                command.append(quality)
 
         if ext == 'ogg':
             # Muxer
@@ -171,7 +182,7 @@ class decode:
         subprocess.run(command)
         os.remove(variables.temp_pcm)
 
-    def AppleAAC_macOS(sample_rate, channels, f, s, out, quality):
+    def AppleAAC_macOS(sample_rate, channels, f, s, out, quality, strategy):
         try:
             quality = str(quality)
             command = [
@@ -192,13 +203,18 @@ class decode:
             os.remove(variables.temp_flac)
             sys.exit(0)
         try:
+            if strategy in ['c', '', None]: strategy = '0'
+            elif strategy == 'a': strategy = '1'
+            elif strategy == 'v': strategy = '3'
+            else: raise ValueError()
+
             command = [
                 variables.aac,
                 '-f', 'adts', '-d', 'aac' if int(quality) < 64000 else 'aach',
                 variables.temp_flac,
                 '-b', quality,
                 f'{out}.aac',
-                '-s', '0'
+                '-s', strategy
             ]
             subprocess.run(command)
             os.remove(variables.temp_flac)
@@ -232,6 +248,7 @@ class decode:
         sample_rate, channels = decode.internal(file_path, bits, e=e, verbose=verbose)
 
         try:
+            quality, strategy = decode.split_q(quality)
             # Checking name
             if out:
                 out, ext = os.path.splitext(out)
@@ -240,7 +257,7 @@ class decode:
                     if ext: pass
                     else:   ext = codec
                 else:
-                    if      ext: codec = ext
+                    if ext: codec = ext
                     else:   codec = ext = 'flac'
             else:
                 if codec:   out = 'restored'; ext = codec
@@ -269,11 +286,11 @@ class decode:
             if quality: int(quality.replace('k', '000'))
 
             if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
-                quality = decode.setaacq(quality, channels)
-                if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, f, s, out, quality)
+                if strategy in ['c', 'a']: quality = decode.setaacq(quality, channels)
+                if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, f, s, out, quality, strategy)
                 elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, a, out, quality)
             elif codec not in ['pcm', 'raw']:
-                decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality)
+                decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy)
             else:
                 shutil.move(variables.temp_pcm, f'{out}.{ext}')
 
