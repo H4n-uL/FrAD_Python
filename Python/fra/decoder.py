@@ -1,7 +1,7 @@
 from .common import variables, ecc_v, methods
 from .cosine import cosine
 from .fourier import fourier
-import hashlib, math, os, platform, shutil, struct, subprocess, sys, time
+import hashlib, math, os, platform, shutil, struct, subprocess, sys, time, zlib
 import numpy as np
 import sounddevice as sd
 from .tools.ecc import ecc
@@ -55,24 +55,51 @@ class decode:
 
             # Inverse Fourier Transform #
             i = 0
-            if play == True: # When playing
+            if play: # When playing
                 try:
-                    print()
+                    # Getting secure framed source length
+                    if is_secure:
+                        dlen = 0
+                        while True:
+                            frame = f.read(10)
+                            if not frame: break
+                            blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                            dlen += blocklength
+                            f.read(blocklength)
+                        f.seek(header_length)
+
+                    # Starting stream
                     stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
                     stream.start()
+
                     p = sample_size * sample_rate * speed
                     if is_ecc_on: # When ECC
                         variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
                         p = p // ecc_v.data_size * ecc_v.block_size
+                    print()
+
                     while True:
-                        block = f.read(variables.nperseg*sample_size) # Reading 2048/2368 Bytes block
-                        if not block: break
-                        i += len(block)
+                        # Reading Block
+                        if is_secure:
+                            frame = f.read(10)
+                            if not frame: break
+                            blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                            block = f.read(blocklength)
+                            if e and zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
+                                block = b'\x00'*blocklength
+                            # block = zlib.decompress(block)
+                            i += blocklength
+                        else:
+                            block = f.read(variables.nperseg*sample_size)
+                            if not block: break
+                            i += len(block)
+
                         if is_ecc_on:
                             block = ecc.unecc(block)
                         if is_cosine: segment = (cosine.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         else: segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                         stream.write(segment)
+
                         print('\x1b[1A\x1b[2K', end='')
                         if verbose: 
                             print(f'{(i / p):.3f} s / {(dlen / p):.3f} s (Frame #{i // variables.nperseg // sample_size} / {dlen // variables.nperseg // sample_size} Frames)')
@@ -88,20 +115,35 @@ class decode:
                 try:
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
+
                         if is_ecc_on: # When ECC
                             variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
                         start_time = time.time()
                         if verbose: print('\n')
+
                         while True:
-                            block = f.read(variables.nperseg*sample_size) # Reading 2048/2368 Bytes block
-                            if not block: break
+                            # Reading Block
+                            if is_secure:
+                                frame = f.read(10)
+                                if not frame: break
+                                blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                                block = f.read(blocklength)
+                                if e and zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
+                                    block = b'\x00'*blocklength
+                                # block = zlib.decompress(block)
+                                i += blocklength + 10
+                            else:
+                                block = f.read(variables.nperseg*sample_size)
+                                if not block: break
+                                i += len(block)
+
                             if is_ecc_on:
                                 block = ecc.unecc(block)
                             if is_cosine: segment = cosine.digital(block, float_bits, bits, channels) # Inversing
                             else: segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
+
                             if verbose:
-                                i += len(block)
                                 elapsed_time = time.time() - start_time
                                 bps = i / elapsed_time
                                 mult = bps / (sample_size * sample_rate)

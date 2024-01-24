@@ -23,7 +23,7 @@ def main(action, args):
         from fra import encode
         output = args.output if args.output else 'fourierAnalogue.fra'
         nsr = None if args.nsr == None else int(args.nsr)
-        encode.enc(input, int(args.bits), args.legacy, out=output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img, verbose=args.verbose)
+        encode.enc(input, int(args.bits), args.legacy, args.insecure, out=output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img, verbose=args.verbose)
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
@@ -81,6 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('-k',   '--keys', '--key',                          required=False,                                help='keys')
     parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',      help='metadata in "key" "value" format')
     parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                help='metadata in json')
+    parser.add_argument('-ns',  '--insecure',                               required=False,          action='store_false', help='disable secure framing')
     parser.add_argument('-v',   '--verbose',                                                         action='store_true',  help='verbose cli')
 
     args = parser.parse_args()

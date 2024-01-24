@@ -1,7 +1,7 @@
-from .common import variables
+from .common import variables, ecc_v
 from .cosine import cosine
 from .fourier import fourier
-import hashlib, json, math, os, shutil, subprocess, sys, time
+import hashlib, json, math, os, shutil, struct, subprocess, sys, time, zlib
 import numpy as np
 from scipy.signal import resample
 from .tools.ecc import ecc
@@ -80,13 +80,15 @@ class encode:
         image, _ = process.communicate()
         return image
 
-    def enc(file_path: str, bits: int, mdct: bool = True, out: str = None, apply_ecc: bool = False,
+    def enc(file_path: str, bits: int, mdct: bool = True, secure_frame: bool = True,
+                out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
         variables.nperseg = 2048
         log2 = math.log2(variables.nperseg) - 7
         if not log2.is_integer() or log2 > 7 or log2 < 0: raise ValueError
+
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)
         try:
@@ -113,14 +115,14 @@ class encode:
             # Applying Sample rate
             sample_rate = (new_sample_rate if new_sample_rate is not None else sample_rate)
 
-            # Fourier Transform
-            nperseg = variables.nperseg
         except KeyboardInterrupt: 
             print('Aborting...')
             os.remove(variables.temp_pcm)
             sys.exit(1)
 
+        # Fourier Transform
         try:
+            nperseg = variables.nperseg
             start_time = time.time()
             total_bytes = 0
             cli_width = 40
@@ -187,6 +189,27 @@ class encode:
                 os.remove(variables.temp)
                 sys.exit(1)
 
+        # Secure Framing 
+        if secure_frame:
+            try:
+                if apply_ecc: # When ECC
+                    nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
+                else: nperseg = variables.nperseg
+
+                with open(variables.temp, 'rb') as unsecure:
+                  with open(variables.temp2, 'wb') as secure:
+                    while True:
+                        segment = unsecure.read(nperseg * bits // 8 * channel) # Reading temp
+                        if not segment: break                                  # if no data, Break
+                        # segment = zlib.compress(segment, level=9)
+                        secure.write(b'\xff\x0f' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment) # Writing to temp
+                shutil.move(variables.temp2, variables.temp)
+            except KeyboardInterrupt:
+                print('Aborting...')
+                os.remove(variables.temp2)
+                os.remove(variables.temp)
+                sys.exit(1)
+
         try:
             # Calculating MD5 hash
             with open(variables.temp, 'rb') as temp:
@@ -201,7 +224,9 @@ class encode:
             if img == None: img = encode.get_image(file_path)
 
             # Moulding header
-            h = headb.uilder(sample_rate, channel=channel, fsize=variables.nperseg, cosine=mdct, bits=bits, isecc=apply_ecc, md5=checksum,
+            h = headb.uilder(sample_rate, channel=channel, fsize=variables.nperseg,
+                cosine=mdct, secure_frame=secure_frame,
+                bits=bits, isecc=apply_ecc, md5=checksum,
                 meta=meta, img=img)
 
             # Setting file extension

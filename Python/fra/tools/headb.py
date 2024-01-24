@@ -14,7 +14,7 @@ class headb:
     def uilder(
             # Fixed Header
             sample_rate: bytes, channel: int, fsize: int,
-            cosine: bool, isecc: bool, bits: int, md5: bytes,
+            cosine: bool, secure_frame: bool, isecc: bool, bits: int, md5: bytes,
 
             # Metadata
             meta = None, img: bytes = None):
@@ -27,8 +27,9 @@ class headb:
 
         length = b'\x00'*8
         cos = (0b1 if cosine else 0b0) << 7
+        secure_frame = (0b1 if secure_frame else 0b0) << 5
         ecc = (0b1 if isecc else 0b0) << 4
-        efb_struct = struct.pack('<B', cos | ecc | b3)
+        efb_struct = struct.pack('<B', cos | secure_frame | ecc | b3)
         fs = struct.pack('<B', (int(math.log2(fsize)) - 7) << 5)
 
         blocks = bytes()

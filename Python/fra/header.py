@@ -68,7 +68,7 @@ class header:
                         else: break
 
                 # Making new header
-                head_new = headb.uilder(sample_rate, channel, fsize, is_cosine, is_ecc_on, bits, checksum_stream,
+                head_new = headb.uilder(sample_rate, channel, fsize, is_cosine, is_secure, is_ecc_on, bits, checksum_stream,
                 meta, img)
 
             # Overwriting Fourier Analogue-in-Digital file

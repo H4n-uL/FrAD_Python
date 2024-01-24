@@ -1,5 +1,5 @@
 from .common import variables, ecc_v, methods
-import hashlib, math, os, struct, sys, time
+import hashlib, math, os, struct, sys, time, zlib
 from .tools.ecc import ecc
 
 class repack:
@@ -12,6 +12,7 @@ class repack:
 
                 header_length = struct.unpack('>Q', head[0x8:0x10])[0]
                 efb = struct.unpack('<B', head[0x10:0x11])[0]
+                is_secure = True if (efb >> 5 & 0b1) == 0b1 else False # 0x10@0b101:    Secure frame Toggle(Enabled if 1)
                 is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
                 fsize = struct.unpack('<B', head[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
 
@@ -28,11 +29,27 @@ class repack:
                 with open(variables.temp, 'wb') as t:
                     if verbose: print()
                     while True:
-                        block = f.read(nperseg)
-                        if not block: break
+                        if is_secure:
+                            frame = f.read(10)
+                            if not frame: break
+                            blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                            block = f.read(blocklength)
+                            if zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
+                                block = b'\x00'*blocklength
+                            # block = zlib.decompress(block)
+                            total_bytes += blocklength
+                        else:
+                            block = f.read(nperseg)
+                            if not block: break
+                            total_bytes += len(block)
+
                         if is_ecc_on: block = ecc.decode(block)
                         block = ecc.encode(block)
-                        t.write(block)
+
+                        if is_secure:
+                            t.write(b'\xff\x0f' + struct.pack('>I', len(block)) + struct.pack('>I', zlib.crc32(block)) + block)
+                        else:
+                            t.write(block)
 
                         if verbose:
                             total_bytes += len(block)
