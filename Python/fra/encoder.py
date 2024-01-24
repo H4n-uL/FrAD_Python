@@ -131,12 +131,12 @@ class encode:
               with open(variables.temp, 'wb') as swv:
                 if verbose: print('\n')
                 while True:
-                    p = pcm.read(nperseg * 4 * channel)
-                    if not p: break
-                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channel)
-                    if mdct: segment = cosine.analogue(block, bits, channel)
-                    else: segment = fourier.analogue(block, bits, channel)
-                    swv.write(segment)
+                    p = pcm.read(nperseg * 4 * channel)                           # Reading PCM
+                    if not p: break                                               # if no data, Break
+                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channel) # RAW PCM to Numpy
+                    if mdct: segment = cosine.analogue(block, bits, channel)      # Cosine Transform
+                    else: segment = fourier.analogue(block, bits, channel)        # Fourier Transform
+                    swv.write(segment)                                            # Writing to temp
                     if verbose:
                         total_bytes += len(block) * sample_size
                         elapsed_time = time.time() - start_time
@@ -154,6 +154,8 @@ class encode:
             os.remove(variables.temp)
             os.remove(variables.temp_pcm)
             sys.exit(1)
+
+        # Applying ECC
         if apply_ecc:
             try:
                 dlen = os.path.getsize(variables.temp)
@@ -164,8 +166,8 @@ class encode:
                   with open(variables.temp2, 'wb') as enf:
                     if verbose: print('\n')
                     while True:
-                        block = swv.read(16777216)
-                        if not block: break
+                        block = swv.read(16777216)   # Reading 16 MiB Block
+                        if not block: break          # if no data, Break
                         enf.write(ecc.encode(block)) # Encoding Reed-Solomon ECC
 
                         if verbose:
@@ -203,7 +205,7 @@ class encode:
                 meta=meta, img=img)
 
             # Setting file extension
-            if not (out.endswith('.frad') or out.endswith('.dsin') or out.endswith('.fra') or out.endswith('.dsn')):
+            if not (out.lower().endswith('.frad') or out.lower().endswith('.dsin') or out.lower().endswith('.fra') or out.lower().endswith('.dsn')):
                 if len(out) <= 8: out += '.fra'
                 else: out += '.frad'
 
