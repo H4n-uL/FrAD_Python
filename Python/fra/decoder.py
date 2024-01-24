@@ -177,7 +177,7 @@ class decode:
                 quality = 320000
             else: quality = 160000 * channels
         return quality
-    
+
     ffmpeg_lossless = ['wav', 'flac', 'wavpack', 'tta', 'truehd', 'alac', 'dts', 'mlp']
 
     def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy):
