@@ -31,6 +31,6 @@ class ecc:
 
     def decode(data):
         chunks = ecc.split_data(data, ecc_v.block_size)
-        try: decoded_chunks = [bytes(rs.decode(chunk)) for chunk in chunks]
+        try: decoded_chunks = [bytes(rs.decode(chunk)[0]) for chunk in chunks]
         except ReedSolomonError as e: print(f'Error: {e}'); return None
         return b''.join(decoded_chunks)
