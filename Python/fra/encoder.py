@@ -136,7 +136,11 @@ class encode:
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channel) # RAW PCM to Numpy
                     if mdct: segment = cosine.analogue(block, bits, channel)      # Cosine Transform
                     else: segment = fourier.analogue(block, bits, channel)        # Fourier Transform
-                    swv.write(segment)                                            # Writing to temp
+
+                    if apply_ecc: segment = ecc.encode(segment)                   # Applying ECC(This will make encoding about 10000 times slower)
+                    # WRITE
+                    swv.write(b'\xff\x0f' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment)
+
                     if verbose:
                         total_bytes += len(block) * sample_size
                         elapsed_time = time.time() - start_time
@@ -153,58 +157,6 @@ class encode:
             print('Aborting...')
             os.remove(variables.temp)
             os.remove(variables.temp_pcm)
-            sys.exit(1)
-
-        # Applying ECC
-        if apply_ecc:
-            try:
-                dlen = os.path.getsize(variables.temp)
-                start_time = time.time()
-                total_bytes = 0
-                cli_width = 40
-                with open(variables.temp, 'rb') as swv:
-                  with open(variables.temp2, 'wb') as enf:
-                    if verbose: print('\n')
-                    while True:
-                        block = swv.read(variables.nperseg * channel * bits // 8 * 1024)
-                        if not block: break          # if no data, Break
-                        enf.write(ecc.encode(block)) # Encoding Reed-Solomon ECC
-
-                        if verbose:
-                            total_bytes += len(block)
-                            elapsed_time = time.time() - start_time
-                            bps = total_bytes / elapsed_time
-                            percent = total_bytes * 100 / dlen
-                            b = int(percent / 100 * cli_width)
-                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
-                            print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-                    if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                shutil.move(variables.temp2, variables.temp)
-            except KeyboardInterrupt:
-                print('Aborting...')
-                os.remove(variables.temp2)
-                os.remove(variables.temp)
-                sys.exit(1)
-
-        # Secure Framing
-        try:
-            if apply_ecc: # When ECC
-                nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
-            else: nperseg = variables.nperseg
-
-            with open(variables.temp, 'rb') as insecure:
-              with open(variables.temp2, 'wb') as secure:
-                while True:
-                    segment = insecure.read(nperseg * bits // 8 * channel * (1 if mdct else 2)) # Reading temp
-                    if not segment: break                                  # if no data, Break
-                    # segment = zlib.compress(segment, level=9)
-                    secure.write(b'\xff\x0f' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment) # Writing to temp
-            shutil.move(variables.temp2, variables.temp)
-        except KeyboardInterrupt:
-            print('Aborting...')
-            os.remove(variables.temp2)
-            os.remove(variables.temp)
             sys.exit(1)
 
         try:
