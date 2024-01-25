@@ -33,7 +33,8 @@ class variables:
 
 class ecc_v:
     data_size = 128
-    block_size = math.ceil(1.15625*data_size)
+    mult = 1.15625
+    block_size = math.ceil(mult*data_size)
     code_size = block_size - data_size
 
 class methods:
