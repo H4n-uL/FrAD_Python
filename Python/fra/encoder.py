@@ -1,7 +1,7 @@
-from .common import variables
+from .common import variables, ecc_v
 from .cosine import cosine
 from .fourier import fourier
-import hashlib, json, os, shutil, struct, subprocess, sys, time, zlib
+import hashlib, json, math, os, shutil, struct, subprocess, sys, time, zlib
 import numpy as np
 from scipy.signal import resample
 from .tools.ecc import ecc
@@ -34,8 +34,6 @@ class encode:
             variables.temp_pcm
         ]
         subprocess.run(command)
-        channels, sample_rate, codec = encode.get_info(file_path)
-        return sample_rate, channels, codec
 
     def get_metadata(file_path: str):
         excluded = ['major_brand', 'minor_version', 'compatible_brands', 'encoder']
@@ -87,11 +85,15 @@ class encode:
                 verbose: bool = False):
         variables.nperseg = 2048
 
-        if variables.nperseg > 2**18: raise ValueError('Sample size cannot exceed 262144.')
+        # Getting Audio info w. ffmpeg & ffprobe
+        channels, sample_rate, codec = encode.get_info(file_path)
+        segmax = (2**32 // ((ecc_v.mult if apply_ecc else 1) * channels * bits // (8 if mdct else 4))//4)*4
+        if variables.nperseg > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
+        if variables.nperseg < 4: raise ValueError(f'Sample size must be at least 4.')
         if variables.nperseg % 4 != 0 and mdct: raise ValueError('Sample size must be multiple of 4.')
 
-        # Getting Audio info w. ffmpeg & ffprobe
-        sample_rate, channel, codec = encode.get_pcm(file_path)
+        encode.get_pcm(file_path)
+
         try:
             # Resampling
             if codec in ['dsd_lsbf_planar', 'dsd_msbf']: new_sample_rate = sample_rate * 8 // bits
@@ -100,11 +102,11 @@ class encode:
                 with open(variables.temp_pcm, 'rb') as pcmb:
                   with open(variables.temp2_pcm, 'wb') as pcma:
                     while True:
-                        wv = pcmb.read(sample_rate * channel * 4)
+                        wv = pcmb.read(sample_rate * channels * 4)
                         if not wv: break
-                        block = np.frombuffer(wv, dtype=np.int32).reshape(-1, channel)
-                        resdata = np.zeros((new_sample_rate, channel))
-                        for i in range(channel):
+                        block = np.frombuffer(wv, dtype=np.int32).reshape(-1, channels)
+                        resdata = np.zeros((new_sample_rate, channels))
+                        for i in range(channels):
                             resdata[:, i] = resample(block[:, i], new_sample_rate)
                         pcma.write(resdata.astype(np.int32).tobytes())
                 shutil.move(variables.temp2_pcm, variables.temp_pcm)
@@ -127,18 +129,18 @@ class encode:
             start_time = time.time()
             total_bytes = 0
             cli_width = 40
-            sample_size = bits // 4 * channel
+            sample_size = bits // 4 * channels
             dlen = os.path.getsize(variables.temp_pcm)
 
             with open(variables.temp_pcm, 'rb') as pcm:
               with open(variables.temp, 'wb') as swv:
                 if verbose: print('\n')
                 while True:
-                    p = pcm.read(nperseg * 4 * channel)                           # Reading PCM
+                    p = pcm.read(nperseg * 4 * channels)                           # Reading PCM
                     if not p: break                                               # if no data, Break
-                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channel) # RAW PCM to Numpy
-                    if mdct: segment = cosine.analogue(block, bits, channel)      # Cosine Transform
-                    else: segment = fourier.analogue(block, bits, channel)        # Fourier Transform
+                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
+                    if mdct: segment = cosine.analogue(block, bits, channels)      # Cosine Transform
+                    else: segment = fourier.analogue(block, bits, channels)        # Fourier Transform
 
                     if apply_ecc: segment = ecc.encode(segment)                   # Applying ECC (This will make encoding thousands of times slower)
                     # WRITE
@@ -176,7 +178,7 @@ class encode:
             if img == None: img = encode.get_image(file_path)
 
             # Moulding header
-            h = headb.uilder(sample_rate, channel=channel,
+            h = headb.uilder(sample_rate, channel=channels,
                 cosine=mdct, bits=bits,
                 isecc=apply_ecc, md5=checksum,
                 meta=meta, img=img)
