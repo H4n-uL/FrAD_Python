@@ -88,6 +88,7 @@ class encode:
         variables.nperseg = 2048
 
         if variables.nperseg > 2**18: raise ValueError('Sample size cannot exceed 262144.')
+        if variables.nperseg % 4 != 0 and mdct: raise ValueError('Sample size must be multiple of 4.')
 
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)

@@ -5,8 +5,9 @@ import numpy as np
 
 class cosine:
     def analogue(data, bits: int, channels: int):
-        odd = len(data[:, 0]) % 2 != 0
-        fft_data = [mdct(np.concatenate((data[:, i], [0])) if odd else data[:, i], N=math.ceil(len(data)/2)*2) for i in range(channels)]
+        pad_length = 0 if len(data[:, 0]) % 4 == 0 else 4 - len(data[:, 0]) % 4
+        data = np.pad(data, ((0, pad_length), (0, 0)), mode='constant')
+        fft_data = [mdct(data[:, i], N=len(data)) for i in range(channels)]
 
         # if bits == 128: freq = [d.astype(np.float128) for d in fft_data]
         if bits == 64: data = np.column_stack([d.astype(np.float64) for d in fft_data]).ravel(order='C').tobytes()
