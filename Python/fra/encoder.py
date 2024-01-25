@@ -85,7 +85,7 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        variables.nperseg = 2048
+        variables.nperseg = 576
 
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)

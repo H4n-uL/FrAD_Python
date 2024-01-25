@@ -24,31 +24,13 @@ class ecc:
     def split_data(data, chunk_size):
         for i in range(0, len(data), chunk_size): yield data[i:i+chunk_size]
 
-    class rdsl:
-        def encode_chunk(chunk):
-            return bytes(rs.encode(chunk))
-
-        def decode_chunk(chunk):
-            try:
-                return bytes(rs.decode(chunk)[0])
-            except ReedSolomonError as e:
-                print(f'Error: {e}')
-                return None
-
-        def encode(data):
-            chunks = ecc.split_data(data, ecc_v.data_size)
-            with Pool(cpu_count() // 2) as p:
-                encoded_chunks = p.map(ecc.rdsl.encode_chunk, chunks)
-            return b''.join(encoded_chunks)
-
-        def decode(data):
-            chunks = ecc.split_data(data, ecc_v.block_size)
-            with Pool(cpu_count() // 2) as p:
-                decoded_chunks = p.map(ecc.rdsl.decode_chunk, chunks)
-            return b''.join(decoded_chunks)
-
     def encode(data):
-        return ecc.rdsl.encode(data)
+        chunks = ecc.split_data(data, ecc_v.data_size)
+        encoded_chunks = [bytes(rs.encode(chunk)) for chunk in chunks]
+        return b''.join(encoded_chunks)
 
     def decode(data):
-        return ecc.rdsl.decode(data)
+        chunks = ecc.split_data(data, ecc_v.block_size)
+        try: decoded_chunks = [bytes(rs.decode(chunk)) for chunk in chunks]
+        except ReedSolomonError as e: print(f'Error: {e}'); return None
+        return b''.join(decoded_chunks)
