@@ -107,9 +107,6 @@ class decode:
                     dlen = os.path.getsize(file_path) - header_length
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
-
-                        if is_ecc_on: # When ECC
-                            variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
                         start_time = time.time()
                         if verbose: print('\n')
 
@@ -135,7 +132,6 @@ class decode:
                                 bps = i / elapsed_time
                                 mult = bps / (sample_size * sample_rate)
                                 percent = i*100 / dlen
-                                if is_ecc_on: percent = percent / ecc_v.data_size * ecc_v.block_size
                                 b = int(percent / 100 * cli_width)
                                 print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
