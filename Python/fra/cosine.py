@@ -5,7 +5,7 @@ import numpy as np
 
 class cosine:
     def analogue(data, bits: int, channels: int):
-        pad_length = 0 if len(data[:, 0]) % 4 == 0 else 4 - len(data[:, 0]) % 4
+        pad_length = (4 - len(data[:, 0])) % 4
         data = np.pad(data, ((0, pad_length), (0, 0)), mode='constant')
         fft_data = [mdct(data[:, i], N=len(data)) for i in range(channels)]
 
