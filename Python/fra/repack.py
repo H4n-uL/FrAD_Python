@@ -17,7 +17,6 @@ class repack:
 
                 f.seek(header_length)
                 variables.nperseg = int(math.pow(2, fsize + 7))
-                nperseg = (variables.nperseg if not is_ecc_on else variables.nperseg // ecc_v.data_size * ecc_v.block_size) * 16384
             except KeyboardInterrupt:
                 sys.exit(1)
             try:

@@ -86,8 +86,6 @@ class encode:
                 meta = None, img: bytes = None,
                 verbose: bool = False):
         variables.nperseg = 2048
-        log2 = math.log2(variables.nperseg) - 7
-        if not log2.is_integer() or log2 > 7 or log2 < 0: raise ValueError
 
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)
@@ -198,7 +196,7 @@ class encode:
             with open(variables.temp, 'rb') as insecure:
               with open(variables.temp2, 'wb') as secure:
                 while True:
-                    segment = insecure.read(nperseg * bits // 8 * channel) # Reading temp
+                    segment = insecure.read(nperseg * bits // 8 * channel * (1 if mdct else 2)) # Reading temp
                     if not segment: break                                  # if no data, Break
                     # segment = zlib.compress(segment, level=9)
                     secure.write(b'\xff\x0f' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment) # Writing to temp

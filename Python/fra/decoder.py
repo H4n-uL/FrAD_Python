@@ -49,19 +49,19 @@ class decode:
 
             if is_cosine: sample_size = {0b110: 16*channels, 0b101: 8*channels, 0b100: 6*channels, 0b011: 4*channels, 0b010: 3*channels, 0b001: 2*channels}[float_bits]
             else: sample_size = {0b110: 32*channels, 0b101: 16*channels, 0b100: 12*channels, 0b011: 8*channels, 0b010: 6*channels, 0b001: 4*channels}[float_bits]
-            variables.nperseg = int(math.pow(2, fsize + 7))
 
             # Inverse Fourier Transform #
             i = 0
             if play: # When playing
                 try:
                     # Getting secure framed source length
-                    dlen = 0
+                    dlen = frames = 0
                     while True:
                         frame = f.read(10)
                         if not frame: break
                         blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
                         dlen += blocklength
+                        frames += 1
                         f.read(blocklength)
                     f.seek(header_length)
 
@@ -71,7 +71,6 @@ class decode:
 
                     p = sample_size * sample_rate * speed
                     if is_ecc_on: # When ECC
-                        variables.nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
                         p = p // ecc_v.data_size * ecc_v.block_size
                     print()
 
@@ -94,7 +93,7 @@ class decode:
 
                         print('\x1b[1A\x1b[2K', end='')
                         if verbose: 
-                            print(f'{(i / p):.3f} s / {(dlen / p):.3f} s (Frame #{i // variables.nperseg // sample_size} / {dlen // variables.nperseg // sample_size} Frames)')
+                            print(f'{(i / p):.3f} s / {(dlen / p):.3f} s (Frame #{i // (dlen / frames)} / {frames} Frames)')
                         else: 
                             print(f'{(i / p):.3f} s')
                     print('\x1b[1A\x1b[2K', end='')
