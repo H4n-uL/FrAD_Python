@@ -137,7 +137,7 @@ class encode:
                     if mdct: segment = cosine.analogue(block, bits, channel)      # Cosine Transform
                     else: segment = fourier.analogue(block, bits, channel)        # Fourier Transform
 
-                    if apply_ecc: segment = ecc.encode(segment)                   # Applying ECC(This will make encoding about 10000 times slower)
+                    if apply_ecc: segment = ecc.encode(segment)                   # Applying ECC (This will make encoding thousands of times slower)
                     # WRITE
                     swv.write(b'\xff\x0f' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment)
 
