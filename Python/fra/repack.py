@@ -29,9 +29,9 @@ class repack:
                     while True:
                         frame = f.read(12)
                         if not frame: break
-                        blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                        blocklength = struct.unpack('>I', frame[0x4:0x8])[0]
                         block = f.read(blocklength)
-                        if zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
+                        if zlib.crc32(block) != struct.unpack('>I', frame[0x8:0xc])[0]:
                             block = b'\x00'*blocklength
                         # block = zlib.decompress(block)
                         total_bytes += blocklength

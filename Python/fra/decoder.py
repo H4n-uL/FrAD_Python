@@ -24,7 +24,6 @@ class decode:
             is_cosine = True if (efb >> 7 & 0b1) == 0b1 else False   # 0x10@0b111:    MDCT Toggle(Enabled if 1)
             is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False   # 0x10@0b100:    ECC Toggle(Enabled if 1)
             float_bits = efb & 0b111                                 # 0x10@0b010-3b: Stream bit depth
-            fsize = struct.unpack('<B', header[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
             checksum_header = header[0xf0:0x100]                     # 0xf0-16B:      Stream hash
 
             # Reading Audio stream
@@ -59,7 +58,7 @@ class decode:
                     while True:
                         frame = f.read(12)
                         if not frame: break
-                        blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                        blocklength = struct.unpack('>I', frame[0x4:0x8])[0]
                         dlen += blocklength
                         frames += 1
                         f.read(blocklength)
@@ -78,9 +77,9 @@ class decode:
                         # Reading Block
                         frame = f.read(12)
                         if not frame: break
-                        blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                        blocklength = struct.unpack('>I', frame[0x4:0x8])[0]
                         block = f.read(blocklength)
-                        if e and zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
+                        if e and zlib.crc32(block) != struct.unpack('>I', frame[0x8:0xc])[0]:
                             block = b'\x00'*blocklength
                         # block = zlib.decompress(block)
                         i += blocklength
@@ -114,9 +113,9 @@ class decode:
                             # Reading Block
                             frame = f.read(12)
                             if not frame: break
-                            blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                            blocklength = struct.unpack('>I', frame[0x4:0x8])[0]
                             block = f.read(blocklength)
-                            if e and zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
+                            if e and zlib.crc32(block) != struct.unpack('>I', frame[0x8:0xc])[0]:
                                 block = b'\x00'*blocklength
                             # block = zlib.decompress(block)
                             i += blocklength + 10
