@@ -80,7 +80,7 @@ class encode:
         image, _ = process.communicate()
         return image
 
-    def enc(file_path: str, bits: int, mdct: bool = True, secure_frame: bool = True,
+    def enc(file_path: str, bits: int, mdct: bool = True,
                 out: str = None, apply_ecc: bool = False,
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
@@ -189,26 +189,25 @@ class encode:
                 os.remove(variables.temp)
                 sys.exit(1)
 
-        # Secure Framing 
-        if secure_frame:
-            try:
-                if apply_ecc: # When ECC
-                    nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
-                else: nperseg = variables.nperseg
+        # Secure Framing
+        try:
+            if apply_ecc: # When ECC
+                nperseg = variables.nperseg // ecc_v.data_size * ecc_v.block_size
+            else: nperseg = variables.nperseg
 
-                with open(variables.temp, 'rb') as unsecure:
-                  with open(variables.temp2, 'wb') as secure:
-                    while True:
-                        segment = unsecure.read(nperseg * bits // 8 * channel) # Reading temp
-                        if not segment: break                                  # if no data, Break
-                        # segment = zlib.compress(segment, level=9)
-                        secure.write(b'\xff\x0f' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment) # Writing to temp
-                shutil.move(variables.temp2, variables.temp)
-            except KeyboardInterrupt:
-                print('Aborting...')
-                os.remove(variables.temp2)
-                os.remove(variables.temp)
-                sys.exit(1)
+            with open(variables.temp, 'rb') as insecure:
+              with open(variables.temp2, 'wb') as secure:
+                while True:
+                    segment = insecure.read(nperseg * bits // 8 * channel) # Reading temp
+                    if not segment: break                                  # if no data, Break
+                    # segment = zlib.compress(segment, level=9)
+                    secure.write(b'\xff\x0f' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment) # Writing to temp
+            shutil.move(variables.temp2, variables.temp)
+        except KeyboardInterrupt:
+            print('Aborting...')
+            os.remove(variables.temp2)
+            os.remove(variables.temp)
+            sys.exit(1)
 
         try:
             # Calculating MD5 hash
@@ -224,9 +223,9 @@ class encode:
             if img == None: img = encode.get_image(file_path)
 
             # Moulding header
-            h = headb.uilder(sample_rate, channel=channel, fsize=variables.nperseg,
-                cosine=mdct, secure_frame=secure_frame,
-                bits=bits, isecc=apply_ecc, md5=checksum,
+            h = headb.uilder(sample_rate, channel=channel,
+                cosine=mdct, bits=bits,
+                isecc=apply_ecc, md5=checksum,
                 meta=meta, img=img)
 
             # Setting file extension

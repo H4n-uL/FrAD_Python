@@ -22,7 +22,6 @@ class decode:
             header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B:       Total header size
             efb = struct.unpack('<B', header[0x10:0x11])[0]          # 0x10:          ECC-Float Bit
             is_cosine = True if (efb >> 7 & 0b1) == 0b1 else False   # 0x10@0b111:    MDCT Toggle(Enabled if 1)
-            is_secure = True if (efb >> 5 & 0b1) == 0b1 else False   # 0x10@0b101:    Secure frame Toggle(Enabled if 1)
             is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False   # 0x10@0b100:    ECC Toggle(Enabled if 1)
             float_bits = efb & 0b111                                 # 0x10@0b010-3b: Stream bit depth
             fsize = struct.unpack('<B', header[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
@@ -46,7 +45,6 @@ class decode:
                         print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
                         raise Exception(f'{file_path} has been corrupted, Please repack your file for the best music experience.')
 
-            dlen = os.path.getsize(file_path) - header_length
             f.seek(header_length)
 
             if is_cosine: sample_size = {0b110: 16*channels, 0b101: 8*channels, 0b100: 6*channels, 0b011: 4*channels, 0b010: 3*channels, 0b001: 2*channels}[float_bits]
@@ -58,15 +56,14 @@ class decode:
             if play: # When playing
                 try:
                     # Getting secure framed source length
-                    if is_secure:
-                        dlen = 0
-                        while True:
-                            frame = f.read(10)
-                            if not frame: break
-                            blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
-                            dlen += blocklength
-                            f.read(blocklength)
-                        f.seek(header_length)
+                    dlen = 0
+                    while True:
+                        frame = f.read(10)
+                        if not frame: break
+                        blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                        dlen += blocklength
+                        f.read(blocklength)
+                    f.seek(header_length)
 
                     # Starting stream
                     stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
@@ -80,19 +77,14 @@ class decode:
 
                     while True:
                         # Reading Block
-                        if is_secure:
-                            frame = f.read(10)
-                            if not frame: break
-                            blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
-                            block = f.read(blocklength)
-                            if e and zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
-                                block = b'\x00'*blocklength
-                            # block = zlib.decompress(block)
-                            i += blocklength
-                        else:
-                            block = f.read(variables.nperseg*sample_size)
-                            if not block: break
-                            i += len(block)
+                        frame = f.read(10)
+                        if not frame: break
+                        blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                        block = f.read(blocklength)
+                        if e and zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
+                            block = b'\x00'*blocklength
+                        # block = zlib.decompress(block)
+                        i += blocklength
 
                         if is_ecc_on:
                             block = ecc.unecc(block)
@@ -113,6 +105,7 @@ class decode:
                     sys.exit(0)
             else:
                 try:
+                    dlen = os.path.getsize(file_path) - header_length
                     cli_width = 40
                     with open(variables.temp_pcm, 'wb') as p:
 
@@ -123,19 +116,14 @@ class decode:
 
                         while True:
                             # Reading Block
-                            if is_secure:
-                                frame = f.read(10)
-                                if not frame: break
-                                blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
-                                block = f.read(blocklength)
-                                if e and zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
-                                    block = b'\x00'*blocklength
-                                # block = zlib.decompress(block)
-                                i += blocklength + 10
-                            else:
-                                block = f.read(variables.nperseg*sample_size)
-                                if not block: break
-                                i += len(block)
+                            frame = f.read(10)
+                            if not frame: break
+                            blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
+                            block = f.read(blocklength)
+                            if e and zlib.crc32(block) != struct.unpack('>I', frame[0x6:0x10])[0]:
+                                block = b'\x00'*blocklength
+                            # block = zlib.decompress(block)
+                            i += blocklength + 10
 
                             if is_ecc_on:
                                 block = ecc.unecc(block)

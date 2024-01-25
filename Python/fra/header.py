@@ -51,7 +51,6 @@ class header:
                 header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B:       Total header size
                 efb = struct.unpack('<B', head[0x10:0x11])[0]          # 0x10:          ECC-Float Bit
                 is_cosine = True if (efb >> 7 & 0b1) == 0b1 else False # 0x10@0b111:    MDCT Toggle(Enabled if 1)
-                is_secure = True if (efb >> 5 & 0b1) == 0b1 else False # 0x10@0b101:    Secure frame Toggle(Enabled if 1)
                 is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
                 bits = b3_to_bits.get(efb & 0b111)                     # 0x10@0b011-3b: Stream bit depth
                 fsize = struct.unpack('<B', head[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
@@ -65,7 +64,7 @@ class header:
                     temp.write(f.read())
 
             # Making new header
-            head_new = headb.uilder(sample_rate, channel, fsize, is_cosine, is_secure, is_ecc_on, bits, checksum_stream,meta, img)
+            head_new = headb.uilder(sample_rate, channel, is_cosine, is_ecc_on, bits, checksum_stream,meta, img)
 
             # Overwriting Fourier Analogue-in-Digital file
             with open(variables.temp, 'wb') as f: # DO NEVER DELETE THIS
