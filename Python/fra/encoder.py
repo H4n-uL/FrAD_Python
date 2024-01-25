@@ -166,7 +166,7 @@ class encode:
                   with open(variables.temp2, 'wb') as enf:
                     if verbose: print('\n')
                     while True:
-                        block = swv.read(16777216)   # Reading 16 MiB Block
+                        block = swv.read(variables.nperseg * channel * bits // 8 * 1024)
                         if not block: break          # if no data, Break
                         enf.write(ecc.encode(block)) # Encoding Reed-Solomon ECC
 

@@ -18,7 +18,7 @@ class ecc:
     def unecc(data):
         block = bytearray()
         for i in range(0, len(data), ecc_v.block_size):
-            block.extend(data[i:i+ecc_v.block_size][:-ecc_v.code_size]) # Carrying first 128 Bytes data from 148 Bytes chunk
+            block.extend(data[i:i+ecc_v.block_size][:-ecc_v.code_size]) # Carrying first Data Bytes data from ECC chunk
         return bytes(block)
 
     def split_data(data, chunk_size):
