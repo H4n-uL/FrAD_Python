@@ -1,7 +1,7 @@
 from .common import variables, ecc_v, methods
 from .cosine import cosine
 from .fourier import fourier
-import hashlib, math, os, platform, shutil, struct, subprocess, sys, time, zlib
+import hashlib, os, platform, shutil, struct, subprocess, sys, time, zlib
 import numpy as np
 import sounddevice as sd
 from .tools.ecc import ecc
@@ -57,7 +57,7 @@ class decode:
                     # Getting secure framed source length
                     dlen = frames = 0
                     while True:
-                        frame = f.read(10)
+                        frame = f.read(12)
                         if not frame: break
                         blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
                         dlen += blocklength
@@ -76,7 +76,7 @@ class decode:
 
                     while True:
                         # Reading Block
-                        frame = f.read(10)
+                        frame = f.read(12)
                         if not frame: break
                         blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
                         block = f.read(blocklength)
@@ -112,7 +112,7 @@ class decode:
 
                         while True:
                             # Reading Block
-                            frame = f.read(10)
+                            frame = f.read(12)
                             if not frame: break
                             blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
                             block = f.read(blocklength)

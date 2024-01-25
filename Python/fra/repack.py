@@ -27,7 +27,7 @@ class repack:
                 with open(variables.temp, 'wb') as t:
                     if verbose: print()
                     while True:
-                        frame = f.read(10)
+                        frame = f.read(12)
                         if not frame: break
                         blocklength = struct.unpack('>I', frame[0x2:0x6])[0]
                         block = f.read(blocklength)
@@ -39,7 +39,7 @@ class repack:
                         if is_ecc_on: block = ecc.decode(block)
                         block = ecc.encode(block)
 
-                        t.write(b'\xff\x0f' + struct.pack('>I', len(block)) + struct.pack('>I', zlib.crc32(block)) + block)
+                        t.write(b'\xff\xd4\xd2\x98' + struct.pack('>I', len(block)) + struct.pack('>I', zlib.crc32(block)) + block)
 
                         if verbose:
                             total_bytes += len(block)

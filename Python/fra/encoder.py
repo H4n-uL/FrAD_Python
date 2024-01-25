@@ -1,7 +1,7 @@
-from .common import variables, ecc_v
+from .common import variables
 from .cosine import cosine
 from .fourier import fourier
-import hashlib, json, math, os, shutil, struct, subprocess, sys, time, zlib
+import hashlib, json, os, shutil, struct, subprocess, sys, time, zlib
 import numpy as np
 from scipy.signal import resample
 from .tools.ecc import ecc
@@ -85,7 +85,9 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        variables.nperseg = 576
+        variables.nperseg = 2048
+
+        if variables.nperseg > 2**18: raise ValueError('Sample size cannot exceed 262144.')
 
         # Getting Audio info w. ffmpeg & ffprobe
         sample_rate, channel, codec = encode.get_pcm(file_path)
@@ -139,7 +141,7 @@ class encode:
 
                     if apply_ecc: segment = ecc.encode(segment)                   # Applying ECC (This will make encoding thousands of times slower)
                     # WRITE
-                    swv.write(b'\xff\x0f' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment)
+                    swv.write(b'\xff\xd4\xd2\x98' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment)
 
                     if verbose:
                         total_bytes += len(block) * sample_size
