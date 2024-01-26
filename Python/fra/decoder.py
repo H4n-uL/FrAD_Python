@@ -69,7 +69,7 @@ class decode:
                 framescount += 1
                 f.read(blocklength)
             
-            dur_sec = duration / sample_rate*speed
+            dur_sec = duration / (sample_rate*speed)
             f.seek(header_length)
 
             if play: # When playing
@@ -106,9 +106,9 @@ class decode:
 
                             print('\x1b[1A\x1b[2K', end='')
                             if verbose: 
-                                print(f'{(i / sample_rate*speed):.3f} s / {(dur_sec):.3f} s (Frame #{frameNo} / {framescount} Frames)')
+                                print(f'{(i / (sample_rate*speed)):.3f} s / {(dur_sec):.3f} s (Frame #{frameNo} / {framescount} Frames)')
                             else: 
-                                print(f'{(i / sample_rate*speed):.3f} s')
+                                print(f'{(i / (sample_rate*speed)):.3f} s')
                     print('\x1b[1A\x1b[2K', end='')
                     stream.close()
                     sys.exit(0)
