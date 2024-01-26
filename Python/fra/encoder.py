@@ -144,7 +144,7 @@ class encode:
 
                     if apply_ecc: segment = ecc.encode(segment)                   # Applying ECC (This will make encoding thousands of times slower)
                     # WRITE
-                    swv.write(b'\xff\xd4\xd2\x98' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + segment)
+                    swv.write(b'\xff\xd4\xd2\x98' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + (b'\x00'*4) + segment)
 
                     if verbose:
                         total_bytes += len(block) * sample_size

@@ -56,7 +56,7 @@ class decode:
                     # Getting secure framed source length
                     dlen = frames = 0
                     while True:
-                        frame = f.read(12)
+                        frame = f.read(16)
                         if not frame: break
                         blocklength = struct.unpack('>I', frame[0x4:0x8])[0]
                         dlen += blocklength
@@ -74,8 +74,8 @@ class decode:
                     print()
 
                     while True:
-                        # Reading Block
-                        frame = f.read(12)
+                        # Reading Frame Header
+                        frame = f.read(16)
                         if not frame: break
                         blocklength = struct.unpack('>I', frame[0x4:0x8])[0]
                         block = f.read(blocklength)
@@ -110,8 +110,8 @@ class decode:
                         if verbose: print('\n')
 
                         while True:
-                            # Reading Block
-                            frame = f.read(12)
+                            # Reading Frame Header
+                            frame = f.read(16)
                             if not frame: break
                             blocklength = struct.unpack('>I', frame[0x4:0x8])[0]
                             block = f.read(blocklength)
