@@ -30,8 +30,8 @@ class repack:
                         frame = f.read(16)
                         if not frame: break
                         blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B:       Audio Stream Frame length
-                        cfb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:          Cosine-Float Bit
-                        is_cosine, is_ecc_on, float_bits = headb.decode_cfb(cfb)
+                        efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:          Cosine-Float Bit
+                        is_ecc_on, float_bits = headb.decode_efb(efb)
                         channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:          Channels
                         ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
                         ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
@@ -48,7 +48,7 @@ class repack:
                         # WRITE
                         t.write(b'\xff\xd4\xd2\x98' + \
                               struct.pack('>I', len(block)) + \
-                              headb.encode_cfb(is_cosine, True, float_bits) + \
+                              headb.encode_efb(True, float_bits) + \
                               struct.pack('>B', channels - 1) + \
                               struct.pack('>B', ecc_dsize) + \
                               struct.pack('>B', ecc_codesize) + \

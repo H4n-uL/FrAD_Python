@@ -1,4 +1,4 @@
-import base64, math, os, platform, secrets
+import base64, os, platform, secrets
 
 class variables:
     hash_block_size = 2**20
@@ -29,12 +29,6 @@ class variables:
         if arch == 'arm64':
             ffmpeg = os.path.join(dir, 'res', 'codec', 'ffmpeg.AArch64')
             ffprobe = os.path.join(dir, 'res', 'parser', 'ffprobe.AArch64')
-
-class ecc_v:
-    data_size = 128
-    mult = 1.15625
-    block_size = math.ceil(mult*data_size)
-    code_size = block_size - data_size
 
 class methods:
     def signature(sign):

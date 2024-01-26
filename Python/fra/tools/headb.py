@@ -11,17 +11,15 @@ bits_to_b3 = {
 }
 
 class headb:
-    def encode_cfb(cosine, isecc, bits):
-        cosine = (0b1 if cosine else 0b0) << 7
+    def encode_efb(isecc, bits):
         ecc = (0b1 if isecc else 0b0) << 4
         b3 = bits_to_b3.get(bits, 0b000)
-        return struct.pack('<B', cosine | ecc | b3)
+        return struct.pack('<B', ecc | b3)
 
-    def decode_cfb(cfb):
-        cosine = True if (cfb >> 7 & 0b1) == 0b1 else False # 0x08@0b111:    MDCT Toggle(Enabled if 1)
-        ecc = True if (cfb >> 4 & 0b1) == 0b1 else False    # 0x08@0b100:    ECC Toggle(Enabled if 1)
-        float_bits = cfb & 0b111                            # 0x08@0b010-3b: Stream bit depth
-        return cosine, ecc, float_bits
+    def decode_efb(efb):
+        ecc = True if (efb >> 4 & 0b1) == 0b1 else False    # 0x08@0b100:    ECC Toggle(Enabled if 1)
+        float_bits = efb & 0b111                            # 0x08@0b010-3b: Stream bit depth
+        return ecc, float_bits
 
     def uilder(
             # Fixed Header
