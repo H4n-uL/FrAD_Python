@@ -82,7 +82,7 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        nperseg = 2048
+        nperseg = 588
         ecc_dsize = 128
         ecc_codesize = 20
 
@@ -143,6 +143,7 @@ class encode:
 
                     # Applying ECC (This will make encoding thousands of times slower)
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
+                    else: ecc_dsize = ecc_codesize = 0
 
                     # WRITE
                     swv.write(b'\xff\xd4\xd2\x98' + \
