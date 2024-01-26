@@ -82,7 +82,7 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        nperseg = 588
+        nperseg = 2048
         ecc_dsize = 128
         ecc_codesize = 20
 
