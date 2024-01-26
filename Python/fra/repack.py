@@ -13,10 +13,8 @@ class repack:
                 header_length = struct.unpack('>Q', head[0x8:0x10])[0]
                 efb = struct.unpack('<B', head[0x10:0x11])[0]
                 is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
-                fsize = struct.unpack('<B', head[0x11:0x12])[0] >> 5   # 0x11@0b111-4b: Frame size
 
                 f.seek(header_length)
-                variables.nperseg = int(math.pow(2, fsize + 7))
             except KeyboardInterrupt:
                 sys.exit(1)
             try:

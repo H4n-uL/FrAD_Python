@@ -9,9 +9,6 @@ class ECCUnavailable(Exception):
     def __str__(self):
         return self.msg
 
-if ecc_v.data_size is None:
-    raise ECCUnavailable(f'ECC unavailable for this block size: {variables.nperseg}')
-
 rs = RSCodec(ecc_v.code_size, ecc_v.block_size)
 
 class ecc:

@@ -1,7 +1,6 @@
 import base64, math, os, platform, secrets
 
 class variables:
-    nperseg = int
     hash_block_size = 2**20
 
     dir = os.path.dirname(os.path.realpath(__file__))

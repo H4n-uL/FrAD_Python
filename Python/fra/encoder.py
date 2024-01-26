@@ -83,14 +83,14 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        variables.nperseg = 2048
+        nperseg = 2048
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
         segmax = (2**32 // ((ecc_v.mult if apply_ecc else 1) * channels * bits // (8 if mdct else 4))//4)*4
-        if variables.nperseg > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if variables.nperseg < 4: raise ValueError(f'Sample size must be at least 4.')
-        if variables.nperseg % 4 != 0 and mdct: raise ValueError('Sample size must be multiple of 4.')
+        if nperseg > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
+        if nperseg < 4: raise ValueError(f'Sample size must be at least 4.')
+        if nperseg % 4 != 0 and mdct: raise ValueError('Sample size must be multiple of 4.')
 
         encode.get_pcm(file_path)
 
@@ -125,7 +125,6 @@ class encode:
 
         # Fourier Transform
         try:
-            nperseg = variables.nperseg
             start_time = time.time()
             total_bytes = 0
             cli_width = 40
