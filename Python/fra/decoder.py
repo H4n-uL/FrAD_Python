@@ -43,8 +43,7 @@ class decode:
 
             f.seek(header_length)
 
-            if is_cosine: sample_size = {0b110: 16*channels, 0b101: 8*channels, 0b100: 6*channels, 0b011: 4*channels, 0b010: 3*channels, 0b001: 2*channels}[float_bits]
-            else: sample_size = {0b110: 32*channels, 0b101: 16*channels, 0b100: 12*channels, 0b011: 8*channels, 0b010: 6*channels, 0b001: 4*channels}[float_bits]
+            ssize_dict = {0b110: 16*channels, 0b101: 8*channels, 0b100: 6*channels, 0b011: 4*channels, 0b010: 3*channels, 0b001: 2*channels}
 
             # Inverse Fourier Transform #
             i = 0
@@ -70,7 +69,7 @@ class decode:
                     stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
                     stream.start()
 
-                    p = sample_size * sample_rate * speed
+                    p = ssize_dict[float_bits] * sample_rate * speed
                     if is_ecc_on: # When ECC
                         p = p // (ecc_dsize/frame) * (ecc_codesize/frame)
                     print()
@@ -92,7 +91,7 @@ class decode:
                         if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
                             block = b'\x00'*blocklength
                         # block = zlib.decompress(block)
-                        i += blocklength
+                        i += blocklength // (1 if is_cosine else 2)
 
                         if is_ecc_on:
                             block = ecc.unecc(block, ecc_dsize, ecc_codesize)
@@ -136,7 +135,7 @@ class decode:
                             if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
                                 block = b'\x00'*blocklength
                             # block = zlib.decompress(block)
-                            i += blocklength + 10
+                            i += blocklength + 10 // (1 if is_cosine else 2)
 
                             if is_ecc_on:
                                 block = ecc.unecc(block, ecc_dsize, ecc_codesize)
@@ -147,7 +146,7 @@ class decode:
                             if verbose:
                                 elapsed_time = time.time() - start_time
                                 bps = i / elapsed_time
-                                mult = bps / (sample_size * sample_rate)
+                                mult = bps / (ssize_dict[float_bits] * sample_rate)
                                 percent = i*100 / dlen
                                 b = int(percent / 100 * cli_width)
                                 print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
