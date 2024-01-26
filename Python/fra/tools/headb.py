@@ -1,5 +1,5 @@
 from .comment_block import cb
-import math, struct
+import struct
 
 bits_to_b3 = {
     128: 0b110,
@@ -11,24 +11,30 @@ bits_to_b3 = {
 }
 
 class headb:
+    def encode_cfb(cosine, isecc, bits):
+        cosine = (0b1 if cosine else 0b0) << 7
+        ecc = (0b1 if isecc else 0b0) << 4
+        b3 = bits_to_b3.get(bits, 0b000)
+        return struct.pack('<B', cosine | ecc | b3)
+
+    def decode_cfb(cfb):
+        cosine = True if (cfb >> 7 & 0b1) == 0b1 else False # 0x08@0b111:    MDCT Toggle(Enabled if 1)
+        ecc = True if (cfb >> 4 & 0b1) == 0b1 else False    # 0x08@0b100:    ECC Toggle(Enabled if 1)
+        float_bits = cfb & 0b111                            # 0x08@0b010-3b: Stream bit depth
+        return cosine, ecc, float_bits
+
     def uilder(
             # Fixed Header
             sample_rate: bytes, channel: int,
-            cosine: bool, isecc: bool, bits: int, md5: bytes,
+            md5: bytes,
 
             # Metadata
             meta = None, img: bytes = None):
-        b3 = bits_to_b3.get(bits, 0b000)
 
         signature = b'\x16\xb0\x03'
 
         channel_block = struct.pack('<B', channel - 1)
         sample_block = struct.pack('>I', sample_rate)
-
-        length = b'\x00'*8
-        cos = (0b1 if cosine else 0b0) << 7
-        ecc = (0b1 if isecc else 0b0) << 4
-        efb_struct = struct.pack('<B', cos | ecc | b3)
 
         blocks = bytes()
 
@@ -39,5 +45,5 @@ class headb:
 
         length = struct.pack('>Q', (256 + len(blocks)))
 
-        header = signature + channel_block + sample_block + length + efb_struct + (b'\x00'*223) + md5 + blocks
+        header = signature + channel_block + sample_block + length + (b'\x00'*224) + md5 + blocks
         return header

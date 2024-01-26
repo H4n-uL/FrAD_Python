@@ -1,6 +1,7 @@
-from .common import variables, ecc_v, methods
+from .common import variables, methods
 import hashlib, math, os, struct, sys, time, zlib
 from .tools.ecc import ecc
+from .tools.headb import headb
 
 class repack:
     def ecc(file_path, verbose: bool = False):
@@ -25,19 +26,35 @@ class repack:
                 with open(variables.temp, 'wb') as t:
                     if verbose: print()
                     while True:
+                        # Reading Frame Header
                         frame = f.read(16)
                         if not frame: break
-                        blocklength = struct.unpack('>I', frame[0x4:0x8])[0]
+                        blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B:       Audio Stream Frame length
+                        cfb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:          Cosine-Float Bit
+                        is_cosine, is_ecc_on, float_bits = headb.decode_cfb(cfb)
+                        channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:          Channels
+                        ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
+                        ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
+                        crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Data
+
+                        # Reading Block
                         block = f.read(blocklength)
-                        if zlib.crc32(block) != struct.unpack('>I', frame[0x8:0xc])[0]:
-                            block = b'\x00'*blocklength
                         # block = zlib.decompress(block)
                         total_bytes += blocklength
 
-                        if is_ecc_on: block = ecc.decode(block)
-                        block = ecc.encode(block)
+                        if is_ecc_on: block = ecc.decode(block, ecc_dsize, ecc_codesize)
+                        block = ecc.encode(block, ecc_dsize, ecc_codesize)
 
-                        t.write(b'\xff\xd4\xd2\x98' + struct.pack('>I', len(block)) + struct.pack('>I', zlib.crc32(block)) + (b'\x00'*4) + block)
+                        # WRITE
+                        t.write(b'\xff\xd4\xd2\x98' + \
+                              struct.pack('>I', len(block)) + \
+                              headb.encode_cfb(is_cosine, True, float_bits) + \
+                              struct.pack('>B', channels - 1) + \
+                              struct.pack('>B', ecc_dsize) + \
+                              struct.pack('>B', ecc_codesize) + \
+                              struct.pack('>I', zlib.crc32(block)) + \
+                              
+                              block)
 
                         if verbose:
                             total_bytes += len(block)

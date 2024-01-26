@@ -1,7 +1,7 @@
-from .common import variables, ecc_v
+from .common import variables
 from .cosine import cosine
 from .fourier import fourier
-import hashlib, json, math, os, shutil, struct, subprocess, sys, time, zlib
+import hashlib, json, os, shutil, struct, subprocess, sys, time, zlib
 import numpy as np
 from scipy.signal import resample
 from .tools.ecc import ecc
@@ -84,10 +84,12 @@ class encode:
                 meta = None, img: bytes = None,
                 verbose: bool = False):
         nperseg = 2048
+        ecc_dsize = 128
+        ecc_codesize = 20
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
-        segmax = (2**32 // ((ecc_v.mult if apply_ecc else 1) * channels * bits // (8 if mdct else 4))//4)*4
+        segmax = (2**32 // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * bits // (8 if mdct else 4))//4)*4
         if nperseg > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if nperseg < 4: raise ValueError(f'Sample size must be at least 4.')
         if nperseg % 4 != 0 and mdct: raise ValueError('Sample size must be multiple of 4.')
@@ -136,14 +138,24 @@ class encode:
                 if verbose: print('\n')
                 while True:
                     p = pcm.read(nperseg * 4 * channels)                           # Reading PCM
-                    if not p: break                                               # if no data, Break
+                    if not p: break                                                # if no data, Break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
                     if mdct: segment = cosine.analogue(block, bits, channels)      # Cosine Transform
                     else: segment = fourier.analogue(block, bits, channels)        # Fourier Transform
 
-                    if apply_ecc: segment = ecc.encode(segment)                   # Applying ECC (This will make encoding thousands of times slower)
+                    # Applying ECC (This will make encoding thousands of times slower)
+                    if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
+
                     # WRITE
-                    swv.write(b'\xff\xd4\xd2\x98' + struct.pack('>I', len(segment)) + struct.pack('>I', zlib.crc32(segment)) + (b'\x00'*4) + segment)
+                    swv.write(b'\xff\xd4\xd2\x98' + \
+                              struct.pack('>I', len(segment)) + \
+                              headb.encode_cfb(mdct, apply_ecc, bits) + \
+                              struct.pack('>B', channels - 1) + \
+                              struct.pack('>B', ecc_dsize) + \
+                              struct.pack('>B', ecc_codesize) + \
+                              struct.pack('>I', zlib.crc32(segment)) + \
+
+                              segment)
 
                     if verbose:
                         total_bytes += len(block) * sample_size
@@ -178,8 +190,7 @@ class encode:
 
             # Moulding header
             h = headb.uilder(sample_rate, channel=channels,
-                cosine=mdct, bits=bits,
-                isecc=apply_ecc, md5=checksum,
+                md5=checksum,
                 meta=meta, img=img)
 
             # Setting file extension
