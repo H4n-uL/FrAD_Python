@@ -13,16 +13,19 @@ class ecc:
         for i in range(0, len(data), chunk_size): yield data[i:i+chunk_size]
 
     def encode(data, ecc_dsize, ecc_codesize):
+        print(len(data))
         blocksize = ecc_dsize + ecc_codesize
-        rs = RSCodec(ecc_codesize, blocksize, c_exp=9)
+        rs = RSCodec(ecc_codesize, blocksize)
 
         chunks = ecc.split_data(data, ecc_dsize)
         encoded_chunks = [bytes(rs.encode(chunk)) for chunk in chunks]
-        return b''.join(encoded_chunks)
+        data = b''.join(encoded_chunks)
+        print(len(data))
+        return data
 
     def decode(data, ecc_dsize, ecc_codesize):
         blocksize = ecc_dsize + ecc_codesize
-        rs = RSCodec(ecc_codesize, blocksize, c_exp=9)
+        rs = RSCodec(ecc_codesize, blocksize)
 
         chunks = ecc.split_data(data, blocksize)
         try: decoded_chunks = [bytes(rs.decode(chunk)[0]) for chunk in chunks]
