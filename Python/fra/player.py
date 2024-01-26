@@ -1,7 +1,4 @@
 from .decoder import decode
-import sounddevice as sd
-import threading
-import time
 
 class player:
     def play(file_path, keys: float = None, speed_in_times: float = None, e: bool = False, verbose: bool = False):
