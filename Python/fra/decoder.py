@@ -101,7 +101,7 @@ class decode:
                             segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                             stream.write(segment)
 
-                            i += blocklength / ssize_dict[float_bits]
+                            i += blocklength / ssize_dict[float_bits] * (ecc_dsize / (ecc_codesize+ecc_dsize) if is_ecc_on else 1)
                             frameNo += 1
 
                             print('\x1b[1A\x1b[2K', end='')
