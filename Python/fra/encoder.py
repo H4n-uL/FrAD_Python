@@ -145,6 +145,8 @@ class encode:
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
                     else: ecc_dsize = ecc_codesize = 0
 
+                    # block = zlib.compress(block)
+
                     # WRITE
                     swv.write(b'\xff\xd0\xd2\x97' + \
                               struct.pack('>I', len(segment)) + \

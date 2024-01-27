@@ -33,12 +33,8 @@ class decode:
                     md5.update(d)
                 checksum_data = md5.digest()
                 if checksum_data != checksum_header:
-                    if is_ecc_on == False:
-                        print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
-                        raise Exception(f'{file_path} has corrupted but it has no ECC option. Decoder halted.')
-                    else:
-                        print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
-                        raise Exception(f'{file_path} has been corrupted, Please repack your file for the best music experience.')
+                    print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
+                    print(f'{file_path} has been corrupted, Please repack your file via \'ecc\' option for the best music experience.')
 
             f.seek(header_length)
 
@@ -92,12 +88,13 @@ class decode:
 
                             # Reading Block
                             block = f.read(blocklength)
-                            if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
-                                block = b'\x00'*blocklength
                             # block = zlib.decompress(block)
 
                             if is_ecc_on:
-                                block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+                                if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
+                                    block = ecc.decode(block, ecc_dsize, ecc_codesize)
+                                else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+
                             segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
                             stream.write(segment)
 
@@ -137,13 +134,14 @@ class decode:
 
                             # Reading Block
                             block = f.read(blocklength)
-                            if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
-                                block = b'\x00'*blocklength
                             # block = zlib.decompress(block)
                             i += blocklength + 16
 
                             if is_ecc_on:
-                                block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+                                if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
+                                    block = ecc.decode(block, ecc_dsize, ecc_codesize)
+                                else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+
                             segment = fourier.digital(block, float_bits, bits, channels) # Inversing
                             p.write(segment)
 
