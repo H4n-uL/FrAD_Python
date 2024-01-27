@@ -118,15 +118,17 @@ class encode:
                     # block = zlib.compress(block)
 
                     # WRITE
-                    swv.write(b'\xff\xd0\xd2\x97' + \
-                              struct.pack('>I', len(segment)) + \
-                              headb.encode_efb(apply_ecc, bits) + \
-                              struct.pack('>B', channels - 1) + \
-                              struct.pack('>B', ecc_dsize) + \
-                              struct.pack('>B', ecc_codesize) + \
-                              struct.pack('>I', zlib.crc32(segment)) + \
+                    swv.write(
+                        b'\xff\xd0\xd2\x97' + \
+                        struct.pack('>I', len(segment)) + \
+                        headb.encode_efb(apply_ecc, bits) + \
+                        struct.pack('>B', channels - 1) + \
+                        struct.pack('>B', ecc_dsize) + \
+                        struct.pack('>B', ecc_codesize) + \
+                        struct.pack('>I', zlib.crc32(segment)) + \
 
-                              segment)
+                        segment
+                    )
 
                     if verbose:
                         total_bytes += len(block) * sample_size
