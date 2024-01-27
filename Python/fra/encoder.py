@@ -112,7 +112,6 @@ class encode:
 
                     # Applying ECC (This will make encoding thousands of times slower)
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
-                    else: ecc_dsize = ecc_codesize = 0
 
                     # block = zlib.compress(block)
 
@@ -122,8 +121,8 @@ class encode:
                         struct.pack('>I', len(segment)) + \
                         headb.encode_efb(apply_ecc, bits) + \
                         struct.pack('>B', channels - 1) + \
-                        struct.pack('>B', ecc_dsize) + \
-                        struct.pack('>B', ecc_codesize) + \
+                        struct.pack('>B', ecc_dsize if apply_ecc else 0) + \
+                        struct.pack('>B', ecc_codesize if apply_ecc else 0) + \
                         struct.pack('>I', zlib.crc32(segment)) + \
 
                         segment
