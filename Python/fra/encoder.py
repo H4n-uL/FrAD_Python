@@ -192,13 +192,15 @@ class encode:
                 md5=checksum,
                 meta=meta, img=img)
 
+            if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
+
             # Setting file extension
             if not (out.lower().endswith('.frad') or out.lower().endswith('.dsin') or out.lower().endswith('.fra') or out.lower().endswith('.dsn')):
                 if len(out) <= 8: out += '.fra'
                 else: out += '.frad'
 
             # Creating Fourier Analogue-in-Digital File
-            with open(out if out is not None else'fourierAnalogue.fra', 'wb') as file:
+            with open(out, 'wb') as file:
                 file.write(h)
                 with open(variables.temp, 'r+b') as swv:
                     while True:

@@ -21,9 +21,8 @@ def main(action, args):
 
     if action == 'encode':
         from fra import encode
-        output = args.output if args.output else 'fourierAnalogue.fra'
         nsr = None if args.nsr == None else int(args.nsr)
-        encode.enc(input, int(args.bits), out=output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img, verbose=args.verbose)
+        encode.enc(input, int(args.bits), out=args.output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img, verbose=args.verbose)
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)

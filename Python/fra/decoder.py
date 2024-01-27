@@ -304,8 +304,9 @@ class decode:
                     if ext: codec = ext
                     else:   codec = ext = 'flac'
             else:
-                if codec:   out = 'restored'; ext = codec
-                else:       codec = ext = 'flac'; out = 'restored'
+                out = os.path.basename(file_path).rsplit('.', 1)[0]
+                if codec:   ext = codec
+                else:       codec = ext = 'flac'
 
             # Checking Codec and Muxers
             if codec in ['vorbis', 'opus', 'speex']:
