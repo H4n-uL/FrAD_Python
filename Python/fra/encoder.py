@@ -80,7 +80,7 @@ class encode:
                 out: str = None, apply_ecc: bool = False,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        nperseg = 2048
+        nperseg = 705600
         ecc_dsize = 128
         ecc_codesize = 20
 
@@ -176,9 +176,9 @@ class encode:
                 file.write(h)
                 with open(variables.temp, 'r+b') as swv:
                     while True:
-                        block = swv.read()
-                        if block: file.write(block)
-                        else: break
+                        block = swv.read(1048576)
+                        if not block: break
+                        file.write(block)
                 os.remove(variables.temp)
         except KeyboardInterrupt:
             print('Aborting...')
