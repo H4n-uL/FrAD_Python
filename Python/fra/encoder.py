@@ -82,7 +82,7 @@ class encode:
                 new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        nperseg = 2048
+        nperseg = 588
         ecc_dsize = 128
         ecc_codesize = 20
 
@@ -146,7 +146,7 @@ class encode:
                     else: ecc_dsize = ecc_codesize = 0
 
                     # WRITE
-                    swv.write(b'\xff\xd4\xd2\x98' + \
+                    swv.write(b'\xff\xd0\xd2\x97' + \
                               struct.pack('>I', len(segment)) + \
                               headb.encode_efb(apply_ecc, bits) + \
                               struct.pack('>B', channels - 1) + \

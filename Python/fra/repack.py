@@ -46,7 +46,7 @@ class repack:
                         block = ecc.encode(block, ecc_dsize, ecc_codesize)
 
                         # WRITE
-                        t.write(b'\xff\xd4\xd2\x98' + \
+                        t.write(b'\xff\xd0\xd2\x97' + \
                               struct.pack('>I', len(block)) + \
                               headb.encode_efb(True, float_bits) + \
                               struct.pack('>B', channels - 1) + \
