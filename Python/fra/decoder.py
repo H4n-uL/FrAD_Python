@@ -51,12 +51,12 @@ class decode:
             while True:
                 frame = f.read(16)
                 if not frame: break
-                blocklength = struct.unpack('>I', frame[0x4:0x8])[0]   # 0x04-4B:       Audio Stream Frame length
-                efb = struct.unpack('>B', frame[0x8:0x9])[0]           # 0x08:          Cosine-Float Bit
+                blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B:       Audio Stream Frame length
+                efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:          Cosine-Float Bit
                 is_ecc_on, float_bits = headb.decode_efb(efb)
                 ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
                 ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
-                crc32 = frame[0xc:0x10]                                # 0x0c-4B:       ISO 3309 CRC32 of Audio Data
+                crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Data
 
                 if is_ecc_on: duration += (blocklength // (ecc_dsize+ecc_codesize) * ecc_dsize // ssize_dict[float_bits])
                 else: duration += (blocklength // ssize_dict[float_bits])
@@ -78,13 +78,13 @@ class decode:
                             # Reading Frame Header
                             frame = f.read(16)
                             if not frame: break
-                            blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B:       Audio Stream Frame length
-                            efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:          Cosine-Float Bit
+                            blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B: Audio Stream Frame length
+                            efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:    Cosine-Float Bit
                             is_ecc_on, float_bits = headb.decode_efb(efb)
-                            channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:          Channels
-                            ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
-                            ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
-                            crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Data
+                            channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
+                            ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:    ECC Data block size
+                            ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:    ECC Code size
+                            crc32 = frame[0xc:0x10]                               # 0x0c-4B: ISO 3309 CRC32 of Audio Data
 
                             # Reading Block
                             block = f.read(blocklength)
@@ -124,13 +124,13 @@ class decode:
                             # Reading Frame Header
                             frame = f.read(16)
                             if not frame: break
-                            blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B:       Audio Stream Frame length
-                            efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:          Cosine-Float Bit
+                            blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B: Audio Stream Frame length
+                            efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:    Cosine-Float Bit
                             is_ecc_on, float_bits = headb.decode_efb(efb)
-                            channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:          Channels
-                            ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
-                            ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
-                            crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Data
+                            channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
+                            ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:    ECC Data block size
+                            ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:    ECC Code size
+                            crc32 = frame[0xc:0x10]                               # 0x0c-4B: ISO 3309 CRC32 of Audio Data
 
                             # Reading Block
                             block = f.read(blocklength)
