@@ -79,7 +79,6 @@ class encode:
 
     def enc(file_path: str, bits: int,
                 out: str = None, apply_ecc: bool = False,
-                new_sample_rate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
         nperseg = 2048
@@ -94,35 +93,6 @@ class encode:
         if nperseg % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
 
         encode.get_pcm(file_path)
-
-        try:
-            # Resampling
-            if codec in ['dsd_lsbf_planar', 'dsd_msbf']: new_sample_rate = sample_rate * 8 // bits
-            if new_sample_rate:
-              try:
-                with open(variables.temp_pcm, 'rb') as pcmb:
-                  with open(variables.temp2_pcm, 'wb') as pcma:
-                    while True:
-                        wv = pcmb.read(sample_rate * channels * 4)
-                        if not wv: break
-                        block = np.frombuffer(wv, dtype=np.int32).reshape(-1, channels)
-                        resdata = np.zeros((new_sample_rate, channels))
-                        for i in range(channels):
-                            resdata[:, i] = resample(block[:, i], new_sample_rate)
-                        pcma.write(resdata.astype(np.int32).tobytes())
-                shutil.move(variables.temp2_pcm, variables.temp_pcm)
-              except KeyboardInterrupt:
-                os.remove(variables.temp_pcm)
-                os.remove(variables.temp2_pcm)
-                sys.exit(1)
-
-            # Applying Sample rate
-            sample_rate = (new_sample_rate if new_sample_rate is not None else sample_rate)
-
-        except KeyboardInterrupt: 
-            print('Aborting...')
-            os.remove(variables.temp_pcm)
-            sys.exit(1)
 
         # Fourier Transform
         try:

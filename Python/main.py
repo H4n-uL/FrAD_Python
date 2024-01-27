@@ -21,8 +21,7 @@ def main(action, args):
 
     if action == 'encode':
         from fra import encode
-        nsr = None if args.nsr == None else int(args.nsr)
-        encode.enc(input, int(args.bits), out=args.output, apply_ecc=args.ecc, new_sample_rate=nsr, meta=meta, img=img, verbose=args.verbose)
+        encode.enc(input, int(args.bits), out=args.output, apply_ecc=args.ecc, meta=meta, img=img, verbose=args.verbose)
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
@@ -70,7 +69,6 @@ if __name__ == '__main__':
     parser.add_argument('input',                                                                                           help='input file path')
     parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                                help='output file path')
     parser.add_argument('-b',   '--bits', '--bit',                          required=False,                                help='output file bit depth')
-    parser.add_argument('-n',   '--nsr', '--new_sample_rate',               required=False,                                help='resample as new sample rate')
     parser.add_argument('-img', '--image',                                  required=False,                                help='image file path')
     parser.add_argument('-c',   '--codec',                                  required=False,                                help='codec type')
     parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true',  help='enable ecc')
