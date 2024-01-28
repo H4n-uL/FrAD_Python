@@ -18,7 +18,7 @@ class dsd:
 
         return bitstream
 
-    def build_dff_header(datalen, channels, sample_rate):
+    def build_dff_header(datalen: int, channels: int, sample_rate: int):
         CMPR = base64.b64decode('RFNEIA9ub3QgY29tcHJlc3NlZAA=')
 
         PROP = bytes(
@@ -40,19 +40,19 @@ class dsd:
         HEAD[0x4:0xc] = struct.pack('>Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
-    def build_dsf_header(datalen, chtype, sample_rate, dsfblock):
+    def build_dsf_header(datalen: int, chtype: int, sample_rate: int, dsfblock: int, lsbf: bool):
         channels = chtype - 1 if chtype > 4 else chtype
         FMT = bytearray(
             b'fmt ' + struct.pack('<Q', 52) + 
-            struct.pack('<I', 1) +                       # Version
-            struct.pack('<I', 0) +                       # Format ID
-            struct.pack('<I', chtype) +                  # Channel Type
+            struct.pack('<I', 1) +                        # Version
+            struct.pack('<I', 0) +                        # Format ID
+            struct.pack('<I', chtype) +                   # Channel Type
             struct.pack('<I', channels) +
             struct.pack('<I', sample_rate) +
-            struct.pack('<I', 1) +                       # Sample bits
-            struct.pack('<Q', datalen * 8 // channels) + # Sample count
-            struct.pack('<I', dsfblock) +                # Block size / channel
-            struct.pack('<I', 0)                         # Reserved
+            struct.pack('<I', 1 if lsbf == True else 8) + # Sample bits
+            struct.pack('<Q', datalen * 8 // channels) +  # Sample count
+            struct.pack('<I', dsfblock) +                 # Block size / channel
+            struct.pack('<I', 0)                          # Reserved
         )
         FMT[0x4:0xc] = struct.pack('<Q', len(FMT))
         FMT = bytes(FMT)
@@ -99,6 +99,7 @@ if __name__ == '__main__':
     channels = 2
     temp_file = f'temp.{base64.b64encode(secrets.token_bytes(6)).decode().replace("/", "_")}.dsd'
     dsfblock = 4096
+    lsbf = True
 
     # DSF #
     try:
@@ -111,12 +112,12 @@ if __name__ == '__main__':
 
                 for i in range(0, len(data_numpy), dsfblock):
                     freq = [data_numpy[i:i+dsfblock][j::channels] for j in range(channels)]
-                    block = np.column_stack([dsd.delta_sigma(c, True) for c in freq]).ravel(order='C').tobytes()
+                    block = np.column_stack([dsd.delta_sigma(c, lsbf) for c in freq]).ravel(order='C').tobytes()
                     temp.write(block)
 
                 temp.write(block)
                 dlen = os.path.getsize(temp_file)
                 with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
-                    dsdfile.write(dsd.build_dsf_header(dlen, channels, 2822400, dsfblock) + trd.read())
+                    dsdfile.write(dsd.build_dsf_header(dlen, channels, 2822400, dsfblock, lsbf) + trd.read())
     except KeyboardInterrupt: pass
     finally: os.remove(temp_file)
