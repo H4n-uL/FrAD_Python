@@ -42,7 +42,7 @@ class dsd:
 
     def build_dsf_header(datalen, chtype, sample_rate):
         channels = chtype - 1 if chtype > 4 else chtype
-        FMT = bytes(
+        FMT = bytearray(
             b'fmt ' + struct.pack('<Q', 52) + 
             struct.pack('<I', 1) +                       # Version
             struct.pack('<I', 0) +                       # Format ID
@@ -54,21 +54,22 @@ class dsd:
             struct.pack('<I', 4096) +                    # Block size / channel
             struct.pack('<I', 0)                         # Reserved
         )
+        FMT[0x4:0xc] = struct.pack('>Q', len(FMT))
+        FMT = bytes(FMT)
 
         DATA = bytes(
             b'data' +
             struct.pack('<Q', datalen + 12)
         )
 
-        HEAD = bytes(
+        HEAD = bytearray(
             b'DSD ' + 
             struct.pack('<Q', 28) + 
-            struct.pack('<Q', datalen + 92) + 
+            struct.pack('<Q', 0) + # Data length padding
             struct.pack('<Q', 0) + # Metadata location
             FMT + DATA
         )
-
-        HEAD[0x4:0xc] = struct.pack('>Q', len(HEAD) + datalen)
+        HEAD[0xc:0x14] = struct.pack('>Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
 if __name__ == '__main__':
@@ -110,6 +111,6 @@ if __name__ == '__main__':
                 temp.write(block)
                 dlen = os.path.getsize(temp_file)
                 with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
-                    dsdfile.write(dsd.build_dsf_header(dlen, channels_batch, 2822400) + trd.read())
+                    dsdfile.write(dsd.build_dsf_header(dlen, channels, 2822400) + trd.read())
     except KeyboardInterrupt: pass
     finally: os.remove(temp_file)
