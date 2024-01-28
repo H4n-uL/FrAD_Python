@@ -82,12 +82,12 @@ if __name__ == '__main__':
                 if not block: break
                 data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**32
                 freq = [data_numpy[i::len(channels_batch)] for i in range(len(channels_batch))]
-                block = np.column_stack([dsd.delta_sigma(c, False) for c in freq]).ravel(order='C').tobytes()
+                block = np.column_stack([dsd.delta_sigma(c) for c in freq]).ravel(order='C').tobytes()
                 temp.write(block)
                 dlen = os.path.getsize(temp_file)
                 with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
                     dsdfile.write(dsd.build_dff_header(dlen, channels_batch, 2822400) + trd.read())
-    except: pass
+    except KeyboardInterrupt: pass
     finally: os.remove(temp_file)
 
     dsd_name = 'output.dsf'
