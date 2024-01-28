@@ -80,7 +80,7 @@ class encode:
                 out: str = None, apply_ecc: bool = False,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        nperseg = 705600
+        nperseg = 2048
         ecc_dsize = 128
         ecc_codesize = 20
 
