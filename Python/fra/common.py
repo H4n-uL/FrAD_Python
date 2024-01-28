@@ -1,4 +1,6 @@
 import base64, os, platform, secrets
+import numpy as np
+from scipy import interpolate
 
 class variables:
     hash_block_size = 2**20
@@ -35,5 +37,13 @@ class methods:
         if sign != b'\x16\xb0\x03':
             raise Exception('This is not Fourier Analogue file.')
 
-    def get_ecc():
-        pass
+    def resample_1sec(x, sample_rate):
+        original_length = len(x)
+        pad_length = sample_rate - (original_length % sample_rate)
+        padded_x = np.pad(x, (0, pad_length), 'constant')
+        t_original = np.arange(len(padded_x)) / original_length
+        t_upsampled = np.arange(sample_rate) / sample_rate
+        interpolator = interpolate.interp1d(t_original, padded_x, kind='cubic', assume_sorted=True)
+        upsampled_x = interpolator(t_upsampled)
+        return_length = int((sample_rate / original_length) * len(upsampled_x))
+        return upsampled_x[:return_length]
