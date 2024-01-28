@@ -10,7 +10,7 @@ class dsd:
             integrator_state += x[i] - quantizer_state
             quantizer_state = 1 if integrator_state > 0 else -1
             bitstream[i] = 1 if quantizer_state==1 else 0
-        
+
         return np.packbits([int(b)for b in bitstream])
 
     def build_dff_header(datalen: int, channels: int, sample_rate: int):
