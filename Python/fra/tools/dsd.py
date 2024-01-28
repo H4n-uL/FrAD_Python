@@ -2,7 +2,7 @@ import base64, os, secrets, struct
 import numpy as np
 
 class dsd:
-    def delta_sigma(x, lsbf=False):
+    def delta_sigma(x):
         integrator_state, quantizer_state = 0, 0
         bitstream = np.zeros_like(x)
 
@@ -10,13 +10,8 @@ class dsd:
             integrator_state += x[i] - quantizer_state
             quantizer_state = 1 if integrator_state > 0 else -1
             bitstream[i] = 1 if quantizer_state==1 else 0
-
-        bitstream = np.packbits([int(b)for b in bitstream])
-
-        if lsbf == True:
-            bitstream = bytes([int('{:08b}'.format(b)[::-1], 2) for b in bitstream])
-
-        return bitstream
+        
+        return np.packbits([int(b)for b in bitstream])
 
     def build_dff_header(datalen: int, channels: int, sample_rate: int):
         CMPR = base64.b64decode('RFNEIA9ub3QgY29tcHJlc3NlZAA=')
@@ -40,7 +35,7 @@ class dsd:
         HEAD[0x4:0xc] = struct.pack('>Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
-    def build_dsf_header(datalen: int, chtype: int, sample_rate: int, dsfblock: int, lsbf: bool):
+    def build_dsf_header(datalen: int, chtype: int, sample_rate: int):
         channels = chtype - 1 if chtype > 4 else chtype
         FMT = bytearray(
             b'fmt ' + struct.pack('<Q', 52) + 
@@ -49,9 +44,9 @@ class dsd:
             struct.pack('<I', chtype) +                   # Channel Type
             struct.pack('<I', channels) +
             struct.pack('<I', sample_rate) +
-            struct.pack('<I', 1 if lsbf == True else 8) + # Sample bits
+            struct.pack('<I', 8) +                        # Sample bits
             struct.pack('<Q', datalen * 8 // channels) +  # Sample count
-            struct.pack('<I', dsfblock) +                 # Block size / channel
+            struct.pack('<I', 1) +                        # Block size / channel
             struct.pack('<I', 0)                          # Reserved
         )
         FMT[0x4:0xc] = struct.pack('<Q', len(FMT))
@@ -98,26 +93,19 @@ if __name__ == '__main__':
     dsd_name = 'output.dsf'
     channels = 2
     temp_file = f'temp.{base64.b64encode(secrets.token_bytes(6)).decode().replace("/", "_")}.dsd'
-    dsfblock = 4096
-    lsbf = True
 
     # DSF #
     try:
         with open(pcm_name, 'rb') as pcm, open(temp_file, 'wb') as temp:
             while True:
-                block = pcm.read(4 * channels * 1048576 * dsfblock)
+                block = pcm.read(4 * channels * 1048576)
                 if not block: break
                 data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**32
                 freq = [data_numpy[i::channels] for i in range(channels)]
-
-                for i in range(0, len(data_numpy), dsfblock):
-                    freq = [data_numpy[i:i+dsfblock][j::channels] for j in range(channels)]
-                    block = np.column_stack([dsd.delta_sigma(c, lsbf) for c in freq]).ravel(order='C').tobytes()
-                    temp.write(block)
-
+                block = np.column_stack([dsd.delta_sigma(c) for c in freq]).ravel(order='C').tobytes()
                 temp.write(block)
                 dlen = os.path.getsize(temp_file)
                 with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
-                    dsdfile.write(dsd.build_dsf_header(dlen, channels, 2822400, dsfblock, lsbf) + trd.read())
+                    dsdfile.write(dsd.build_dsf_header(dlen, channels, 2822400) + trd.read())
     except KeyboardInterrupt: pass
     finally: os.remove(temp_file)
