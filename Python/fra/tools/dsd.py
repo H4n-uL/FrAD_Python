@@ -95,27 +95,3 @@ if __name__ == '__main__':
                     dsdfile.write(dsd.build_dff_header(dlen, channels_batch, dsd_srate) + trd.read())
     except KeyboardInterrupt: pass
     finally: os.remove(temp_file)
-
-    dsd_name = 'output.dsf'
-    channels = 2
-    temp_file = f'temp.{base64.b64encode(secrets.token_bytes(6)).decode().replace("/", "_")}.dsd'
-
-    # DSF #
-    try:
-        with open(pcm_name, 'rb') as pcm, open(temp_file, 'wb') as temp:
-            while True:
-                block = pcm.read(4 * channels * srate)
-                if not block: break
-                data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**32
-                freq = [data_numpy[i::channels] for i in range(channels)]
-                resampled = [dsd.delta_sigma(methods.resample_1sec(c, dsd_srate)) for c in freq]
-
-                reshaped = [np.array(c).reshape(-1, len(c)) for c in resampled]
-                interleaved = np.column_stack(reshaped).T.ravel(order='C').tobytes()
-
-                temp.write(interleaved)
-                dlen = os.path.getsize(temp_file)
-                with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
-                    dsdfile.write(dsd.build_dsf_header(dlen, channels, dsd_srate, len(reshaped[0][0])) + trd.read())
-    except KeyboardInterrupt: pass
-    finally: os.remove(temp_file)
