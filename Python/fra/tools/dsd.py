@@ -42,6 +42,7 @@ if __name__ == '__main__':
     with open(pcm_name, 'rb') as pcm, open('temp.dsd', 'wb') as temp:
         while True:
             block = pcm.read(4 * len(channels_batch) * 1048576)
+            if not block: break
             data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**32
             freq = [data_numpy[i::len(channels_batch)] for i in range(len(channels_batch))]
             block = np.column_stack([dsd.delta_sigma_msbf(c).astype(np.uint8) for c in freq]).ravel(order='C').tobytes()
