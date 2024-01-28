@@ -54,7 +54,7 @@ class dsd:
             struct.pack('<I', 4096) +                    # Block size / channel
             struct.pack('<I', 0)                         # Reserved
         )
-        FMT[0x4:0xc] = struct.pack('>Q', len(FMT))
+        FMT[0x4:0xc] = struct.pack('<Q', len(FMT))
         FMT = bytes(FMT)
 
         DATA = bytes(
@@ -69,7 +69,7 @@ class dsd:
             struct.pack('<Q', 0) + # Metadata location
             FMT + DATA
         )
-        HEAD[0xc:0x14] = struct.pack('>Q', len(HEAD) + datalen)
+        HEAD[0xc:0x14] = struct.pack('<Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
 if __name__ == '__main__':
