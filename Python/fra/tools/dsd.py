@@ -94,7 +94,7 @@ if __name__ == '__main__':
     except: pass
     finally: os.remove()
 
-    dsd_name = temp_file
+    dsd_name = 'output.dsf'
     channels = 2
     temp_file = f'temp.{base64.b64encode(secrets.token_bytes(6)).decode().replace("/", "_")}.dsd'
 
