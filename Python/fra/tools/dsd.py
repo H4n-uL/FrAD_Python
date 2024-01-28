@@ -92,7 +92,7 @@ if __name__ == '__main__':
                 with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
                     dsdfile.write(dsd.build_dff_header(dlen, channels_batch, 2822400) + trd.read())
     except: pass
-    finally: os.remove()
+    finally: os.remove(temp_file)
 
     dsd_name = 'output.dsf'
     channels = 2
@@ -112,4 +112,4 @@ if __name__ == '__main__':
                 with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
                     dsdfile.write(dsd.build_dsf_header(dlen, channels_batch, 2822400) + trd.read())
     except: pass
-    finally: os.remove()
+    finally: os.remove(temp_file)
