@@ -53,7 +53,7 @@ class repack:
                               struct.pack('>B', ecc_dsize) + \
                               struct.pack('>B', ecc_codesize) + \
                               struct.pack('>I', zlib.crc32(block)) + \
-                              
+
                               block)
 
                         if verbose:

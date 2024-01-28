@@ -64,7 +64,7 @@ class decode:
                 dlen += blocklength
                 framescount += 1
                 f.read(blocklength)
-            
+
             dur_sec = duration / (sample_rate*speed)
             f.seek(header_length)
 
