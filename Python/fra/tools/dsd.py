@@ -40,7 +40,7 @@ class dsd:
         HEAD[0x4:0xc] = struct.pack('>Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
-    def build_dsf_header(datalen, chtype, sample_rate):
+    def build_dsf_header(datalen, chtype, sample_rate, dsfblock):
         channels = chtype - 1 if chtype > 4 else chtype
         FMT = bytearray(
             b'fmt ' + struct.pack('<Q', 52) + 
@@ -51,7 +51,7 @@ class dsd:
             struct.pack('<I', sample_rate) +
             struct.pack('<I', 1) +                       # Sample bits
             struct.pack('<Q', datalen * 8 // channels) + # Sample count
-            struct.pack('<I', 4096) +                    # Block size / channel
+            struct.pack('<I', dsfblock) +                # Block size / channel
             struct.pack('<I', 0)                         # Reserved
         )
         FMT[0x4:0xc] = struct.pack('<Q', len(FMT))
@@ -98,19 +98,25 @@ if __name__ == '__main__':
     dsd_name = 'output.dsf'
     channels = 2
     temp_file = f'temp.{base64.b64encode(secrets.token_bytes(6)).decode().replace("/", "_")}.dsd'
+    dsfblock = 4096
 
     # DSF #
     try:
         with open(pcm_name, 'rb') as pcm, open(temp_file, 'wb') as temp:
             while True:
-                block = pcm.read(4 * channels * 1048576)
+                block = pcm.read(4 * channels * 1048576 * dsfblock)
                 if not block: break
                 data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**32
                 freq = [data_numpy[i::channels] for i in range(channels)]
-                block = np.column_stack([dsd.delta_sigma(c, True) for c in freq]).ravel(order='C').tobytes()
+
+                for i in range(0, len(data_numpy), dsfblock):
+                    freq = [data_numpy[i:i+dsfblock][j::channels] for j in range(channels)]
+                    block = np.column_stack([dsd.delta_sigma(c, True) for c in freq]).ravel(order='C').tobytes()
+                    temp.write(block)
+
                 temp.write(block)
                 dlen = os.path.getsize(temp_file)
                 with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
-                    dsdfile.write(dsd.build_dsf_header(dlen, channels, 2822400) + trd.read())
+                    dsdfile.write(dsd.build_dsf_header(dlen, channels, 2822400, dsfblock) + trd.read())
     except KeyboardInterrupt: pass
     finally: os.remove(temp_file)
