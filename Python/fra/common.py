@@ -1,6 +1,6 @@
 import base64, os, platform, secrets
 import numpy as np
-from scipy import interpolate
+from scipy.interpolate import interp1d
 
 class variables:
     hash_block_size = 2**20
@@ -37,13 +37,36 @@ class methods:
         if sign != b'\x16\xb0\x03':
             raise Exception('This is not Fourier Analogue file.')
 
-    def resample_1sec(x, sample_rate):
-        original_length = len(x)
-        pad_length = sample_rate - (original_length % sample_rate)
-        padded_x = np.pad(x, (0, pad_length), 'constant')
-        t_original = np.arange(len(padded_x)) / original_length
-        t_upsampled = np.arange(sample_rate) / sample_rate
-        interpolator = interpolate.interp1d(t_original, padded_x, kind='cubic', assume_sorted=True)
-        upsampled_x = interpolator(t_upsampled)
-        return_length = int((sample_rate / original_length) * len(upsampled_x))
-        return upsampled_x[:return_length]
+    def resample_1sec(data, sr_origin, sr_new):
+        len_orig = len(data)
+
+        # Padding
+        padding = sr_origin - len_orig
+        if padding > 0:
+            data = np.pad(data, (0, padding), 'constant')
+
+        # Linear Prediction
+        if len_orig >= 2:
+            slope = (data[-1] - data[-2]) / (1 / sr_origin)
+            predicted_value = data[-1] + slope / sr_origin
+        else:
+            predicted_value = data[-1]
+
+        data = np.append(data, predicted_value)
+
+        # Resampling
+        new_length = (len_orig + padding) * (sr_new + 1) // sr_origin
+        new_time_axis = np.linspace(0, (len_orig + padding) / sr_origin, new_length, endpoint=False)
+
+        time_axis = np.linspace(0, (len_orig + padding) / sr_origin, len_orig + padding + 1)
+        interpolator = interp1d(time_axis, data, kind='cubic')
+        resampled_data = interpolator(new_time_axis)
+
+        # Unpadding
+        if padding > 0:
+            padding_to_remove = int(padding / sr_origin * sr_new)
+            return resampled_data[:-padding_to_remove]
+        if padding == 0:
+            resampled_data = resampled_data[:-1]
+
+        return resampled_data
