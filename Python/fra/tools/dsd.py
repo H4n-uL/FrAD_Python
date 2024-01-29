@@ -115,7 +115,7 @@ class dsd:
                     if verbose:
                         elapsed_time = time.time() - start_time
                         bps = i / elapsed_time
-                        mult = dlen / bits * 64 / dsd_srate / channels / elapsed_time
+                        mult = dlen / 8 / dsd_srate / channels# / elapsed_time
                         percent = i*100 / plen
                         b = int(percent / 100 * cli_width)
                         print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
