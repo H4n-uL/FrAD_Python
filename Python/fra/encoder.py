@@ -1,4 +1,4 @@
-from .common import variables
+from .common import variables, methods
 from .fourier import fourier
 import json, os, struct, subprocess, sys, time, zlib
 import numpy as np
@@ -77,7 +77,7 @@ class encode:
         return image
 
     def enc(file_path: str, bits: int,
-                out: str = None, apply_ecc: bool = False,
+                out: str = None, apply_ecc: bool = False, nsr: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
         nperseg = 2048
@@ -92,6 +92,7 @@ class encode:
         if nperseg % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
 
         encode.get_pcm(file_path)
+        sample_rate = methods.resample_pcm(channels, sample_rate, nsr)
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
 

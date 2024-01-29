@@ -1,5 +1,4 @@
 import argparse, base64, json, os, sys, traceback
-from fra.common import variables
 
 def main(action, args):
     input = args.input
@@ -21,12 +20,12 @@ def main(action, args):
 
     if action == 'encode':
         from fra import encode
-        encode.enc(input, int(args.bits), out=args.output, apply_ecc=args.ecc, meta=meta, img=img, verbose=args.verbose)
+        encode.enc(input, int(args.bits), out=args.output, apply_ecc=args.ecc, nsr=args.new_sample_rate, meta=meta, img=img, verbose=args.verbose)
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
         codec = args.codec if args.codec is not None else None
-        decode.dec(input, out=args.output, bits=bits, codec=codec, quality=args.quality, e=args.ecc, verbose=args.verbose)
+        decode.dec(input, out=args.output, bits=bits, codec=codec, quality=args.quality, e=args.ecc, nsr=args.new_sample_rate, verbose=args.verbose)
     elif action == 'parse':
         from fra import header
         output = args.output if args.output is not None else 'metadata'
@@ -70,6 +69,7 @@ if __name__ == '__main__':
     parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                               help='Output file path')
     parser.add_argument('-b',   '--bits', '--bit',                          required=False,                               help='Output file bit depth')
     parser.add_argument('-img', '--image',                                  required=False,                               help='Image file path')
+    parser.add_argument('-n', '-nsr', '--new_sample_rate', '--resample',    required=False,                               help='resample as new sample rate')
     parser.add_argument('-c',   '--codec',                                  required=False,                               help='Codec type')
     parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true', help='Error Correction Code toggle')
     parser.add_argument('-s',   '--speed',                                  required=False,                               help='Play speed(in times)')

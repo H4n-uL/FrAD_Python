@@ -250,9 +250,10 @@ class decode:
             os.remove(variables.temp_pcm)
             sys.exit(0)
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, verbose: bool = False):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, nsr: int = None, verbose: bool = False):
         # Decoding
         sample_rate, channels = decode.internal(file_path, bits, e=e, verbose=verbose)
+        sample_rate = methods.resample_pcm(channels, sample_rate, nsr)
 
         try:
             quality, strategy = decode.split_q(quality)

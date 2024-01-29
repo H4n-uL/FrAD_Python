@@ -1,6 +1,7 @@
-import base64, os, platform, secrets
+import base64, os, platform, secrets, shutil, sys, traceback
 import numpy as np
-from scipy.interpolate import interp1d
+import scipy.signal as sps
+# from scipy.interpolate import interp1d
 
 class variables:
     hash_block_size = 2**20
@@ -41,36 +42,31 @@ class methods:
         if sign != b'\x16\xb0\x03':
             raise Exception('This is not Fourier Analogue file.')
 
-    def resample_1sec(data, sr_origin, sr_new):
-        len_orig = len(data)
+    def resample(data, sr_origin, sr_new):
+        return sps.resample(data, int(len(data) * sr_new / sr_origin))
 
-        # Padding
-        padding = sr_origin - len_orig
-        if padding > 0:
-            data = np.pad(data, (0, padding), 'constant')
+    def resample_pcm(channels, sample_rate, new_sample_rate):
+        if new_sample_rate is not None and int(new_sample_rate) != sample_rate:
+            new_sample_rate = int(new_sample_rate)
+            try:
+                with open(variables.temp_pcm, 'rb') as samp_bef, open(variables.temp2_pcm, 'wb') as samp_aft:
+                    while True:
+                        block = samp_bef.read(4 * channels * sample_rate)
+                        if not block: break
+                        data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**31
 
-        # Linear Prediction
-        if len_orig >= 2:
-            slope = (data[-1] - data[-2]) / (1 / sr_origin)
-            predicted_value = data[-1] + slope / sr_origin
-        else:
-            predicted_value = data[-1]
-
-        data = np.append(data, predicted_value)
-
-        # Resampling
-        new_length = (len_orig + padding) * (sr_new + 1) // sr_origin
-        new_time_axis = np.linspace(0, (len_orig + padding) / sr_origin, new_length, endpoint=False)
-
-        time_axis = np.linspace(0, (len_orig + padding) / sr_origin, len_orig + padding + 1)
-        interpolator = interp1d(time_axis, data, kind='cubic')
-        resampled_data = interpolator(new_time_axis)
-
-        # Unpadding
-        if padding > 0:
-            padding_to_remove = int(padding / sr_origin * sr_new)
-            return resampled_data[:-padding_to_remove]
-        if padding == 0:
-            resampled_data = resampled_data[:-1]
-
-        return resampled_data
+                        freq = [data_numpy[i::channels] for i in range(channels)]
+                        block = (np.column_stack([methods.resample(c, sample_rate, new_sample_rate) for c in freq])
+                                 .ravel(order='C') * 2**31).astype(np.int32)
+                        samp_aft.write(block.tobytes())
+                shutil.move(variables.temp2_pcm, variables.temp_pcm)
+            except Exception as e:
+                os.remove(variables.temp_pcm)
+                os.remove(variables.temp2_pcm)
+                if type(e) == KeyboardInterrupt:
+                    sys.exit(0)
+                else:
+                    print(traceback.format_exc())
+                    sys.exit(1)
+            return new_sample_rate
+        return sample_rate
