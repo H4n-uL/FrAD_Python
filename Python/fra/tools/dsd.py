@@ -1,4 +1,4 @@
-import base64, os, secrets, struct
+import base64, os, struct, time
 from ..common import variables, methods
 import numpy as np
 
@@ -82,15 +82,23 @@ class dsd:
         HEAD[0xc:0x14] = struct.pack('<Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
-    def encode(srate, channels, bits, out, ext):
+    def encode(srate, channels, bits, out, ext, verbose: bool = False):
         chb = dsd.channels_dict[channels]
+
+        plen = os.path.getsize(variables.temp_pcm)
+        cli_width = 40
+        i = 0
 
         dsd_srate = 2822400
         try:
             with open(variables.temp_pcm, 'rb') as pcm, open(variables.temp_dsd, 'wb') as temp:
+                start_time = time.time()
+                if verbose: print('\n')
+
                 while True:
                     block = pcm.read(bits // 8 * len(chb) * srate)
                     if not block: break
+                    i += len(block)
                     if bits == 32:   data_numpy = np.frombuffer(block, dtype=np.int32)
                     elif bits == 16: data_numpy = np.frombuffer(block, dtype=np.int16)
                     elif bits == 8:  data_numpy = np.frombuffer(block, dtype=np.uint8)
@@ -103,6 +111,17 @@ class dsd:
                     dlen = os.path.getsize(variables.temp_dsd)
                     with open(variables.temp_dsd, 'rb') as trd, open(f'{out}.{ext}', 'wb') as dsdfile:
                         dsdfile.write(dsd.build_dff_header(dlen, chb, dsd_srate) + trd.read())
+
+                    if verbose:
+                        elapsed_time = time.time() - start_time
+                        bps = i / elapsed_time
+                        mult = dlen / bits * 64 / dsd_srate / channels / elapsed_time
+                        percent = i*100 / plen
+                        b = int(percent / 100 * cli_width)
+                        print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                        print(f'DSD Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                        print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt: pass
         finally:
             os.remove(variables.temp_pcm)

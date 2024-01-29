@@ -323,7 +323,7 @@ class decode:
                 if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, f, s, out, quality, strategy)
                 elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, a, out, quality)
             elif codec in ['dsd', 'dff']:
-                dsd.encode(sample_rate, channels, bits, out, ext)
+                dsd.encode(sample_rate, channels, bits, out, ext, verbose)
             elif codec not in ['pcm', 'raw']:
                 decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy)
             else:
