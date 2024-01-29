@@ -101,7 +101,7 @@ class dsd:
                     i += len(block)
                     if bits == 32:   data_numpy = np.frombuffer(block, dtype=np.int32)
                     elif bits == 16: data_numpy = np.frombuffer(block, dtype=np.int16)
-                    elif bits == 8:  data_numpy = np.frombuffer(block, dtype=np.uint8)
+                    elif bits == 8:  data_numpy = (np.frombuffer(block, dtype=np.uint8).astype(np.int16) - 128).astype(np.int8)
                     data_numpy = data_numpy.astype(np.float64) / np.iinfo(data_numpy.dtype).max
 
                     freq = [data_numpy[i::len(chb)] for i in range(len(chb))]
