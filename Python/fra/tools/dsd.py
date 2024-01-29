@@ -85,8 +85,6 @@ class dsd:
     def encode(srate, channels, bits, out, ext):
         chb = dsd.channels_dict[channels]
 
-        out += ext
-
         dsd_srate = 2822400
         try:
             with open(variables.temp_pcm, 'rb') as pcm, open(variables.temp_dsd, 'wb') as temp:
@@ -103,7 +101,7 @@ class dsd:
                     temp.write(block)
 
                     dlen = os.path.getsize(variables.temp_dsd)
-                    with open(variables.temp_dsd, 'rb') as trd, open(out, 'wb') as dsdfile:
+                    with open(variables.temp_dsd, 'rb') as trd, open(f'{out}.{ext}', 'wb') as dsdfile:
                         dsdfile.write(dsd.build_dff_header(dlen, chb, dsd_srate) + trd.read())
         except KeyboardInterrupt: pass
         finally:
