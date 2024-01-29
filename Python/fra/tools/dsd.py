@@ -102,7 +102,7 @@ class dsd:
                     if bits == 32:   data_numpy = np.frombuffer(block, dtype=np.int32)
                     elif bits == 16: data_numpy = np.frombuffer(block, dtype=np.int16)
                     elif bits == 8:  data_numpy = np.frombuffer(block, dtype=np.uint8)
-                    data_numpy = data_numpy.astype(np.float64) / 2**(bits-1)
+                    data_numpy = data_numpy.astype(np.float64) / np.iinfo(data_numpy.dtype).max
 
                     freq = [data_numpy[i::len(chb)] for i in range(len(chb))]
                     block = np.column_stack([dsd.delta_sigma(methods.resample_1sec(c, srate, dsd_srate)) for c in freq]).ravel(order='C').tobytes()
