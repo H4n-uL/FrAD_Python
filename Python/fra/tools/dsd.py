@@ -1,5 +1,5 @@
 import base64, os, secrets, struct
-from ..common import methods
+from ..common import variables, methods
 import numpy as np
 
 class dsd:
@@ -18,6 +18,15 @@ class dsd:
             bitstream[i] = 1 if quant==1 else 0
 
         return np.packbits([int(b) for b in bitstream.astype(np.uint8)])
+
+    channels_dict = {
+        1: [b'SLFT'],
+        2: [b'SLFT', b'SRGT'],
+        3: [b'MLFT', b'MRGT', b'C   '],
+        4: [b'MLFT', b'MRGT', b'LS  ', b'RS  '],
+        5: [b'MLFT', b'MRGT', b'C   ', b'LS  ', b'RS  '],
+        6: [b'MLFT', b'MRGT', b'C   ', b'LFE ', b'LS  ', b'RS  ']
+    }
 
     def build_dff_header(datalen: int, channels: int, sample_rate: int):
         CMPR = base64.b64decode('RFNEIA9ub3QgY29tcHJlc3NlZAA=')
@@ -73,28 +82,30 @@ class dsd:
         HEAD[0xc:0x14] = struct.pack('<Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
-if __name__ == '__main__':
-    temp_file = f'temp.{base64.b64encode(secrets.token_bytes(6)).decode().replace("/", "_")}.dsd'
-    pcm_name = 'input.pcm'
-    dsd_name = 'output.dff'
+    def encode(srate, channels, bits, out, ext):
+        chb = dsd.channels_dict[channels]
 
-    channels_batch = [b'SLFT', b'SRGT']
+        out += ext
 
-    srate = 96000
-    dsd_srate = 2822400
+        dsd_srate = 2822400
+        try:
+            with open(variables.temp_pcm, 'rb') as pcm, open(variables.temp_dsd, 'wb') as temp:
+                while True:
+                    block = pcm.read(bits // 8 * len(chb) * srate)
+                    if not block: break
+                    if bits == 32:   data_numpy = np.frombuffer(block, dtype=np.int32)
+                    elif bits == 16: data_numpy = np.frombuffer(block, dtype=np.int16)
+                    elif bits == 8:  data_numpy = np.frombuffer(block, dtype=np.uint8)
+                    data_numpy = data_numpy.astype(np.float64) / 2**(bits-1)
 
-    # DFF #
-    try:
-        with open(pcm_name, 'rb') as pcm, open(temp_file, 'wb') as temp:
-            while True:
-                block = pcm.read(4 * len(channels_batch) * srate)
-                if not block: break
-                data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**31
-                freq = [data_numpy[i::len(channels_batch)] for i in range(len(channels_batch))]
-                block = np.column_stack([dsd.delta_sigma(methods.resample_1sec(c, dsd_srate)) for c in freq]).ravel(order='C').tobytes()
-                temp.write(block)
-                dlen = os.path.getsize(temp_file)
-                with open(temp_file, 'rb') as trd, open(dsd_name, 'wb') as dsdfile:
-                    dsdfile.write(dsd.build_dff_header(dlen, channels_batch, dsd_srate) + trd.read())
-    except KeyboardInterrupt: pass
-    finally: os.remove(temp_file)
+                    freq = [data_numpy[i::len(chb)] for i in range(len(chb))]
+                    block = np.column_stack([dsd.delta_sigma(methods.resample_1sec(c, srate, dsd_srate)) for c in freq]).ravel(order='C').tobytes()
+                    temp.write(block)
+
+                    dlen = os.path.getsize(variables.temp_dsd)
+                    with open(variables.temp_dsd, 'rb') as trd, open(out, 'wb') as dsdfile:
+                        dsdfile.write(dsd.build_dff_header(dlen, chb, dsd_srate) + trd.read())
+        except KeyboardInterrupt: pass
+        finally:
+            os.remove(variables.temp_pcm)
+            os.remove(variables.temp_dsd)

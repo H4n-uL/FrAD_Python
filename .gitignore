@@ -23,10 +23,13 @@ music/*
 *.wav
 *.wma
 
+*.dsd
+
 # RAW files #
 *.raw
 *.pcm
 *.swv
+*.bitstream
 
 # Artworks #
 *.png
