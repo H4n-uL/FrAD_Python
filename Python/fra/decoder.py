@@ -1,6 +1,6 @@
 from .common import variables, methods
 from .fourier import fourier
-import hashlib, os, platform, shutil, struct, subprocess, sys, time, zlib
+import os, platform, shutil, struct, subprocess, sys, time, zlib
 import numpy as np
 import sounddevice as sd
 from .tools.ecc import ecc

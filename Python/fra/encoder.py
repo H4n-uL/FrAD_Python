@@ -1,6 +1,6 @@
 from .common import variables
 from .fourier import fourier
-import hashlib, json, os, struct, subprocess, sys, time, zlib
+import json, os, struct, subprocess, sys, time, zlib
 import numpy as np
 from .tools.ecc import ecc
 from .tools.headb import headb
