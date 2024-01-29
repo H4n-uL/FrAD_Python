@@ -65,30 +65,24 @@ def main(action, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fourier Analogue-in-Digital Codec')
-    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'],           help='action to perform')
-    parser.add_argument('input',                                                                                           help='input file path')
-    parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                                help='output file path')
-    parser.add_argument('-b',   '--bits', '--bit',                          required=False,                                help='output file bit depth')
-    parser.add_argument('-img', '--image',                                  required=False,                                help='image file path')
-    parser.add_argument('-c',   '--codec',                                  required=False,                                help='codec type')
-    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true',  help='enable ecc')
-    parser.add_argument('-s',   '--speed',                                  required=False,                                help='play speed(in times)')
-    parser.add_argument('-q',   '--quality',                                required=False,                                help='decode quality')
-    parser.add_argument('-k',   '--keys', '--key',                          required=False,                                help='keys')
-    parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',      help='metadata in "key" "value" format')
-    parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                help='metadata in json')
-    parser.add_argument('-v',   '--verbose',                                                         action='store_true',  help='verbose cli')
+    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'],          help='Codec action')
+    parser.add_argument('input',                                                                                          help='Input file path')
+    parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                               help='Output file path')
+    parser.add_argument('-b',   '--bits', '--bit',                          required=False,                               help='Output file bit depth')
+    parser.add_argument('-img', '--image',                                  required=False,                               help='Image file path')
+    parser.add_argument('-c',   '--codec',                                  required=False,                               help='Codec type')
+    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true', help='Error Correction Code toggle')
+    parser.add_argument('-s',   '--speed',                                  required=False,                               help='Play speed(in times)')
+    parser.add_argument('-q',   '--quality',                                required=False,                               help='Decode quality(for lossy codec decode only)')
+    parser.add_argument('-k',   '--keys', '--key',                          required=False,                               help='Play keys')
+    parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',     help='Metadata in "key" "value" format')
+    parser.add_argument('-jm',  '--jsonmeta',                               required=False,                               help='Metadata in json, This will override --meta option.')
+    parser.add_argument('-v',   '--verbose',                                                         action='store_true', help='Verbose CLI Toggle')
 
     args = parser.parse_args()
     try:
         main(args.action, args)
     except Exception as e:
-        if os.path.exists(variables.temp): os.remove(variables.temp)
-        if os.path.exists(variables.temp2): os.remove(variables.temp2)
-        if os.path.exists(variables.temp_pcm): os.remove(variables.temp_pcm)
-        if os.path.exists(variables.temp2_pcm): os.remove(variables.temp2_pcm)
-        if os.path.exists(variables.temp_flac): os.remove(variables.temp_flac)
-        if os.path.exists(variables.meta): os.remove(variables.meta)
         if type(e) == KeyboardInterrupt:
             sys.exit(0)
         else:
