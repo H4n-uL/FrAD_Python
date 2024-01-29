@@ -7,7 +7,7 @@ class variables:
 
     directory = os.path.dirname(os.path.realpath(__file__))
     tmpdir = os.path.join(directory, 'tempfiles')
-    os.makedirs(dir, exist_ok=True)
+    os.makedirs(tmpdir, exist_ok=True)
     temp =      os.path.join(tmpdir, f'temp.{  base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
     temp =      os.path.join(tmpdir, f'temp.{  base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
     temp2 =     os.path.join(tmpdir, f'temp.2.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
