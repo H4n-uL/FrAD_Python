@@ -4,17 +4,17 @@ import numpy as np
 
 class dsd:
     def delta_sigma(x):
-        integrator_state, quantizer_state = 0, 0
+        intg1, intg2 = 0, 0
+        quant = 0
         bitstream = np.zeros_like(x)
 
         for i in range(len(x)):
-            integrator_state += x[i] - quantizer_state
-            quantizer_state = 1 if integrator_state > 0 else -1
-            bitstream[i] = 1 if quantizer_state==1 else 0
+            intg1 += x[i] - quant
+            intg2 += intg1 - quant
+            quant = 1 if intg2 > 0 else -1
+            bitstream[i] = 1 if quant == 1 else 0
 
-        bitstream = np.packbits([int(b)for b in bitstream])
-
-        return bitstream
+        return np.packbits([int(b) for b in bitstream])
 
     def build_dff_header(datalen: int, channels: int, sample_rate: int):
         CMPR = base64.b64decode('RFNEIA9ub3QgY29tcHJlc3NlZAA=')
