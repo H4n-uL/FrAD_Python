@@ -90,10 +90,10 @@ class decode:
                                 block = ecc.decode(block, ecc_dsize, ecc_codesize)
                             else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
 
-                        segment = (fourier.digital(block, float_bits, bits, channels) / np.iinfo(np.int32).max).astype(np.float32) # Inversing
+                        segment = fourier.digital(block, float_bits, bits, channels) # Inversing
 
                         if play:
-                            stream.write(segment)
+                            stream.write((segment / np.iinfo(np.int32).max).astype(np.float32))
                             i += blocklength / ssize_dict[float_bits] * (ecc_dsize / (ecc_codesize+ecc_dsize) if is_ecc_on else 1)
                             frameNo += 1
                             print('\x1b[1A\x1b[2K', end='')
