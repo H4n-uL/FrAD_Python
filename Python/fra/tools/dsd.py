@@ -3,18 +3,21 @@ from ..common import methods
 import numpy as np
 
 class dsd:
-    def delta_sigma(x):
-        intg1, intg2 = 0, 0
+    def delta_sigma(x, deg=2):
+        assert deg > 0, 'ΔΣ modulator degree should be greater than 0.'
+
+        intg = [0]*deg
         quant = 0
         bitstream = np.zeros_like(x)
 
         for i in range(len(x)):
-            intg1 += x[i] - quant
-            intg2 += intg1 - quant
-            quant = 1 if intg2 > 0 else -1
-            bitstream[i] = 1 if quant == 1 else 0
+            intg[0] += x[i] - quant
+            for j in range(1, deg):
+                intg[j] += intg[j-1] - quant
+            quant = 1 if intg[-1] > 0 else -1
+            bitstream[i] = 1 if quant==1 else 0
 
-        return np.packbits([int(b) for b in bitstream])
+        return np.packbits([int(b) for b in bitstream.astype(np.uint8)])
 
     def build_dff_header(datalen: int, channels: int, sample_rate: int):
         CMPR = base64.b64decode('RFNEIA9ub3QgY29tcHJlc3NlZAA=')
