@@ -1,7 +1,6 @@
 import base64, os, platform, secrets, shutil, sys, traceback
 import numpy as np
 import scipy.signal as sps
-# from scipy.interpolate import interp1d
 
 class variables:
     hash_block_size = 2**20
