@@ -86,7 +86,7 @@ if __name__ == '__main__':
             while True:
                 block = pcm.read(4 * len(channels_batch) * srate)
                 if not block: break
-                data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**32
+                data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**31
                 freq = [data_numpy[i::len(channels_batch)] for i in range(len(channels_batch))]
                 block = np.column_stack([dsd.delta_sigma(methods.resample_1sec(c, dsd_srate)) for c in freq]).ravel(order='C').tobytes()
                 temp.write(block)
