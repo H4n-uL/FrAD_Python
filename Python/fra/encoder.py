@@ -93,6 +93,23 @@ class encode:
 
         encode.get_pcm(file_path)
 
+        if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
+
+        if meta == None: meta = encode.get_metadata(file_path)
+        if img == None: img = encode.get_image(file_path)
+
+        # Setting file extension
+        if not (out.lower().endswith('.frad') or out.lower().endswith('.dsin') or out.lower().endswith('.fra') or out.lower().endswith('.dsn')):
+            if len(out) <= 8: out += '.fra'
+            else: out += '.frad'
+        
+        with open(out, 'wb') as file:
+            h = headb.uilder(
+                sample_rate, channel=channels,
+                meta=meta, img=img)
+
+            file.write(h)
+
         # Fourier Transform
         try:
             start_time = time.time()
@@ -101,8 +118,7 @@ class encode:
             sample_size = bits // 4 * channels
             dlen = os.path.getsize(variables.temp_pcm)
 
-            with open(variables.temp_pcm, 'rb') as pcm:
-              with open(variables.temp, 'wb') as swv:
+            with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n')
                 while True:
                     p = pcm.read(nperseg * 4 * channels)                           # Reading PCM
@@ -115,18 +131,19 @@ class encode:
 
                     # block = zlib.compress(block)
 
-                    # WRITE
-                    swv.write(
-                        b'\xff\xd0\xd2\x97' + \
-                        struct.pack('>I', len(segment)) + \
-                        headb.encode_efb(apply_ecc, bits) + \
-                        struct.pack('>B', channels - 1) + \
-                        struct.pack('>B', ecc_dsize if apply_ecc else 0) + \
-                        struct.pack('>B', ecc_codesize if apply_ecc else 0) + \
-                        struct.pack('>I', zlib.crc32(segment)) + \
+                    data = bytes(b'\xff\xd0\xd2\x97' +
+                        struct.pack('>I', len(segment)) +
+                        headb.encode_efb(apply_ecc, bits) +
+                        struct.pack('>B', channels - 1) +
+                        struct.pack('>B', ecc_dsize if apply_ecc else 0) +
+                        struct.pack('>B', ecc_codesize if apply_ecc else 0) +
+                        struct.pack('>I', zlib.crc32(segment)) +
 
                         segment
                     )
+
+                    # WRITE
+                    file.write(data)
 
                     if verbose:
                         total_bytes += len(block) * sample_size
@@ -138,49 +155,10 @@ class encode:
                         print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
             os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp)
             os.remove(variables.temp_pcm)
-            sys.exit(1)
-
-        try:
-            # Calculating MD5 hash
-            with open(variables.temp, 'rb') as temp:
-                md5 = hashlib.md5()
-                while True:
-                    d = temp.read(variables.hash_block_size)
-                    if not d: break
-                    md5.update(d)
-                checksum = md5.digest()
-
-            if meta == None: meta = encode.get_metadata(file_path)
-            if img == None: img = encode.get_image(file_path)
-
-            # Moulding header
-            h = headb.uilder(sample_rate, channel=channels,
-                md5=checksum,
-                meta=meta, img=img)
-
-            if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
-
-            # Setting file extension
-            if not (out.lower().endswith('.frad') or out.lower().endswith('.dsin') or out.lower().endswith('.fra') or out.lower().endswith('.dsn')):
-                if len(out) <= 8: out += '.fra'
-                else: out += '.frad'
-
-            # Creating Fourier Analogue-in-Digital File
-            with open(out, 'wb') as file:
-                file.write(h)
-                with open(variables.temp, 'r+b') as swv:
-                    while True:
-                        block = swv.read(1048576)
-                        if not block: break
-                        file.write(block)
-                os.remove(variables.temp)
-        except KeyboardInterrupt:
-            print('Aborting...')
-            os.remove(variables.temp)
             sys.exit(1)
