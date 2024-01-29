@@ -6,18 +6,16 @@ from .tools.headb import headb
 class repack:
     def ecc(file_path, verbose: bool = False):
         with open(file_path, 'rb') as f:
-            try:
-                head = f.read(64)
+            head = f.read(64)
 
-                methods.signature(head[0x0:0x3])
+            methods.signature(head[0x0:0x3])
 
-                header_length = struct.unpack('>Q', head[0x8:0x10])[0]
-                efb = struct.unpack('<B', head[0x10:0x11])[0]
-                is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
+            header_length = struct.unpack('>Q', head[0x8:0x10])[0]
+            efb = struct.unpack('<B', head[0x10:0x11])[0]
+            is_ecc_on = True if (efb >> 4 & 0b1) == 0b1 else False # 0x10@0b100:    ECC Toggle(Enabled if 1)
 
-                f.seek(header_length)
-            except KeyboardInterrupt:
-                sys.exit(1)
+            f.seek(header_length)
+
             try:
                 dlen = os.path.getsize(file_path) - header_length
                 start_time = time.time()
@@ -67,14 +65,6 @@ class repack:
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                     if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
 
-                with open(variables.temp, 'rb') as t:
-                    md5 = hashlib.md5()
-                    while True:
-                        d = t.read(variables.hash_block_size)
-                        if not d: break
-                        md5.update(d)
-                    checksum = md5.digest()
-
                 f.seek(0)
                 head = bytearray(f.read(header_length))
                 head[0x10:0x11] = struct.pack('<B', 0b1 << 4 | efb)
@@ -83,11 +73,7 @@ class repack:
                 os.remove(variables.temp)
                 sys.exit(1)
 
-            with open(file_path, 'wb') as f:
+            with open(file_path, 'wb') as f, open(variables.temp, 'rb') as t:
                 f.write(head)
-                with open(variables.temp, 'rb') as t:
-                    while True:
-                        a = t.read(1048576)
-                        if not a: break
-                        f.write(a)
+                f.write(t.read())
             os.remove(variables.temp)

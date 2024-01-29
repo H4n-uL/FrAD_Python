@@ -157,8 +157,8 @@ class encode:
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
 
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-            os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
             print('Aborting...')
+        finally:
             os.remove(variables.temp_pcm)
-            sys.exit(1)
+            sys.exit(0)

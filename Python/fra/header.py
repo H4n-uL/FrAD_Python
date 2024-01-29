@@ -55,9 +55,9 @@ class header:
                 f.write(head_new)
                 with open(variables.temp2, 'rb') as temp:
                     f.write(temp.read())
-            os.remove(variables.temp2)
             shutil.move(variables.temp, file_path)
-        except:
-            os.remove(variables.temp)
+        except KeyboardInterrupt:
+            print('Aborting...')
+        finally:
             os.remove(variables.temp2)
             sys.exit(0)
