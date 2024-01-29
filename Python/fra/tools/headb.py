@@ -24,7 +24,6 @@ class headb:
     def uilder(
             # Fixed Header
             sample_rate: bytes, channel: int,
-            md5: bytes,
 
             # Metadata
             meta = None, img: bytes = None):
@@ -41,7 +40,7 @@ class headb:
                 blocks += cb.comment(meta[i][0], meta[i][1])
         if img is not None and img != b'': blocks += cb.image(img)
 
-        length = struct.pack('>Q', (256 + len(blocks)))
+        length = struct.pack('>Q', (64 + len(blocks)))
 
-        header = signature + channel_block + sample_block + length + (b'\x00'*224) + md5 + blocks
+        header = signature + channel_block + sample_block + length + (b'\x00'*48) + blocks
         return header

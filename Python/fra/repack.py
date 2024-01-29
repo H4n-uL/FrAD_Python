@@ -7,7 +7,7 @@ class repack:
     def ecc(file_path, verbose: bool = False):
         with open(file_path, 'rb') as f:
             try:
-                head = f.read(256)
+                head = f.read(64)
 
                 methods.signature(head[0x0:0x3])
 
@@ -77,7 +77,6 @@ class repack:
 
                 f.seek(0)
                 head = bytearray(f.read(header_length))
-                head[0xf0:0x100] = checksum
                 head[0x10:0x11] = struct.pack('<B', 0b1 << 4 | efb)
                 head = bytes(head)
             except KeyboardInterrupt:

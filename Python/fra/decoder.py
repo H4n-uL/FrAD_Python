@@ -5,12 +5,13 @@ import numpy as np
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
+from .tools.dsd import dsd
 
 class decode:
     def internal(file_path, bits: int = 32, play: bool = False, speed: float = 1, e: bool = False, verbose: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
-            header = f.read(256)
+            header = f.read(64)
 
             # File signature verification
             methods.signature(header[0x0:0x3])
@@ -18,23 +19,7 @@ class decode:
             # Taking Stream info
             channels = struct.unpack('<B', header[0x3:0x4])[0] + 1   # 0x03:          Channels
             sample_rate = struct.unpack('>I', header[0x4:0x8])[0]    # 0x04-4B:       Sample rate
-
             header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B:       Total header size
-            checksum_header = header[0xf0:0x100]                     # 0xf0-16B:      Stream hash
-
-            # Reading Audio stream
-            if e:
-                f.seek(header_length)
-                # Verifying checksum
-                md5 = hashlib.md5()
-                while True:
-                    d = f.read(variables.hash_block_size)
-                    if not d: break
-                    md5.update(d)
-                checksum_data = md5.digest()
-                if checksum_data != checksum_header:
-                    print(f'Checksum: on header[{checksum_header}] vs on data[{checksum_data}]')
-                    print(f'{file_path} has been corrupted, Please repack your file via \'ecc\' option for the best music experience.')
 
             f.seek(header_length)
 
@@ -48,6 +33,7 @@ class decode:
             dlen = framescount = 0
             ecc_dsize = ecc_codesize = 0
             duration = 0
+            warned = False
             while True:
                 frame = f.read(16)
                 if not frame: break
@@ -56,7 +42,9 @@ class decode:
                 is_ecc_on, float_bits = headb.decode_efb(efb)
                 ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
                 ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
-                crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Data
+                crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Dataif is_ecc_on:
+                if e and zlib.crc32(f.read(blocklength)) != struct.unpack('>I', crc32)[0] and not warned:
+                    print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
 
                 if is_ecc_on: duration += (blocklength // (ecc_dsize+ecc_codesize) * ecc_dsize // ssize_dict[float_bits])
                 else: duration += (blocklength // ssize_dict[float_bits])
@@ -306,6 +294,8 @@ class decode:
                 if codec:   ext = codec
                 else:       codec = ext = 'flac'
 
+            codec = codec.lower()
+
             # Checking Codec and Muxers
             if codec in ['vorbis', 'opus', 'speex']:
                 codec = 'lib' + codec
@@ -332,6 +322,8 @@ class decode:
                 if strategy in ['c', 'a']: quality = decode.setaacq(quality, channels)
                 if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, f, s, out, quality, strategy)
                 elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, a, out, quality)
+            elif codec == 'dsd':
+                dsd.encode(sample_rate, channels, bits, out)
             elif codec not in ['pcm', 'raw']:
                 decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy)
             else:
