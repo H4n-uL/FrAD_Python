@@ -8,7 +8,7 @@ from .tools.headb import headb
 from .tools.dsd import dsd
 
 class decode:
-    def internal(file_path, bits: int = 32, play: bool = False, speed: float = 1, e: bool = False, verbose: bool = False):
+    def internal(file_path, play: bool = False, speed: float = 1, e: bool = False, verbose: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
             header = f.read(64)
@@ -90,7 +90,7 @@ class decode:
                                 block = ecc.decode(block, ecc_dsize, ecc_codesize)
                             else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
 
-                        segment = fourier.digital(block, float_bits, bits, channels) # Inversing
+                        segment = fourier.digital(block, float_bits, channels) # Inversing
 
                         if play:
                             stream.write((segment / np.iinfo(np.int32).max).astype(np.float32))
@@ -150,7 +150,7 @@ class decode:
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
-            '-f', f,
+            '-f', 's32le',
             '-ar', str(sample_rate),
             '-ac', str(channels),
             '-i', variables.temp_pcm
@@ -190,13 +190,13 @@ class decode:
         subprocess.run(command)
         os.remove(variables.temp_pcm)
 
-    def AppleAAC_macOS(sample_rate, channels, f, s, out, quality, strategy):
+    def AppleAAC_macOS(sample_rate, channels, s, out, quality, strategy):
         try:
             quality = str(quality)
             command = [
                 variables.ffmpeg, '-y',
                 '-loglevel', 'error',
-                '-f', f,
+                '-f', 's32le',
                 '-ar', str(sample_rate),
                 '-ac', str(channels),
                 '-i', variables.temp_pcm,
@@ -230,14 +230,14 @@ class decode:
             os.remove(variables.temp_flac)
             sys.exit(0)
 
-    def AppleAAC_Windows(sample_rate, channels, a, out, quality):
+    def AppleAAC_Windows(sample_rate, channels, out, quality):
         try:
             command = [
                 variables.aac,
                 '--raw', variables.temp_pcm,
                 '--raw-channels', str(channels),
                 '--raw-rate', str(sample_rate),
-                '--raw-format', a,
+                '--raw-format', 's32l',
                 '--adts',
                 '-c', quality,
                 '-o', f'{out}.aac',
@@ -252,7 +252,7 @@ class decode:
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, nsr: int = None, verbose: bool = False):
         # Decoding
-        sample_rate, channels = decode.internal(file_path, bits, e=e, verbose=verbose)
+        sample_rate, channels = decode.internal(file_path, e=e, verbose=verbose)
         sample_rate = methods.resample_pcm(channels, sample_rate, nsr)
 
         try:
@@ -284,24 +284,22 @@ class decode:
 
             if bits == 32:
                 f = 's32le'
-                a = 's32l'
                 s = 's32'
             elif bits == 16:
                 f = 's16le'
-                a = 's16l'
                 s = 's16'
             elif bits == 8:
-                f = a = s = 'u8'
+                f = s = 'u8'
             else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
 
             if quality: int(quality.replace('k', '000'))
 
             if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
                 if strategy in ['c', 'a']: quality = decode.setaacq(quality, channels)
-                if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, f, s, out, quality, strategy)
-                elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, a, out, quality)
+                if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, s, out, quality, strategy)
+                elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, out, quality)
             elif codec in ['dsd', 'dff']:
-                dsd.encode(sample_rate, channels, bits, out, ext, verbose)
+                dsd.encode(sample_rate, channels, out, ext, verbose)
             elif codec not in ['pcm', 'raw']:
                 decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy)
             else:

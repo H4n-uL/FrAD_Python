@@ -23,7 +23,7 @@ class fourier:
 
         return data
 
-    def digital(data, fb: int, bits: int, channels: int):
+    def digital(data, fb: int, channels: int):
         # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float128)
         if fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float64)
         elif fb == 0b100:
@@ -39,11 +39,5 @@ class fourier:
 
         freq = [data_numpy[i::channels] for i in range(channels)]
         wave_data = [np.int32(np.clip(imdct(d, N=len(d)), -2**31, 2**31-1)) for d in freq]
-
-        if bits == 32: pass
-        elif bits == 16: wave_data = [np.int16(wave / 2**16) for wave in wave_data]
-        elif bits == 8: wave_data = [np.uint8(wave / 2**24 + 2**7) for wave in wave_data]
-        else:
-            raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
 
         return np.column_stack(wave_data)
