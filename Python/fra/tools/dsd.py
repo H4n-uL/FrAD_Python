@@ -96,7 +96,7 @@ class dsd:
                 if verbose: print('\n')
 
                 while True:
-                    block = pcm.read(bits // 8 * len(chb) * srate)
+                    block = methods.resample_1sec(pcm.read(bits // 8 * len(chb) * srate), channels, srate, dsd_srate)
                     if not block: break
                     i += len(block)
                     if bits == 32:   data_numpy = np.frombuffer(block, dtype=np.int32)
@@ -105,7 +105,7 @@ class dsd:
                     data_numpy = data_numpy.astype(np.float64) / (np.iinfo(data_numpy.dtype).max * 2)
 
                     freq = [data_numpy[i::len(chb)] for i in range(len(chb))]
-                    block = np.column_stack([dsd.delta_sigma(methods.resample_1sec(c, srate, dsd_srate)) for c in freq]).ravel(order='C').tobytes()
+                    block = np.column_stack([dsd.delta_sigma(c) for c in freq]).ravel(order='C').tobytes()
                     temp.write(block)
 
                     dlen = os.path.getsize(variables.temp_dsd)

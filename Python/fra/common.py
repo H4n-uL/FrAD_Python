@@ -1,4 +1,4 @@
-import base64, os, platform, secrets, shutil, sys, traceback
+import base64, os, platform, secrets, shutil, subprocess, sys, traceback
 import numpy as np
 import scipy.signal as sps
 
@@ -41,31 +41,35 @@ class methods:
         if sign != b'\x16\xb0\x03':
             raise Exception('This is not Fourier Analogue file.')
 
-    def resample(data, sr_origin, sr_new):
-        return sps.resample(data, int(len(data) * sr_new / sr_origin))
+    def resample_1sec(data, channels, sr_origin, sr_new):
+        command = [
+                variables.ffmpeg,
+                '-v', 'quiet',
+                '-f', 's32le',
+                '-ar', str(sr_origin),
+                '-ac', str(channels),
+                '-i', 'pipe:0',
+                '-ar', str(sr_new),
+                '-f', 's32le',
+                'pipe:1']
+
+        pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=10**8)
+        resampled, _ = pipe.communicate(data)
+        return resampled
 
     def resample_pcm(channels, sample_rate, new_sample_rate):
         if new_sample_rate is not None and int(new_sample_rate) != sample_rate:
-            new_sample_rate = int(new_sample_rate)
-            try:
-                with open(variables.temp_pcm, 'rb') as samp_bef, open(variables.temp2_pcm, 'wb') as samp_aft:
-                    while True:
-                        block = samp_bef.read(4 * channels * sample_rate)
-                        if not block: break
-                        data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**31
-
-                        freq = [data_numpy[i::channels] for i in range(channels)]
-                        block = (np.column_stack([methods.resample(c, sample_rate, new_sample_rate) for c in freq])
-                                 .ravel(order='C') * 2**31).astype(np.int32)
-                        samp_aft.write(block.tobytes())
-                shutil.move(variables.temp2_pcm, variables.temp_pcm)
-            except Exception as e:
-                os.remove(variables.temp_pcm)
-                os.remove(variables.temp2_pcm)
-                if type(e) == KeyboardInterrupt:
-                    sys.exit(0)
-                else:
-                    print(traceback.format_exc())
-                    sys.exit(1)
+            command = [
+                variables.ffmpeg,
+                '-v', 'quiet',
+                '-f', 's32le',
+                '-ar', str(sample_rate),
+                '-ac', str(channels),
+                '-i', variables.temp_pcm,
+                '-ar', str(new_sample_rate),
+                '-f', 's32le',
+                variables.temp2_pcm]
+            subprocess.run(command)
+            shutil.move(variables.temp2_pcm, variables.temp_pcm)
             return new_sample_rate
         return sample_rate
