@@ -1,24 +1,27 @@
-import base64, os, struct, time
-from ..common import variables, methods
+import base64, os, struct, subprocess, time
+from ..common import variables
 import numpy as np
 
-class dsd:
-    def delta_sigma(x, deg=2):
-        assert deg > 0, 'ΔΣ modulator degree should be greater than 0.'
+class DeltaSigma:
+    def __init__(self, deg=2):
+        self.deg = deg
+        self.intg = [0]*deg
+        self.quant = 0
 
-        intg = [0]*deg
-        quant = 0
+    def modulator(self, x):
+        assert self.deg > 0, 'ΔΣ modulator degree should be greater than 0.'
         bitstream = np.zeros_like(x)
 
         for i in range(len(x)):
-            intg[0] += x[i] - quant
-            for j in range(1, deg):
-                intg[j] += intg[j-1] - quant
-            quant = 1 if intg[-1] > 0 else -1
-            bitstream[i] = 1 if quant==1 else 0
+            self.intg[0] += x[i] - self.quant
+            for j in range(1, self.deg):
+                self.intg[j] += self.intg[j-1] - self.quant
+            self.quant = 1 if self.intg[-1] > 0 else -1
+            bitstream[i] = 1 if self.quant==1 else 0
 
         return np.packbits([int(b) for b in bitstream.astype(np.uint8)])
 
+class dsd:
     channels_dict = {
         1: [b'SLFT'],
         2: [b'SLFT', b'SRGT'],
@@ -85,41 +88,61 @@ class dsd:
     def encode(srate, channels, out, ext, verbose: bool = False):
         chb = dsd.channels_dict[channels]
 
-        plen = os.path.getsize(variables.temp_pcm)
         cli_width = 40
         i = 0
 
         dsd_srate = 2822400
+        pred_size = os.path.getsize(variables.temp_pcm) // srate * dsd_srate // 32
         try:
-            with open(variables.temp_pcm, 'rb') as pcm, open(variables.temp_dsd, 'wb') as temp:
-                start_time = time.time()
+            BUFFER_SIZE = 96000 * 4 * channels
+
+            delta_sigma = DeltaSigma()
+            command = [
+                'ffmpeg',
+                '-v', 'quiet',
+                '-f', 's32le',
+                '-ar', str(srate),
+                '-ac', str(channels),
+                '-i', variables.temp_pcm,
+                '-ar', str(dsd_srate),
+                '-f', 's32le',
+                'pipe:1']
+
+            pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+            with open(variables.temp_dsd, 'wb') as bstr:
                 if verbose: print('\n')
-
+                start_time = time.time()
                 while True:
-                    block = methods.resample_1sec(pcm.read(4 * len(chb) * srate), channels, srate, dsd_srate)
-                    if not block: break
-                    i += len(block)
-                    data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**32
+                    i += BUFFER_SIZE
+                    data = pipe.stdout.read(BUFFER_SIZE)
+                    if not data or data == b'': break
+                    # print(data)
+                    data_numpy = np.frombuffer(data, dtype=np.int32).astype(np.float64) / 2**32
+                    freq = [data_numpy[i::channels] for i in range(channels)]
+                    block = np.column_stack([delta_sigma.modulator(c) for c in freq]).ravel(order='C').tobytes()
 
-                    freq = [data_numpy[i::len(chb)] for i in range(len(chb))]
-                    block = np.column_stack([dsd.delta_sigma(c) for c in freq]).ravel(order='C').tobytes()
-                    temp.write(block)
-
+                    bstr.write(block)
                     dlen = os.path.getsize(variables.temp_dsd)
-                    with open(variables.temp_dsd, 'rb') as trd, open(f'{out}.{ext}', 'wb') as dsdfile:
-                        dsdfile.write(dsd.build_dff_header(dlen, chb, dsd_srate) + trd.read())
+                    h = dsd.build_dff_header(dlen, chb, dsd_srate)
 
                     if verbose:
                         elapsed_time = time.time() - start_time
                         bps = i / elapsed_time
-                        mult = dlen * 8 / dsd_srate / channels / elapsed_time
-                        percent = i*100 / plen
+                        mult = dlen / dsd_srate / channels / elapsed_time
+                        percent = dlen*100 / pred_size
                         b = int(percent / 100 * cli_width)
                         print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'DSD Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                with open(f'{out}.{ext}', 'wb') as f, open(variables.temp_dsd, 'rb') as temp:
+                    f.write(h + temp.read())
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt: pass
         finally:
+            dlen = os.path.getsize(variables.temp_dsd)
+            h = dsd.build_dff_header(dlen, chb, dsd_srate)
+            with open(f'{out}.{ext}', 'wb') as f, open(variables.temp_dsd, 'rb') as temp:
+                f.write(h + temp.read())
             os.remove(variables.temp_pcm)
             os.remove(variables.temp_dsd)

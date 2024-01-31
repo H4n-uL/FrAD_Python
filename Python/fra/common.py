@@ -1,6 +1,4 @@
-import base64, os, platform, secrets, shutil, subprocess, sys, traceback
-import numpy as np
-import scipy.signal as sps
+import base64, os, platform, secrets, shutil, subprocess
 
 class variables:
     hash_block_size = 2**20
@@ -40,22 +38,6 @@ class methods:
     def signature(sign):
         if sign != b'\x16\xb0\x03':
             raise Exception('This is not Fourier Analogue file.')
-
-    def resample_1sec(data, channels, sr_origin, sr_new):
-        command = [
-                variables.ffmpeg,
-                '-v', 'quiet',
-                '-f', 's32le',
-                '-ar', str(sr_origin),
-                '-ac', str(channels),
-                '-i', 'pipe:0',
-                '-ar', str(sr_new),
-                '-f', 's32le',
-                'pipe:1']
-
-        pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=10**8)
-        resampled, _ = pipe.communicate(data)
-        return resampled
 
     def resample_pcm(channels, sample_rate, new_sample_rate):
         if new_sample_rate is not None and int(new_sample_rate) != sample_rate:
