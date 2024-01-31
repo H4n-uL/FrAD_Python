@@ -82,7 +82,7 @@ class dsd:
         HEAD[0xc:0x14] = struct.pack('<Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
-    def encode(srate, channels, bits, out, ext, verbose: bool = False):
+    def encode(srate, channels, out, ext, verbose: bool = False):
         chb = dsd.channels_dict[channels]
 
         plen = os.path.getsize(variables.temp_pcm)
@@ -96,13 +96,10 @@ class dsd:
                 if verbose: print('\n')
 
                 while True:
-                    block = methods.resample_1sec(pcm.read(bits // 8 * len(chb) * srate), channels, srate, dsd_srate)
+                    block = methods.resample_1sec(pcm.read(4 * len(chb) * srate), channels, srate, dsd_srate)
                     if not block: break
                     i += len(block)
-                    if bits == 32:   data_numpy = np.frombuffer(block, dtype=np.int32)
-                    elif bits == 16: data_numpy = np.frombuffer(block, dtype=np.int16)
-                    elif bits == 8:  data_numpy = (np.frombuffer(block, dtype=np.uint8).astype(np.int16) - 128).astype(np.int8)
-                    data_numpy = data_numpy.astype(np.float64) / (np.iinfo(data_numpy.dtype).max * 2)
+                    data_numpy = np.frombuffer(block, dtype=np.int32).astype(np.float64) / 2**32
 
                     freq = [data_numpy[i::len(chb)] for i in range(len(chb))]
                     block = np.column_stack([dsd.delta_sigma(c) for c in freq]).ravel(order='C').tobytes()
