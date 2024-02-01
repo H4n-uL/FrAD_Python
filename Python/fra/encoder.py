@@ -101,7 +101,7 @@ class encode:
 
         # Setting file extension
         if not (out.lower().endswith('.frad') or out.lower().endswith('.dsin') or out.lower().endswith('.fra') or out.lower().endswith('.dsn')):
-            if len(out) <= 8: out += '.fra'
+            if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.fra'
             else: out += '.frad'
         
         with open(out, 'wb') as file:
