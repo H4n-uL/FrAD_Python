@@ -132,14 +132,25 @@ class encode:
                     # Applying ECC (This will make encoding thousands of times slower)
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
 
-                    data = bytes(b'\xff\xd0\xd2\x97' +
+                    data = bytes(
+                        # Block Signature
+                        b'\xff\xd0\xd2\x97' +
+
+                        # Segment length(Processed)
                         struct.pack('>I', len(segment)) +
-                        headb.encode_efb(apply_ecc, bits) +
-                        struct.pack('>B', channels - 1) +
-                        struct.pack('>B', ecc_dsize if apply_ecc else 0) +
-                        struct.pack('>B', ecc_codesize if apply_ecc else 0) +
+
+                        headb.encode_efb(apply_ecc, bits) +                   # EFB
+                        struct.pack('>B', channels - 1) +                     # Channels
+                        struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
+                        struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
+
+                        # ISO 3309 CRC32
                         struct.pack('>I', zlib.crc32(segment)) +
 
+                        # Reserved
+                        b'\x00'*16 +
+
+                        # Data
                         segment
                     )
 

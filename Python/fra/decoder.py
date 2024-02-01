@@ -36,7 +36,7 @@ class decode:
             warned = False
             error_dir = []
             while True:
-                frame = f.read(16)
+                frame = f.read(32)
                 if not frame: break
                 blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B:       Audio Stream Frame length
                 efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:          Cosine-Float Bit
@@ -77,7 +77,7 @@ class decode:
                 with open(variables.temp_pcm if not play else os.devnull, 'wb') as p:
                     while True:
                         # Reading Frame Header
-                        frame = f.read(16)
+                        frame = f.read(32)
                         if not frame: break
                         blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B: Audio Stream Frame length
                         efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:    Cosine-Float Bit
@@ -110,7 +110,7 @@ class decode:
                                 print(f'{(i / (sample_rate*speed)):.3f} s')
                         else:
                             p.write(segment)
-                            i += blocklength + 16
+                            i += blocklength + 32
                             if verbose:
                                 elapsed_time = time.time() - start_time
                                 bps = i / elapsed_time
