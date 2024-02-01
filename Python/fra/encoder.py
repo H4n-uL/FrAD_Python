@@ -105,10 +105,7 @@ class encode:
             else: out += '.frad'
         
         with open(out, 'wb') as file:
-            h = headb.uilder(
-                sample_rate, channel=channels,
-                meta=meta, img=img)
-
+            h = headb.uilder(meta, img)
             file.write(h)
 
         # Fourier Transform

@@ -36,7 +36,7 @@ class variables:
 
 class methods:
     def signature(sign):
-        if sign != b'\x16\xb0\x03':
+        if sign != b'fRad':
             raise Exception('This is not Fourier Analogue file.')
 
     def resample_pcm(channels, sample_rate, new_sample_rate):

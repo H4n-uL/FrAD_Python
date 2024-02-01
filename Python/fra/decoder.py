@@ -14,7 +14,7 @@ class decode:
             header = f.read(64)
 
             # File signature verification
-            methods.signature(header[0x0:0x3])
+            methods.signature(header[0x0:0x4])
 
             # Taking Stream info
             channels = None
@@ -119,7 +119,7 @@ class decode:
                             if channels != None or sample_rate != None:
                                 print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print('Warning: Fourier Analogue-in-Digital supports variable sample rates and channels, while other codecs do not.')
-                                print('The decoder has only decoded the first track. The decoding of two or more tracks is planned for an update.')
+                                print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
                                 return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
                         with open(variables.temp_pcm, 'ab') as p: p.write(segment)

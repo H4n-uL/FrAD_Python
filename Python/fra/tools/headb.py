@@ -21,17 +21,9 @@ class headb:
         float_bits = efb & 0b111                            # 0x08@0b010-3b: Stream bit depth
         return ecc, float_bits
 
-    def uilder(
-            # Fixed Header
-            sample_rate: bytes, channel: int,
+    def uilder(meta = None, img: bytes = None):
 
-            # Metadata
-            meta = None, img: bytes = None):
-
-        signature = b'\x16\xb0\x03'
-
-        channel_block = struct.pack('<B', channel - 1)
-        sample_block = struct.pack('>I', sample_rate)
+        signature = b'fRad'
 
         blocks = bytes()
 
@@ -42,5 +34,5 @@ class headb:
 
         length = struct.pack('>Q', (64 + len(blocks)))
 
-        header = signature + channel_block + sample_block + length + (b'\x00'*48) + blocks
+        header = signature + (b'\x00'*4) + length + (b'\x00'*48) + blocks
         return header

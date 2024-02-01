@@ -8,7 +8,7 @@ class repack:
         with open(file_path, 'rb') as f:
             head = f.read(64)
 
-            methods.signature(head[0x0:0x3])
+            methods.signature(head[0x0:0x4])
 
             header_length = struct.unpack('>Q', head[0x8:0x10])[0]
             efb = struct.unpack('<B', head[0x10:0x11])[0]
@@ -85,9 +85,7 @@ class repack:
                     if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
 
                 f.seek(0)
-                head = bytearray(f.read(header_length))
-                head[0x10:0x11] = struct.pack('<B', 0b1 << 4 | efb)
-                head = bytes(head)
+                head = f.read(header_length)
             except KeyboardInterrupt:
                 os.remove(variables.temp)
                 sys.exit(1)

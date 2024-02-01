@@ -8,7 +8,7 @@ class header:
         with open(file_path, 'rb') as f:
             header = f.read(64)
 
-            methods.signature(header[0x0:0x3])
+            methods.signature(header[0x0:0x4])
             headlen = struct.unpack('>Q', header[0x8:0x10])[0]
             blocks = f.read(headlen - 256)
             i = 0
@@ -36,10 +36,7 @@ class header:
                 # Fixed Header
                 head = f.read(64)
 
-                methods.signature(head[0x0:0x3])
-                # Taking Stream info
-                channel = struct.unpack('<B', head[0x3:0x4])[0] + 1    # 0x03:          Channel
-                sample_rate = struct.unpack('>I', head[0x4:0x8])[0]    # 0x04-4B:       Sample rate
+                methods.signature(head[0x0:0x4])
                 header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B:       Total header size
 
                 # Backing up audio data
@@ -48,7 +45,7 @@ class header:
                     temp.write(f.read())
 
             # Making new header
-            head_new = headb.uilder(sample_rate, channel, meta, img)
+            head_new = headb.uilder(meta, img)
 
             # Overwriting Fourier Analogue-in-Digital file
             with open(variables.temp, 'wb') as f: # DO NEVER DELETE THIS
