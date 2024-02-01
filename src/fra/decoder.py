@@ -143,7 +143,7 @@ class decode:
                 if play: stream.abort()
                 else:
                     print('Aborting...')
-                    os.remove(variables.temp_pcm)
+                    os.remove(variables.tmpdir)
                 sys.exit(0)
 
     def split_q(s):
@@ -208,7 +208,7 @@ class decode:
         # File name
         command.append(f'{out}.{ext}')
         subprocess.run(command)
-        os.remove(variables.temp_pcm)
+        os.remove(variables.tmpdir)
 
     def AppleAAC_macOS(sample_rate, channels, s, out, quality, strategy):
         try:
@@ -227,8 +227,7 @@ class decode:
             os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp_pcm)
-            os.remove(variables.temp_flac)
+            os.remove(variables.tmpdir)
             sys.exit(0)
         try:
             if strategy in ['c', '', None]: strategy = '0'
@@ -244,10 +243,10 @@ class decode:
                 '-s', strategy
             ]
             subprocess.run(command)
-            os.remove(variables.temp_flac)
+            os.remove(variables.tmpdir)
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp_flac)
+            os.remove(variables.tmpdir)
             sys.exit(0)
 
     def AppleAAC_Windows(sample_rate, channels, out, quality):
@@ -264,10 +263,10 @@ class decode:
                 '-s'
             ]
             subprocess.run(command)
-            os.remove(variables.temp_pcm)
+            os.remove(variables.tmpdir)
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp_pcm)
+            os.remove(variables.tmpdir)
             sys.exit(0)
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, nsr: int = None, verbose: bool = False):
@@ -327,5 +326,5 @@ class decode:
 
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp_pcm)
+            os.remove(variables.tmpdir)
             sys.exit(0)

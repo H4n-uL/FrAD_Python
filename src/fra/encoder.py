@@ -172,5 +172,5 @@ class encode:
         except KeyboardInterrupt:
             print('Aborting...')
         finally:
-            os.remove(variables.temp_pcm)
+            os.remove(variables.tmpdir)
             sys.exit(0)
