@@ -102,7 +102,6 @@ class decode:
 
                     if play:
                         if channels != channels_frame or sample_rate != srate_frame:
-                            stream.close()
                             stream = sd.OutputStream(samplerate=int(srate_frame*speed), channels=channels_frame)
                             stream.start()
                             channels, sample_rate = channels_frame, srate_frame
@@ -117,7 +116,11 @@ class decode:
                             print(f'{(i):.3f} s')
                     else:
                         if channels != channels_frame or sample_rate != srate_frame:
-                            if channels != None or sample_rate != None: break
+                            if channels != None or sample_rate != None:
+                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                                print('Warning: Fourier Analogue-in-Digital supports variable sample rates and channels, while other codecs do not.')
+                                print('The decoder has only decoded the first track. The decoding of two or more tracks is planned for an update.')
+                                return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
                         with open(variables.temp_pcm, 'ab') as p: p.write(segment)
                         i += blocklength + 32
