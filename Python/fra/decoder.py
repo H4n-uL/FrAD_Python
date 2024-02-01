@@ -50,11 +50,12 @@ class decode:
                     if not warned:
                         warned = True
                         print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
+                # block = zlib.decompress(block)
 
-                if is_ecc_on: duration += (blocklength // (ecc_dsize+ecc_codesize) * ecc_dsize // ssize_dict[float_bits])
-                else: duration += (blocklength // ssize_dict[float_bits])
+                if is_ecc_on: duration += (len(block) // (ecc_dsize+ecc_codesize) * ecc_dsize // ssize_dict[float_bits])
+                else: duration += (len(block) // ssize_dict[float_bits])
 
-                dlen += blocklength
+                dlen += len(block)
                 framescount += 1
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
 
@@ -88,12 +89,13 @@ class decode:
 
                         # Reading Block
                         block = f.read(blocklength)
-                        # block = zlib.decompress(block)
 
                         if is_ecc_on:
                             if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
                                 block = ecc.decode(block, ecc_dsize, ecc_codesize)
                             else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+
+                        # block = zlib.decompress(block)
 
                         segment = fourier.digital(block, float_bits, channels) # Inversing
 

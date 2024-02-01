@@ -127,10 +127,10 @@ class encode:
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
                     segment = fourier.analogue(block, bits, channels)              # Fourier Transform
 
+                    # segment = zlib.compress(segment)
+
                     # Applying ECC (This will make encoding thousands of times slower)
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
-
-                    # block = zlib.compress(block)
 
                     data = bytes(b'\xff\xd0\xd2\x97' +
                         struct.pack('>I', len(segment)) +
