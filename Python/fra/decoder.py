@@ -17,13 +17,11 @@ class decode:
             methods.signature(header[0x0:0x3])
 
             # Taking Stream info
-            channels = struct.unpack('<B', header[0x3:0x4])[0] + 1   # 0x03:          Channels
-            sample_rate = struct.unpack('>I', header[0x4:0x8])[0]    # 0x04-4B:       Sample rate
+            channels = None
+            sample_rate = None
             header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B:       Total header size
 
             f.seek(header_length)
-
-            ssize_dict = {0b110: 16*channels, 0b101: 8*channels, 0b100: 6*channels, 0b011: 4*channels, 0b010: 3*channels, 0b001: 2*channels}
 
             # Inverse Fourier Transform #
             i = 0
@@ -38,12 +36,14 @@ class decode:
             while True:
                 frame = f.read(32)
                 if not frame: break
-                blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B:       Audio Stream Frame length
-                efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:          Cosine-Float Bit
+                blocklength = struct.unpack('>I', frame[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
+                efb = struct.unpack('>B', frame[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
                 is_ecc_on, float_bits = headb.decode_efb(efb)
-                ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
-                ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
-                crc32 = frame[0x1c:0x20]                              # 0x1c-4B:       ISO 3309 CRC32 of Audio Data
+                channels_frame = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
+                ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]          # 0x0a:    ECC Data block size
+                ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0]       # 0x0b:    ECC Code size
+                srate_frame = struct.unpack('>I', frame[0xc:0x10])[0]       # 0x0c-4B: Sample rate
+                crc32 = frame[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
                 block = f.read(blocklength)
                 if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
                     error_dir.append(str(framescount))
@@ -53,19 +53,19 @@ class decode:
 
                 if is_ecc_on: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
                 # block = zlib.decompress(block)
-                duration += (len(block) // ssize_dict[float_bits])
+                ssize_dict = {0b110: 16*channels_frame, 0b101: 8*channels_frame, 0b100: 6*channels_frame, 0b011: 4*channels_frame, 0b010: 3*channels_frame, 0b001: 2*channels_frame}
+                duration += (len(block) // ssize_dict[float_bits]) / (srate_frame * speed)
 
                 dlen += len(block)
                 framescount += 1
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
 
-            dur_sec = duration / (sample_rate*speed)
             f.seek(header_length)
 
             try:
                 # Starting stream
                 if play:
-                    stream = sd.OutputStream(samplerate=int(sample_rate*speed), channels=channels)
+                    stream = sd.OutputStream(samplerate=44100, channels=2)
                     stream.start()
                     print()
                 else:
@@ -74,52 +74,62 @@ class decode:
                     start_time = time.time()
                     if verbose: print('\n')
 
-                with open(variables.temp_pcm if not play else os.devnull, 'wb') as p:
-                    while True:
-                        # Reading Frame Header
-                        frame = f.read(32)
-                        if not frame: break
-                        blocklength = struct.unpack('>I', frame[0x4:0x8])[0]  # 0x04-4B: Audio Stream Frame length
-                        efb = struct.unpack('>B', frame[0x8:0x9])[0]          # 0x08:    Cosine-Float Bit
-                        is_ecc_on, float_bits = headb.decode_efb(efb)
-                        channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
-                        ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:    ECC Data block size
-                        ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:    ECC Code size
-                        crc32 = frame[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+                while True:
+                    # Reading Frame Header
+                    frame = f.read(32)
+                    if not frame: break
+                    blocklength = struct.unpack('>I', frame[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
+                    efb = struct.unpack('>B', frame[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
+                    is_ecc_on, float_bits = headb.decode_efb(efb)
+                    channels_frame = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
+                    ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]          # 0x0a:    ECC Data block size
+                    ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0]       # 0x0b:    ECC Code size
+                    srate_frame = struct.unpack('>I', frame[0xc:0x10])[0]        # 0x0c-4B: Sample rate
+                    crc32 = frame[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+                    ssize_dict = {0b110: 16*channels_frame, 0b101: 8*channels_frame, 0b100: 6*channels_frame, 0b011: 4*channels_frame, 0b010: 3*channels_frame, 0b001: 2*channels_frame}
 
-                        # Reading Block
-                        block = f.read(blocklength)
+                    # Reading Block
+                    block = f.read(blocklength)
 
-                        if is_ecc_on:
-                            if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
-                                block = ecc.decode(block, ecc_dsize, ecc_codesize)
-                            else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+                    if is_ecc_on:
+                        if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
+                            block = ecc.decode(block, ecc_dsize, ecc_codesize)
+                        else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
 
-                        # block = zlib.decompress(block)
+                    # block = zlib.decompress(block)
 
-                        segment = fourier.digital(block, float_bits, channels) # Inversing
+                    segment = fourier.digital(block, float_bits, channels_frame) # Inversing
 
-                        if play:
-                            stream.write((segment / np.iinfo(np.int32).max).astype(np.float32))
-                            i += len(segment)
-                            frameNo += 1
-                            print('\x1b[1A\x1b[2K', end='')
-                            if verbose: 
-                                print(f'{(i / (sample_rate*speed)):.3f} s / {(dur_sec):.3f} s (Frame #{frameNo} / {framescount} Frames)')
-                            else:
-                                print(f'{(i / (sample_rate*speed)):.3f} s')
+                    if play:
+                        if channels != channels_frame or sample_rate != srate_frame:
+                            stream.close()
+                            stream = sd.OutputStream(samplerate=int(srate_frame*speed), channels=channels_frame)
+                            stream.start()
+                            channels, sample_rate = channels_frame, srate_frame
+                        stream.write((segment / np.iinfo(np.int32).max).astype(np.float32))
+
+                        i += len(segment) / (sample_rate*speed)
+                        frameNo += 1
+                        print('\x1b[1A\x1b[2K', end='')
+                        if verbose: 
+                            print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames)')
                         else:
-                            p.write(segment)
-                            i += blocklength + 32
-                            if verbose:
-                                elapsed_time = time.time() - start_time
-                                bps = i / elapsed_time
-                                mult = bps / (ssize_dict[float_bits] * sample_rate)
-                                percent = i*100 / dlen
-                                b = int(percent / 100 * cli_width)
-                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                                print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
-                                print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                            print(f'{(i):.3f} s')
+                    else:
+                        if channels != channels_frame or sample_rate != srate_frame:
+                            if channels != None or sample_rate != None: break
+                            channels, sample_rate = channels_frame, srate_frame
+                        with open(variables.temp_pcm, 'ab') as p: p.write(segment)
+                        i += blocklength + 32
+                        if verbose:
+                            elapsed_time = time.time() - start_time
+                            bps = i / elapsed_time
+                            mult = bps / (ssize_dict[float_bits] * sample_rate)
+                            percent = i*100 / dlen
+                            b = int(percent / 100 * cli_width)
+                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                            print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                            print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 if play:
                     print('\x1b[1A\x1b[2K', end='')
                     stream.close()

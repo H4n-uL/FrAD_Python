@@ -145,8 +145,7 @@ class encode:
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
 
-                            # Reserved
-                            b'\x00'*4 +
+                            struct.pack('>I', sample_rate) +                     # Sample Rate
 
                         #-- 0x10 ~ 0x1f --#
                             b'\x00'*12 +

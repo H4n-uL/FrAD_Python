@@ -33,6 +33,7 @@ class repack:
                         channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
                         ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:    ECC Data block size
                         ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:    ECC Code size
+                        srate_frame = struct.unpack('>I', frame[0xc:0x10])[0]        # 0x0c-4B: Sample rate
                         crc32 = frame[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
 
                         # Reading Block
@@ -57,8 +58,7 @@ class repack:
                                 struct.pack('>B', ecc_dsize) +       # ECC DSize
                                 struct.pack('>B', ecc_codesize) +    # ECC code size
 
-                                # Reserved
-                                b'\x00'*4 +
+                                struct.pack('>I', srate_frame) +                     # Sample Rate
 
                             #-- 0x10 ~ 0x1f --#
                                 b'\x00'*12 +
