@@ -26,6 +26,10 @@ class ecc:
         rs = RSCodec(ecc_codesize, blocksize)
 
         chunks = ecc.split_data(data, blocksize)
-        try: decoded_chunks = [bytes(rs.decode(chunk)[0]) for chunk in chunks]
-        except ReedSolomonError as e: return ecc.unecc(data, ecc_dsize, ecc_codesize)
-        return b''.join(decoded_chunks)
+        decoded_chunk = []
+        for chunk in chunks:
+            try:
+                decoded_chunk.append(bytes(rs.decode(chunk)[0]))
+            except ReedSolomonError as e:
+                decoded_chunk.append(b'\x00'*ecc_dsize)
+        return b''.join(decoded_chunk)

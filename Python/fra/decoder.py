@@ -34,6 +34,7 @@ class decode:
             ecc_dsize = ecc_codesize = 0
             duration = 0
             warned = False
+            error_dir = []
             while True:
                 frame = f.read(16)
                 if not frame: break
@@ -42,16 +43,20 @@ class decode:
                 is_ecc_on, float_bits = headb.decode_efb(efb)
                 ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
                 ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
-                crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Dataif is_ecc_on:
-                if e and zlib.crc32(f.read(blocklength)) != struct.unpack('>I', crc32)[0] and not warned:
-                    print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
+                crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Data
+                block = f.read(blocklength)
+                if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
+                    error_dir.append(str(framescount))
+                    if not warned:
+                        warned = True
+                        print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
 
                 if is_ecc_on: duration += (blocklength // (ecc_dsize+ecc_codesize) * ecc_dsize // ssize_dict[float_bits])
                 else: duration += (blocklength // ssize_dict[float_bits])
 
                 dlen += blocklength
                 framescount += 1
-                f.read(blocklength)
+            if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
 
             dur_sec = duration / (sample_rate*speed)
             f.seek(header_length)
