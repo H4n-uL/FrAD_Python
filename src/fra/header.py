@@ -56,5 +56,5 @@ class header:
         except KeyboardInterrupt:
             print('Aborting...')
         finally:
-            os.remove(variables.tmpdir)
+            os.remove(variables.temp2)
             sys.exit(0)
