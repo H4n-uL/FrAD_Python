@@ -33,7 +33,7 @@ class repack:
                         channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
                         ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:    ECC Data block size
                         ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:    ECC Code size
-                        crc32 = frame[0xc:0x10]                               # 0x0c-4B: ISO 3309 CRC32 of Audio Data
+                        crc32 = frame[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
 
                         # Reading Block
                         block = f.read(blocklength)
@@ -44,26 +44,29 @@ class repack:
                             ecc_dsize = 128
                             ecc_codesize = 20
                         block = ecc.encode(block, ecc_dsize, ecc_codesize)
-
                         data = bytes(
-                            # Block Signature
-                            b'\xff\xd0\xd2\x97' +
+                            #-- 0x00 ~ 0x0f --#
+                                # Block Signature
+                                b'\xff\xd0\xd2\x97' +
 
-                            # Segment length(Processed)
-                            struct.pack('>I', len(block)) +
+                                # Segment length(Processed)
+                                struct.pack('>I', len(block)) +
 
-                            headb.encode_efb(True, float_bits) + # EFB
-                            struct.pack('>B', channels - 1) +    # Channels
-                            struct.pack('>B', ecc_dsize) +       # ECC DSize
-                            struct.pack('>B', ecc_codesize) +    # ECC code size
+                                headb.encode_efb(True, float_bits) + # EFB
+                                struct.pack('>B', channels - 1) +    # Channels
+                                struct.pack('>B', ecc_dsize) +       # ECC DSize
+                                struct.pack('>B', ecc_codesize) +    # ECC code size
 
-                            # ISO 3309 CRC32
-                            struct.pack('>I', zlib.crc32(block)) +
+                                # Reserved
+                                b'\x00'*4 +
 
-                            # Reserved
-                            b'\x00'*16 +
+                            #-- 0x10 ~ 0x1f --#
+                                b'\x00'*12 +
 
-                            # Data
+                                # ISO 3309 CRC32
+                                struct.pack('>I', zlib.crc32(block)) +
+
+                            #-- Data --#
                             block
                         )
 

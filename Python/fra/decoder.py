@@ -43,7 +43,7 @@ class decode:
                 is_ecc_on, float_bits = headb.decode_efb(efb)
                 ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:          ECC Data block size
                 ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:          ECC Code size
-                crc32 = frame[0xc:0x10]                               # 0x0c-4B:       ISO 3309 CRC32 of Audio Data
+                crc32 = frame[0x1c:0x20]                              # 0x1c-4B:       ISO 3309 CRC32 of Audio Data
                 block = f.read(blocklength)
                 if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
                     error_dir.append(str(framescount))
@@ -85,7 +85,7 @@ class decode:
                         channels = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
                         ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]    # 0x0a:    ECC Data block size
                         ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:    ECC Code size
-                        crc32 = frame[0xc:0x10]                               # 0x0c-4B: ISO 3309 CRC32 of Audio Data
+                        crc32 = frame[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
 
                         # Reading Block
                         block = f.read(blocklength)
