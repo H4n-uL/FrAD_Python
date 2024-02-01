@@ -39,7 +39,7 @@ class methods:
             raise Exception('This is not Fourier Analogue file.')
 
     def resample_pcm(channels, sample_rate, new_sample_rate):
-        if new_sample_rate is not None and int(new_sample_rate) != sample_rate:
+        if new_sample_rate is not None and new_sample_rate != sample_rate:
             command = [
                 variables.ffmpeg,
                 '-v', 'quiet',

@@ -20,7 +20,8 @@ def main(action, args):
 
     if action == 'encode':
         from fra import encode
-        encode.enc(input, int(args.bits), out=args.output, apply_ecc=args.ecc, nsr=args.new_sample_rate, meta=meta, img=img, verbose=args.verbose)
+        nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
+        encode.enc(input, int(args.bits), out=args.output, apply_ecc=args.ecc, nsr=nsr, meta=meta, img=img, verbose=args.verbose)
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
