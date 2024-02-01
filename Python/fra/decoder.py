@@ -51,7 +51,8 @@ class decode:
                         warned = True
                         print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
 
-                # block = zlib.decompress(ecc.unecc(block, ecc_dsize, ecc_codesize))
+                if is_ecc_on: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+                # block = zlib.decompress(block)
                 duration += (len(block) // ssize_dict[float_bits])
 
                 dlen += len(block)
