@@ -101,7 +101,7 @@ class decode:
 
                         if play:
                             stream.write((segment / np.iinfo(np.int32).max).astype(np.float32))
-                            i += blocklength / ssize_dict[float_bits] * (ecc_dsize / (ecc_codesize+ecc_dsize) if is_ecc_on else 1)
+                            i += len(segment)
                             frameNo += 1
                             print('\x1b[1A\x1b[2K', end='')
                             if verbose: 
