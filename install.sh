@@ -7,7 +7,7 @@ then
     exit
 fi
 
-if [ -d "$FOURIER_PATH/FrAD-Codec" ]; then
+if [ -d "$FOURIER_PATH/FrAD-Codec/main.py" ]; then
     read -p "Fourier Analogue-in-Digital is already installed. Would you like to remove and reinstall? (Y/N) " yn
     case $yn in
         [Yy]* )
