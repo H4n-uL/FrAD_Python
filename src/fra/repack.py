@@ -1,5 +1,5 @@
 from .common import variables, methods
-import hashlib, math, os, struct, sys, time, zlib
+import os, struct, sys, time, zlib
 from .tools.ecc import ecc
 from .tools.headb import headb
 

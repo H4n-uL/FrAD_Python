@@ -1,5 +1,5 @@
 from .common import variables, methods
-import math, os, shutil, struct, sys
+import os, shutil, struct, sys
 from .tools.headb import headb
 
 class header:
