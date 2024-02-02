@@ -7,17 +7,16 @@ then
     exit
 fi
 
-if [ -d "$FOURIER_PATH/FrAD-Codec/main.py" ]; then
+if [ "$FOURIER_PATH/FrAD-Codec/main.py" ]; then
     read -p "Fourier Analogue-in-Digital is already installed. Would you like to remove and reinstall? (Y/N) " yn
     case $yn in
         [Yy]* )
-            rm -r $FOURIER_PATH/FrAD-Codec
-            for rcfile in `ls -a ~ | grep 'shrc$'`; do
+            rm -rf $FOURIER_PATH/FrAD-Codec
+            for rcfile in `ls -a ~ | egrep '^\\.(.*_profile|.*shrc)$'`; do
                 sed -i '' "/FOURIER_PATH/d" ~/$rcfile
                 sed -i '' "/alias fourier=/d" ~/$rcfile
             done
             echo "Deleted.";;
-
         * )
             echo "Installation Aborted."; exit 1;;
     esac
@@ -32,7 +31,9 @@ export FOURIER_PATH
 mkdir -p $FOURIER_PATH/FrAD-Codec || { exit 1; }
 rsync -a --exclude='__pycache__' --exclude='.DS_Store' "$(dirname "$0")/src/" $FOURIER_PATH/FrAD-Codec || { echo "Failed copying files."; exit 1; }
 
-for rcfile in `ls -a ~ | grep 'shrc$'`; do
+for rcfile in `ls -a ~ | egrep '^\\.(.*sh_profile|.*shrc)$'`; do
+    sed -i '' "/FOURIER_PATH/d" ~/$rcfile
+    sed -i '' "/alias fourier=/d" ~/$rcfile
     echo "export FOURIER_PATH=$FOURIER_PATH" >> ~/$rcfile
     echo "alias fourier='python3 \$FOURIER_PATH/FrAD-Codec/main.py'" >> ~/$rcfile
 done
