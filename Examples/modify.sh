@@ -1,8 +1,8 @@
 #!/bin/bash
 
-python3 Python/main.py meta-modify "path/to/fourierAnalogue.frad" \
+fourier meta-modify "path/to/fourierAnalogue.frad" \
 \
---meta "Metadata Title" "Metadata contents" \
+--metadata "Metadata Title" "Metadata contents" \
 --jsonmeta "path/to/metadata.json" \
 --image "path/to/image/file"
 

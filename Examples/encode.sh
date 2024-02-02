@@ -1,9 +1,9 @@
 #!/bin/bash
 
-python3 Python/main.py encode "path/to/audio.flac" \
+fourier encode "path/to/audio.flac" \
 --bits 32 \
 \
---output "path/for/fourierAnalogue.fra" \
+--output "path/for/fourierAnalogue.frad" \
 --enable_ecc \
 --metadata "Metadata Title" "Metadata contents" \
 --jsonmeta "path/to/metadata.json" \

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python3 Python/main.py play "path/to/fourierAnalogue.frad" \
+fourier play "path/to/fourierAnalogue.frad" \
 \
 --key keys \
 --speed speed \

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python3 Python/main.py decode "path/to/fourierAnalogue.frad" \
+fourier decode "path/to/fourierAnalogue.frad" \
 \
 --bits 32 \
 --enable_ecc \
