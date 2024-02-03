@@ -96,7 +96,7 @@ class dsd:
         try:
             BUFFER_SIZE = 96000 * 4 * channels
 
-            delta_sigma = DeltaSigma()
+            delta_sigma = [DeltaSigma() for _ in range(channels)]
             command = [
                 'ffmpeg',
                 '-v', 'quiet',
@@ -120,7 +120,7 @@ class dsd:
                     # print(data)
                     data_numpy = np.frombuffer(data, dtype=np.int32).astype(np.float64) / 2**32
                     freq = [data_numpy[i::channels] for i in range(channels)]
-                    block = np.column_stack([delta_sigma.modulator(c) for c in freq]).ravel(order='C').tobytes()
+                    block = np.column_stack([delta_sigma[c].modulator(freq[c]) for c in range(len(freq))]).ravel(order='C').tobytes()
 
                     bstr.write(block)
                     dlen = os.path.getsize(variables.temp_dsd)
