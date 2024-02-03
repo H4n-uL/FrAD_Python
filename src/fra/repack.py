@@ -22,7 +22,7 @@ class repack:
                 total_bytes = 0
                 cli_width = 40
                 with open(variables.temp, 'wb') as t:
-                    if verbose: print()
+                    if verbose: print('\n\n')
                     while True:
                         # Reading Frame Header
                         frame = f.read(32)
@@ -79,10 +79,12 @@ class repack:
                             bps = total_bytes / elapsed_time
                             percent = (total_bytes * 100 // (1 if is_ecc_on else (32/37))) / dlen
                             b = int(percent / 100 * cli_width)
-                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                            eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
+                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
+                            print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-                    if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                    if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
 
                 f.seek(0)
                 head = f.read(header_length)

@@ -117,7 +117,7 @@ class encode:
             dlen = os.path.getsize(variables.temp_pcm)
 
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
-                if verbose: print('\n')
+                if verbose: print('\n\n')
                 while True:
                     p = pcm.read(nperseg * 4 * channels)                           # Reading PCM
                     if not p: break                                                # if no data, Break
@@ -164,11 +164,13 @@ class encode:
                         mult = bps / sample_rate / sample_size
                         percent = total_bytes / dlen / bits * 1600
                         b = int(percent / 100 * cli_width)
-                        print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                        eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
+                        print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                        print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
 
-                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt:
             print('Aborting...')
         finally:

@@ -72,7 +72,7 @@ class decode:
                     dlen = os.path.getsize(file_path) - header_length
                     cli_width = 40
                     start_time = time.time()
-                    if verbose: print('\n')
+                    if verbose: print('\n\n')
 
                 while True:
                     # Reading Frame Header
@@ -130,14 +130,16 @@ class decode:
                             mult = bps / (ssize_dict[float_bits] * sample_rate)
                             percent = i*100 / dlen
                             b = int(percent / 100 * cli_width)
-                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                            eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
+                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                            print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 if play:
                     print('\x1b[1A\x1b[2K', end='')
                     stream.close()
                 elif verbose:
-                    print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                    print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                 return sample_rate, channels
             except KeyboardInterrupt:
                 if play: stream.abort()

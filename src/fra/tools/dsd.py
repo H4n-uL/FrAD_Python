@@ -111,7 +111,7 @@ class dsd:
             pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
             with open(variables.temp_dsd, 'wb') as bstr:
-                if verbose: print('\n')
+                if verbose: print('\n\n')
                 start_time = time.time()
                 while True:
                     i += BUFFER_SIZE
@@ -132,12 +132,14 @@ class dsd:
                         mult = (dlen * 8 / dsd_srate / channels) / elapsed_time
                         percent = dlen*100 / pred_size
                         b = int(percent / 100 * cli_width)
-                        print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                        eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
+                        print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'DSD Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                        print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 with open(f'{out}.{ext}', 'wb') as f, open(variables.temp_dsd, 'rb') as temp:
                     f.write(h + temp.read())
-                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt: pass
         finally:
             dlen = os.path.getsize(variables.temp_dsd)
