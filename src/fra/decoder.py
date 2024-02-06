@@ -1,7 +1,7 @@
 from .common import variables, methods
 from .fourier import fourier
-import os, platform, shutil, struct, subprocess, sys, time, zlib
 import numpy as np
+import os, platform, shutil, struct, subprocess, sys, time, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
