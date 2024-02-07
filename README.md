@@ -89,7 +89,7 @@ Example of .json file is in Example folder.
 
 ### Coverage
 
-This licence applies to the entirety of the IPR, MOR, Git repository, source code, etc. of Fourier Analogue-in-Digital.
+This licence applies to the entirety of the Moral rights, Intellectual property rights, Git repository, source code, etc. of Fourier Analogue-in-Digital.
 
 ### Permissions
 
