@@ -24,7 +24,7 @@ def main(action, args):
         encode.enc(
                 input, int(args.bits),
                 out=args.output,
-                samples_per_block=args.sample_size,
+                samples_per_block=int(args.sample_size),
                 apply_ecc=args.ecc,
                 ecc_sizes=args.data_ecc_size,
                 nsr=nsr, meta=meta, img=img,
