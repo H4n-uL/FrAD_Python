@@ -82,8 +82,8 @@ class encode:
                 nsr: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        ecc_dsize = ecc_sizes[0]
-        ecc_codesize = ecc_sizes[1]
+        ecc_dsize = int(ecc_sizes[0])
+        ecc_codesize = int(ecc_sizes[1])
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
