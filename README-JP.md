@@ -24,7 +24,9 @@ fourier encode "path/to/audio.flac" \
 --bits 32 \                                        # ビット深度
 \  # オプション
 --output "path/to/fourierAnalogue.frad" \          # 出力ファイル
+--samples_per_block 2048 \                         # ブロックあたりのサンプル数
 --enable_ecc \                                     # ECC使用可否
+--data_ecc_size 128 20 \                           # データブロックとECCブロックのサイズ
 --metadata "Metadata Title" "Metadata contents" \  # メタデータ
 --jsonmeta "path/to/metadata.json" \               # メタデータ json, --metadata より優先されます。
 --image "path/to/image/file" \                     # 画像ファイル

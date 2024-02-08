@@ -77,19 +77,20 @@ class encode:
         return image
 
     def enc(file_path: str, bits: int,
-                out: str = None, apply_ecc: bool = False, nsr: int = None,
+                out: str = None, samples_per_block: int = 2048,
+                apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
+                nsr: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
-        nperseg = 2048
-        ecc_dsize = 128
-        ecc_codesize = 20
+        ecc_dsize = ecc_sizes[0]
+        ecc_codesize = ecc_sizes[1]
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
         segmax = (2**32 // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * bits // 8)//4)*4
-        if nperseg > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if nperseg < 4: raise ValueError(f'Sample size must be at least 4.')
-        if nperseg % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
+        if samples_per_block > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
+        if samples_per_block < 4: raise ValueError(f'Sample size must be at least 4.')
+        if samples_per_block % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
 
         encode.get_pcm(file_path)
         sample_rate = methods.resample_pcm(channels, sample_rate, nsr)
@@ -119,7 +120,7 @@ class encode:
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(nperseg * 4 * channels)                           # Reading PCM
+                    p = pcm.read(samples_per_block * 4 * channels)                           # Reading PCM
                     if not p: break                                                # if no data, Break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
                     segment = fourier.analogue(block, bits, channels)              # Fourier Transform

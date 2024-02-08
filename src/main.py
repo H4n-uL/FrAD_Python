@@ -21,12 +21,24 @@ def main(action, args):
     if action == 'encode':
         from fra import encode
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
-        encode.enc(input, int(args.bits), out=args.output, apply_ecc=args.ecc, nsr=nsr, meta=meta, img=img, verbose=args.verbose)
+        encode.enc(
+                input, int(args.bits),
+                out=args.output,
+                samples_per_block=args.sample_size,
+                apply_ecc=args.ecc,
+                ecc_sizes=args.data_ecc_size,
+                nsr=nsr, meta=meta, img=img,
+                verbose=args.verbose)
     elif action == 'decode':
         from fra import decode
         bits = 32 if args.bits == None else int(args.bits)
         codec = args.codec if args.codec is not None else None
-        decode.dec(input, out=args.output, bits=bits, codec=codec, quality=args.quality, e=args.ecc, nsr=args.new_sample_rate, verbose=args.verbose)
+        decode.dec(
+                input,
+                out=args.output, bits=bits,
+                codec=codec, quality=args.quality,
+                e=args.ecc, nsr=args.new_sample_rate,
+                verbose=args.verbose)
     elif action == 'parse':
         from fra import header
         output = args.output if args.output is not None else 'metadata'
@@ -59,26 +71,32 @@ def main(action, args):
         repack.ecc(input, args.verbose)
     elif action == 'play':
         from fra import player
-        player.play(input, keys=int(args.keys) if args.keys is not None else None, speed_in_times=float(args.speed) if args.speed is not None else None, e=args.ecc, verbose=args.verbose)
+        player.play(
+                input,
+                keys=int(args.keys) if args.keys is not None else None,
+                speed_in_times=float(args.speed) if args.speed is not None else None,
+                e=args.ecc, verbose=args.verbose)
     else:
         raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fourier Analogue-in-Digital Codec')
-    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'],          help='Codec action')
-    parser.add_argument('input',                                                                                          help='Input file path')
-    parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                               help='Output file path')
-    parser.add_argument('-b',   '--bits', '--bit',                          required=False,                               help='Output file bit depth')
-    parser.add_argument('-img', '--image',                                  required=False,                               help='Image file path')
-    parser.add_argument('-n', '-nsr', '--new_sample_rate', '--resample',    required=False,                               help='resample as new sample rate')
-    parser.add_argument('-c',   '--codec',                                  required=False,                               help='Codec type')
-    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true', help='Error Correction Code toggle')
-    parser.add_argument('-s',   '--speed',                                  required=False,                               help='Play speed(in times)')
-    parser.add_argument('-q',   '--quality',                                required=False,                               help='Decode quality(for lossy codec decode only)')
-    parser.add_argument('-k',   '--keys', '--key',                          required=False,                               help='Play keys')
-    parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',     help='Metadata in "key" "value" format')
-    parser.add_argument('-jm',  '--jsonmeta',                               required=False,                               help='Metadata in json, This will override --meta option.')
-    parser.add_argument('-v',   '--verbose',                                                         action='store_true', help='Verbose CLI Toggle')
+    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'],            help='Codec action')
+    parser.add_argument('input',                                                                                            help='Input file path')
+    parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                                 help='Output file path')
+    parser.add_argument('-b',   '--bits', '--bit',                          required=False,                                 help='Output file bit depth')
+    parser.add_argument('-img', '--image',                                  required=False,                                 help='Image file path')
+    parser.add_argument('-n',   '-nsr', '--new_sample_rate', '--resample',  required=False,          default='2048',        help='Resample as new sample rate')
+    parser.add_argument('-smp', '--sample_size', '--samples_per_block',     required=False,                                 help='Samples per block')
+    parser.add_argument('-c',   '--codec',                                  required=False,                                 help='Codec type')
+    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true',   help='Error Correction Code toggle')
+    parser.add_argument('-ds',  '--data_ecc_size', '--data_ecc_ratio',      required=False, nargs=2, default=['128', '20'], help='Original data size and ECC data size(in Data size : ECC size)')
+    parser.add_argument('-s',   '--speed',                                  required=False,                                 help='Play speed(in times)')
+    parser.add_argument('-q',   '--quality',                                required=False,                                 help='Decode quality(for lossy codec decode only)')
+    parser.add_argument('-k',   '--keys', '--key',                          required=False,                                 help='Play keys')
+    parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',       help='Metadata in "key" "value" format')
+    parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                 help='Metadata in json, This will override --meta option.')
+    parser.add_argument('-v',   '--verbose',                                                         action='store_true',   help='Verbose CLI Toggle')
 
     args = parser.parse_args()
     try:

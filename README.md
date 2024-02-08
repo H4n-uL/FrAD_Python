@@ -24,7 +24,9 @@ fourier encode "path/to/audio.flac" \
 --bits 32 \                                        # Bit depth
 \  # Optional
 --output "path/to/fourierAnalogue.frad" \          # Output file
+--samples_per_block 2048 \                         # Samples per block
 --enable_ecc \                                     # ECC enabled or not
+--data_ecc_size 128 20 \                           # Sizes of data block and ECC block when ECC enabled
 --metadata "Metadata Title" "Metadata contents" \  # Metadata
 --jsonmeta "path/to/metadata.json" \               # Metadata json, will override --metadata.
 --image "path/to/image/file" \                     # Image file
