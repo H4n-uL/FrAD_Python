@@ -105,7 +105,7 @@ class decode:
                             stream = sd.OutputStream(samplerate=int(srate_frame*speed), channels=channels_frame)
                             stream.start()
                             channels, sample_rate = channels_frame, srate_frame
-                        stream.write((segment / np.iinfo(np.int32).max).astype(np.float32))
+                        stream.write(segment.astype(np.float32))
 
                         i += len(segment) / (sample_rate*speed)
                         frameNo += 1
@@ -122,7 +122,8 @@ class decode:
                                 print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
                                 return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
-                        with open(variables.temp_pcm, 'ab') as p: p.write(segment)
+                        with open(variables.temp_pcm, 'ab') as p: 
+                            p.write(np.int32(segment*np.iinfo(np.int32).max))
                         i += blocklength + 32
                         if verbose:
                             elapsed_time = time.time() - start_time

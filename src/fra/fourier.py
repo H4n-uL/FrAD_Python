@@ -4,7 +4,7 @@ from ml_dtypes import bfloat16
 import numpy as np
 
 class fourier:
-    def analogue(data, bits: int, channels: int):
+    def analogue(data: np.ndarray, bits: int, channels: int):
         pad_length = (4 - len(data[:, 0])) % 4
         data = np.pad(data, ((0, pad_length), (0, 0)), mode='constant')
         fft_data = [mdct(data[:, i], N=len(data)) for i in range(channels)]
@@ -18,12 +18,12 @@ class fourier:
         elif bits == 24:
             freq = [d.astype(np.float32) for d in fft_data]
             data = b''.join([struct.pack('<f', d)[1:] for d in np.column_stack(freq).ravel(order='C')])
-        elif bits == 16: data = np.column_stack([d.astype(bfloat16) for d in fft_data]).ravel(order='C').tobytes()
+        elif bits == 16: data = np.column_stack([d.astype(np.float16) for d in fft_data]).ravel(order='C').tobytes()
         else: raise Exception('Illegal bits value.')
 
         return data
 
-    def digital(data, fb: int, channels: int):
+    def digital(data: np.ndarray, fb: int, channels: int):
         # if fb == 0b110: data_numpy = np.frombuffer(data, dtype=np.float128)
         if fb == 0b101: data_numpy = np.frombuffer(data, dtype=np.float64)
         elif fb == 0b100:
@@ -33,11 +33,10 @@ class fourier:
         elif fb == 0b010:
             data = b''.join([b'\x00'+data[i:i+3] for i in range(0, len(data), 3)])
             data_numpy = np.frombuffer(data, dtype='<f')
-        elif fb == 0b001: data_numpy = np.frombuffer(data, dtype=bfloat16)
+        elif fb == 0b001: data_numpy = np.frombuffer(data, dtype=np.float16)
         else:
             raise Exception('Illegal bits value.')
 
         freq = [data_numpy[i::channels] for i in range(channels)]
-        wave_data = [np.int32(np.clip(imdct(d, N=len(d)), -2**31, 2**31-1)) for d in freq]
 
-        return np.column_stack(wave_data)
+        return np.column_stack([imdct(d, N=len(d)) for d in freq])

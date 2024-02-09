@@ -123,6 +123,7 @@ class encode:
                     p = pcm.read(samples_per_block * 4 * channels)                 # Reading PCM
                     if not p: break                                                # if no data, Break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
+                    block = block.astype(float) / np.iinfo(np.int32).max
                     segment = fourier.analogue(block, bits, channels)              # Fourier Transform
 
                     # segment = zlib.compress(segment)
