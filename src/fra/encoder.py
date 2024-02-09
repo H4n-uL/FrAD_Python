@@ -120,7 +120,7 @@ class encode:
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(samples_per_block * 4 * channels)                           # Reading PCM
+                    p = pcm.read(samples_per_block * 4 * channels)                 # Reading PCM
                     if not p: break                                                # if no data, Break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
                     segment = fourier.analogue(block, bits, channels)              # Fourier Transform
@@ -143,7 +143,7 @@ class encode:
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
 
-                            struct.pack('>I', sample_rate) +                     # Sample Rate
+                            struct.pack('>I', sample_rate) +                      # Sample Rate
 
                         #-- 0x10 ~ 0x1f --#
                             b'\x00'*12 +
