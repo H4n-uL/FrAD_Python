@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-Developed with the goal of keeping analogue signals in digital, More information can be found in the [Notion](https://mikhael-openworkspace.notion.site/Fourier-Analogue-e512fa7a21474ef6bdbd615a424293cf?pvs=4).
+It was developed as part of Project Archivist with the goal of keeping analogue signals in digital. More information can be found in the [Notion](https://mikhael-openworkspace.notion.site/Project-Archivist-e512fa7a21474ef6bdbd615a424293cf).
 
-**Warning: This codec is not yet complete. The implementation may change in the future, so be sure to back up your existing music files.**
+Note: The purpose of an archive is always to make it easy for you to access important data. Please be sure to back up any important audio files.
 
 ## How to install
 

@@ -2,9 +2,9 @@
 
 ## プロジェクト概要
 
-アナログ信号をそのままデジタルの中に収めるという目標を持って開発されました。 詳細は[Notion](https://mikhael-openworkspace.notion.site/Fourier-Analogue-e512fa7a21474ef6bdbd615a424293cf?pvs=4)で確認することができます。
+Project Archivistの一環として、アナログ信号をそのままデジタルの中に収めるという目標を持って開発されました。 詳細は[Notion](https://mikhael-openworkspace.notion.site/Project-Archivist-e512fa7a21474ef6bdbd615a424293cf)で確認することができます。
 
-**警告: このコーデックはまだ未完成です。今後の実装方法が変更される可能性がありますので、既存の音源ファイルは必ずバックアップしておいてください**。
+注意: アーカイブの目的は、いつでも簡単に重要なデータにアクセスできるようにすることです。重要な音源ファイルは必ずバックアップしておいてください。
 
 ## インストール方法
 

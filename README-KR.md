@@ -2,9 +2,9 @@
 
 ## 프로젝트 개요
 
-아날로그 신호를 그대로 디지털 속에 담아낸다는 목표를 가지고 개발되었습니다. 자세한 내용은 [Notion](https://mikhael-openworkspace.notion.site/Fourier-Analogue-e512fa7a21474ef6bdbd615a424293cf?pvs=4)에서 확인하실 수 있습니다.
+Project Archivist의 일환으로 아날로그 신호를 그대로 디지털 속에 담아낸다는 목표를 가지고 개발되었습니다. 자세한 내용은 [Notion](https://mikhael-openworkspace.notion.site/Project-Archivist-e512fa7a21474ef6bdbd615a424293cf)에서 확인하실 수 있습니다.
 
-**경고: 이 코덱은 아직 미완성입니다. 추후 구현 방식이 변경될 수 있으므로 기존 음원 파일은 꼭 백업해 두시기 바랍니다.**
+주의: 아카이브의 목적은 언제나 여러분이 쉽게 중요한 데이터에 접근하게 하기 위함입니다. 중요한 음원 파일은 꼭 백업해 두시기 바랍니다.
 
 ## 설치 방법
 
