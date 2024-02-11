@@ -12,14 +12,14 @@ class fourier:
         # if bits == 128: freq = [d.astype(np.float128) for d in fft_data]
         if bits == 64: data = np.column_stack([d.astype(np.float64).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         elif bits == 48:
-            freq = [d.astype(np.float64).newbyteorder(endian) for d in fft_data]
+            freq = [d.astype(np.float64) for d in fft_data]
             if big_endian:
                 data = b''.join([struct.pack('>d', d)[:-2] for d in np.column_stack(freq).ravel(order='C')])
             else:
                 data = b''.join([struct.pack('<d', d)[2:] for d in np.column_stack(freq).ravel(order='C')])
         elif bits == 32: data = np.column_stack([d.astype(np.float32).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         elif bits == 24:
-            freq = [d.astype(np.float32).newbyteorder(endian) for d in fft_data]
+            freq = [d.astype(np.float32) for d in fft_data]
             if big_endian:
                 data = b''.join([struct.pack('>f', d)[:-1] for d in np.column_stack(freq).ravel(order='C')])
             else:
