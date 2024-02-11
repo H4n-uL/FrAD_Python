@@ -7,6 +7,7 @@ fourier encode "path/to/audio.flac" \
 --samples_per_block 2048 \
 --enable_ecc \
 --data_ecc_size 128 20 \
+--big_endian \
 --metadata "Metadata Title" "Metadata contents" \
 --jsonmeta "path/to/metadata.json" \
 --image "path/to/image/file" \

@@ -11,15 +11,17 @@ bits_to_b3 = {
 }
 
 class headb:
-    def encode_efb(isecc, bits):
+    def encode_efb(isecc, big_endian, bits):
         ecc = (0b1 if isecc else 0b0) << 4
+        endian = (0b1 if big_endian else 0b0) << 3
         b3 = bits_to_b3.get(bits, 0b000)
-        return struct.pack('<B', ecc | b3)
+        return struct.pack('<B', ecc | endian | b3)
 
     def decode_efb(efb):
-        ecc = True if (efb >> 4 & 0b1) == 0b1 else False    # 0x08@0b100:    ECC Toggle(Enabled if 1)
-        float_bits = efb & 0b111                            # 0x08@0b010-3b: Stream bit depth
-        return ecc, float_bits
+        ecc = True if (efb >> 4 & 0b1) == 0b1 else False        # 0x08@0b100:    ECC Toggle(Enabled if 1)
+        big_endian = True if (efb >> 3 & 0b1) == 0b1 else False # 0x08@0b011:    Endian
+        float_bits = efb & 0b111                                # 0x08@0b010-3b: Stream bit depth
+        return ecc, big_endian, float_bits
 
     def uilder(meta = None, img: bytes = None):
 

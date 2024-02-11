@@ -22,7 +22,7 @@ def main(action, args):
         from fra import encode
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
-                input, int(args.bits),
+                input, int(args.bits), endian=args.big_endian,
                 out=args.output,
                 samples_per_block=int(args.sample_size),
                 apply_ecc=args.ecc,
@@ -96,6 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('-k',   '--keys', '--key',                          required=False,                                 help='Play keys')
     parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',       help='Metadata in "key" "value" format')
     parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                 help='Metadata in json, This will override --meta option.')
+    parser.add_argument('-be',  '--big_endian',                                                      action='store_true',   help='Big Endian Toggle')
     parser.add_argument('-v',   '--verbose',                                                         action='store_true',   help='Verbose CLI Toggle')
 
     args = parser.parse_args()

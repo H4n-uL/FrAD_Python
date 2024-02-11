@@ -38,7 +38,7 @@ class decode:
                 if not frame: break
                 blocklength = struct.unpack('>I', frame[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                 efb = struct.unpack('>B', frame[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
-                is_ecc_on, float_bits = headb.decode_efb(efb)
+                is_ecc_on, endian, float_bits = headb.decode_efb(efb)
                 channels_frame = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
                 ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]          # 0x0a:    ECC Data block size
                 ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0]       # 0x0b:    ECC Code size
@@ -80,11 +80,11 @@ class decode:
                     if not frame: break
                     blocklength = struct.unpack('>I', frame[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                     efb = struct.unpack('>B', frame[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
-                    is_ecc_on, float_bits = headb.decode_efb(efb)
+                    is_ecc_on, endian, float_bits = headb.decode_efb(efb)
                     channels_frame = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
                     ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]          # 0x0a:    ECC Data block size
                     ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0]       # 0x0b:    ECC Code size
-                    srate_frame = struct.unpack('>I', frame[0xc:0x10])[0]        # 0x0c-4B: Sample rate
+                    srate_frame = struct.unpack('>I', frame[0xc:0x10])[0]       # 0x0c-4B: Sample rate
                     crc32 = frame[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
                     ssize_dict = {0b110: 16*channels_frame, 0b101: 8*channels_frame, 0b100: 6*channels_frame, 0b011: 4*channels_frame, 0b010: 3*channels_frame, 0b001: 2*channels_frame}
 
@@ -98,7 +98,7 @@ class decode:
 
                     # block = zlib.decompress(block)
 
-                    segment = fourier.digital(block, float_bits, channels_frame) # Inversing
+                    segment = fourier.digital(block, float_bits, channels_frame, endian) # Inversing
 
                     if play:
                         if channels != channels_frame or sample_rate != srate_frame:

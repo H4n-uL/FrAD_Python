@@ -76,7 +76,7 @@ class encode:
         image, _ = process.communicate()
         return image
 
-    def enc(file_path: str, bits: int,
+    def enc(file_path: str, bits: int, endian: bool = False,
                 out: str = None, samples_per_block: int = 2048,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
                 nsr: int = None,
@@ -124,7 +124,7 @@ class encode:
                     if not p: break                                                # if no data, Break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
                     block = block.astype(float) / np.iinfo(np.int32).max
-                    segment = fourier.analogue(block, bits, channels)              # Fourier Transform
+                    segment = fourier.analogue(block, bits, channels, True)              # Fourier Transform
 
                     # segment = zlib.compress(segment)
 
@@ -139,7 +139,7 @@ class encode:
                             # Segment length(Processed)
                             struct.pack('>I', len(segment)) +
 
-                            headb.encode_efb(apply_ecc, bits) +                   # EFB
+                            headb.encode_efb(apply_ecc, True, bits) +                   # EFB
                             struct.pack('>B', channels - 1) +                     # Channels
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
