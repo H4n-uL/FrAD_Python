@@ -35,6 +35,7 @@ class repack:
                         ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0] # 0x0b:    ECC Code size
                         srate_frame = struct.unpack('>I', frame[0xc:0x10])[0]        # 0x0c-4B: Sample rate
                         crc32 = frame[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+                        ssize_dict = {0b110: 128, 0b101: 64, 0b100: 48, 0b011: 32, 0b010: 24, 0b001: 16}
 
                         # Reading Block
                         block = f.read(blocklength)
@@ -53,7 +54,7 @@ class repack:
                                 # Segment length(Processed)
                                 struct.pack('>I', len(block)) +
 
-                                headb.encode_efb(True, endian, float_bits) + # EFB
+                                headb.encode_efb(True, endian, ssize_dict[float_bits]) + # EFB
                                 struct.pack('>B', channels - 1) +    # Channels
                                 struct.pack('>B', ecc_dsize) +       # ECC DSize
                                 struct.pack('>B', ecc_codesize) +    # ECC code size
