@@ -10,7 +10,7 @@ class header:
 
             methods.signature(header[0x0:0x4])
             headlen = struct.unpack('>Q', header[0x8:0x10])[0]
-            blocks = f.read(headlen - 256)
+            blocks = f.read(headlen - 64)
             i = 0
             image = b''
             while i < len(blocks):
