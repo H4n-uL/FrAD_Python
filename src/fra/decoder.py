@@ -69,6 +69,7 @@ class decode:
                     stream.start()
                     print()
                 else:
+                    stream = open(variables.temp_pcm, 'ab')
                     dlen = os.path.getsize(file_path) - header_length
                     cli_width = 40
                     start_time = time.time()
@@ -122,8 +123,7 @@ class decode:
                                 print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
                                 return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
-                        with open(variables.temp_pcm, 'ab') as p: 
-                            p.write(np.int32(segment*np.iinfo(np.int32).max))
+                        stream.write(np.int32(segment*np.iinfo(np.int32).max))
                         i += blocklength + 32
                         if verbose:
                             elapsed_time = time.time() - start_time
@@ -136,9 +136,9 @@ class decode:
                             print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                             print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                stream.close()
                 if play:
                     print('\x1b[1A\x1b[2K', end='')
-                    stream.close()
                 elif verbose:
                     print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                 return sample_rate, channels
