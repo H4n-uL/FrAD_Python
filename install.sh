@@ -31,7 +31,7 @@ export FOURIER_PATH
 mkdir -p $FOURIER_PATH/FrAD-Codec || { exit 1; }
 rsync -a --exclude='__pycache__' --exclude='.DS_Store' "$(dirname "$0")/src/" $FOURIER_PATH/FrAD-Codec || { echo "Failed copying files."; exit 1; }
 
-for rcfile in `ls -a ~ | egrep '^\\.(.*sh_profile|.*shrc)$'`; do
+for rcfile in `ls -a ~ | egrep '^(.*sh_profile|.*shrc)$'`; do
     sed -i '' "/FOURIER_PATH/d" ~/$rcfile
     sed -i '' "/alias fourier=/d" ~/$rcfile
     echo "export FOURIER_PATH=$FOURIER_PATH" >> ~/$rcfile
