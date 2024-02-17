@@ -71,7 +71,9 @@ fourier meta-modify "path/to/fourierAnalogue.frad" \
 메타데이터 추출
 
 ```bash
-fourier parse "path/to/fourierAnalogue.frad"
+fourier parse "path/to/fourierAnalogue.frad" \
+\  # 선택 사항
+--output "path/for/metadata" \  # Output file.meta.json, Output file.meta.image
 ```
 
 ECC 패킹/리패킹

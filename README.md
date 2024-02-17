@@ -71,7 +71,9 @@ fourier meta-modify "path/to/fourierAnalogue.frad" \
 Extract metadata
 
 ```bash
-fourier parse "path/to/fourierAnalogue.frad"
+fourier parse "path/to/fourierAnalogue.frad" \
+\  # Optional
+--output "path/for/metadata" \  # Output file.meta.json, Output file.meta.image
 ```
 
 ECC packing/repacking
