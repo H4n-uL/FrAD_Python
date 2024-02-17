@@ -21,16 +21,17 @@ class encode:
                 return int(stream['channels']), int(stream['sample_rate']), stream['codec_name']
         return None
 
-    def get_pcm(file_path: str):
+    def get_pcm(file_path: str, nsr: int):
         command = [
             variables.ffmpeg,
             '-v', 'quiet',
             '-i', file_path,
             '-f', 's32le',
             '-acodec', 'pcm_s32le',
-            '-vn',
-            variables.temp_pcm
+            '-vn'
         ]
+        if nsr != None: command.extend(['-ac', str(nsr)])
+        command.append(variables.temp_pcm)
         subprocess.run(command)
 
     def get_metadata(file_path: str):
@@ -92,8 +93,7 @@ class encode:
         if samples_per_block < 4: raise ValueError(f'Sample size must be at least 4.')
         if samples_per_block % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
 
-        encode.get_pcm(file_path)
-        sample_rate = methods.resample_pcm(channels, sample_rate, nsr)
+        encode.get_pcm(file_path, nsr)
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
 
