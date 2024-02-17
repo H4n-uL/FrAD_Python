@@ -30,7 +30,7 @@ class encode:
             '-acodec', 'pcm_s32le',
             '-vn'
         ]
-        if nsr != None: command.extend(['-ac', str(nsr)])
+        if nsr != None: command.extend(['-ar', str(nsr)])
         command.append(variables.temp_pcm)
         subprocess.run(command)
 
