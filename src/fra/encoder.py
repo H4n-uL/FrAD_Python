@@ -21,7 +21,7 @@ class encode:
                 return int(stream['channels']), int(stream['sample_rate']), stream['codec_name']
         return None
 
-    def get_pcm(file_path: str, nsr: int):
+    def get_pcm(file_path: str, osr: int, nsr: int):
         command = [
             variables.ffmpeg,
             '-v', 'quiet',
@@ -30,7 +30,8 @@ class encode:
             '-acodec', 'pcm_s32le',
             '-vn'
         ]
-        if nsr != None: command.extend(['-ar', str(nsr)])
+        if nsr not in [osr, None]:
+            command.extend(['-ar', str(nsr)])
         command.append(variables.temp_pcm)
         subprocess.run(command)
 
@@ -93,7 +94,8 @@ class encode:
         if samples_per_block < 4: raise ValueError(f'Sample size must be at least 4.')
         if samples_per_block % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
 
-        encode.get_pcm(file_path, nsr)
+        encode.get_pcm(file_path, sample_rate, nsr)
+        sample_rate = nsr
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
 
