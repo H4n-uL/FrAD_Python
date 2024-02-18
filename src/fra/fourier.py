@@ -5,8 +5,7 @@ class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool):
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
-        pad_length = (4 - len(data[:, 0])) % 4
-        data = np.pad(data, ((0, pad_length), (0, 0)), mode='constant')
+        data = np.pad(data, ((0, -len(data[:, 0])%4), (0, 0)), mode='constant')
         fft_data = [mdct(data[:, i], N=len(data)) for i in range(channels)]
 
         data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
