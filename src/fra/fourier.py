@@ -18,7 +18,7 @@ class fourier:
 
         return data
 
-    def digital(data: np.ndarray, fb: int, channels: int, big_endian: bool):
+    def digital(data: bytes, fb: int, channels: int, big_endian: bool):
         endian = big_endian and '>' or '<'
         dt = {0b101:'d',0b100:'d',0b011:'f',0b010:'f',0b001:'e'}[fb]
         if fb in [0b101,0b011,0b001]:
