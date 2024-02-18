@@ -95,7 +95,7 @@ class encode:
         if samples_per_block % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
 
         encode.get_pcm(file_path, sample_rate, nsr)
-        sample_rate = nsr
+        sample_rate = nsr is not None and nsr or sample_rate
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
 
