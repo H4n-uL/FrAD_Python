@@ -68,7 +68,7 @@ def main(action, args):
         header.modify(input, meta=meta, img=img)
     elif action == 'ecc':
         from fra import repack
-        repack.ecc(input, args.verbose)
+        repack.ecc(input, args.data_ecc_size, args.verbose)
     elif action == 'play':
         from fra import player
         player.play(
