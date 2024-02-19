@@ -19,7 +19,7 @@ class decode:
             # Taking Stream info
             channels = None
             sample_rate = None
-            header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B:       Total header size
+            header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B: Total header size
 
             f.seek(header_length)
 

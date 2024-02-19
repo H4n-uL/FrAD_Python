@@ -37,7 +37,7 @@ class header:
                 head = f.read(64)
 
                 methods.signature(head[0x0:0x4])
-                header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B:       Total header size
+                header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
 
                 # Backing up audio data
                 f.seek(header_length)
