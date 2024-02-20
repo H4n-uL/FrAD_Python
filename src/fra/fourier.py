@@ -6,7 +6,7 @@ class fourier:
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
         data = np.pad(data, ((0, -len(data[:, 0])%4), (0, 0)), mode='constant')
-        fft_data = [mdct(data[:, i], N=len(data)) for i in range(channels)]
+        fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
         data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         if bits in [64, 32, 16]:
@@ -31,4 +31,4 @@ class fourier:
 
         freq = [data_numpy[i::channels] for i in range(channels)]
 
-        return np.column_stack([imdct(d, N=len(d)) for d in freq])
+        return np.column_stack([imdct(d, N=len(d)*2) for d in freq])
