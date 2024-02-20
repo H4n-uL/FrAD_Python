@@ -74,7 +74,7 @@ class decode:
                     cli_width = 40
                     start_time = time.time()
                     if verbose: print('\n\n')
-
+                prev = None
                 while True:
                     # Reading Frame Header
                     frame = f.read(32)
@@ -97,9 +97,15 @@ class decode:
                             block = ecc.decode(block, ecc_dsize, ecc_codesize)
                         else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
 
-                    # block = zlib.decompress(block)
+                    block = zlib.decompress(block)
 
-                    segment = fourier.digital(block, float_bits, channels_frame, endian) # Inversing
+                    segment, prev = fourier.digital(block, float_bits, channels_frame, endian, prev) # Inversing
+
+                    # if prev is None:
+                    #     prev = segment
+                    # else:
+                    #     curr = segment[:len(prev)]  # First half of segment
+                    #     segment, prev = prev + curr, segment[len(prev):]  # Add overlap
 
                     if play:
                         if channels != channels_frame or sample_rate != srate_frame:
