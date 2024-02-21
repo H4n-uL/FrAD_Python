@@ -9,6 +9,7 @@ class fourier:
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
         while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
+            if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128) 
             dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
 
