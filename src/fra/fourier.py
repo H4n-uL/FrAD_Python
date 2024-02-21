@@ -30,5 +30,6 @@ class fourier:
         data_numpy = np.frombuffer(data, dtype=endian+dt).astype(float)
 
         freq = [data_numpy[i::channels] for i in range(channels)]
+        freq = np.where(np.isnan(freq) | np.isinf(freq), 0, freq)
 
         return np.column_stack([imdct(d, N=len(d)*2) for d in freq])
