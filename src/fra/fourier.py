@@ -8,6 +8,10 @@ class fourier:
         data = np.pad(data, ((0, -len(data[:, 0])%4), (0, 0)), mode='constant')
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
+        while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
+            bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128) 
+            dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
+
         data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         if bits in [64, 32, 16]:
             pass
@@ -15,7 +19,7 @@ class fourier:
             data = b''.join([big_endian and data[i:i+(bits//8)] or data[i+(bits//24):i+(bits//6)] for i in range(0, len(data), bits//6)])
         else: raise Exception('Illegal bits value.')
 
-        return data
+        return data, bits
 
     def digital(data: bytes, fb: int, channels: int, big_endian: bool):
         endian = big_endian and '>' or '<'
