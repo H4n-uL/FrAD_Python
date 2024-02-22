@@ -126,7 +126,7 @@ class encode:
                     if not p: break                                                # if no data, Break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
                     block = block.astype(float) / np.iinfo(np.int32).max
-                    segment, bits = fourier.analogue(block, bits, channels, endian)      # Fourier Transform
+                    segment, bt = fourier.analogue(block, bits, channels, endian)      # Fourier Transform
 
                     # segment = zlib.compress(segment)
 
@@ -141,7 +141,7 @@ class encode:
                             # Segment length(Processed)
                             struct.pack('>I', len(segment)) +
 
-                            headb.encode_efb(apply_ecc, endian, bits) +           # EFB
+                            headb.encode_efb(apply_ecc, endian, bt) +           # EFB
                             struct.pack('>B', channels - 1) +                     # Channels
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
