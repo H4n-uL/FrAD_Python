@@ -1,6 +1,6 @@
 from mdctn import mdct, imdct
 import numpy as np
-from .lossy_psycho import psycho
+from .tools.lossy_psycho import psycho
 nfilts=64
 alpha=0.8
 
