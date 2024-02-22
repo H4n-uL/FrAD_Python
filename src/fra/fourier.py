@@ -5,8 +5,13 @@ class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool):
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
-        data = np.pad(data, ((0, -len(data[:, 0])%4), (0, 0)), mode='constant')
+        data = np.pad(data, ((0, -len(data[:, 0])%2), (0, 0)), mode='constant')
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
+
+        while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
+            if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
+            bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128) 
+            dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
 
         data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         if bits in [64, 32, 16]:
@@ -15,7 +20,7 @@ class fourier:
             data = b''.join([big_endian and data[i:i+(bits//8)] or data[i+(bits//24):i+(bits//6)] for i in range(0, len(data), bits//6)])
         else: raise Exception('Illegal bits value.')
 
-        return data
+        return data, bits
 
     def analogue_lc(data: np.ndarray, bits: int, channels: int, big_endian: bool, sample_rate: int):
         block_size = len(data)
@@ -33,8 +38,21 @@ class fourier:
 
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
+        while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
+            if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
+            bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128) 
+            dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
+
         for i in range(channels):
             fft_data[i][np.abs(fft_data[i]) < thres] = 0
+
+        data = [imdct(c, N=len(c)*2) for c in fft_data]
+        fade_in = np.linspace(0, 1, 32)
+        fade_out = np.linspace(1, 0, 32)
+        for i in range(channels):
+            data[i, :32] *= fade_in
+            data[i, -32:] *= fade_out
+        fft_data = [mdct(c, N=len(c)*2) for c in data]
 
         data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         if bits in [64, 32, 16]:
@@ -43,9 +61,9 @@ class fourier:
             data = b''.join([big_endian and data[i:i+(bits//8)] or data[i+(bits//24):i+(bits//6)] for i in range(0, len(data), bits//6)])
         else: raise Exception('Illegal bits value.')
 
-        return data
+        return data, bits
 
-    def digital(data: bytes, fb: int, channels: int, big_endian: bool, prev):
+    def digital(data: bytes, fb: int, channels: int, big_endian: bool):
         endian = big_endian and '>' or '<'
         dt = {0b101:'d',0b100:'d',0b011:'f',0b010:'f',0b001:'e'}[fb]
         if fb in [0b101,0b011,0b001]:
@@ -58,10 +76,6 @@ class fourier:
         data_numpy = np.frombuffer(data, dtype=endian+dt).astype(float)
 
         freq = [data_numpy[i::channels] for i in range(channels)]
-        data = np.column_stack([imdct(d, N=len(d)*2) for d in freq])
-
-        if prev is not None:
-            for i in range(channels):
-                data[0][i] = (prev[i] + data[1][i])/2
+        freq = np.where(np.isnan(freq) | np.isinf(freq), 0, freq)
 
         return data, data[-1]

@@ -89,10 +89,10 @@ class encode:
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
-        segmax = (2**32 // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * bits // 8)//4)*4
+        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//2)*2
         if samples_per_block > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if samples_per_block < 4: raise ValueError(f'Sample size must be at least 4.')
-        if samples_per_block % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
+        if samples_per_block < 2: raise ValueError(f'Sample size must be at least 2.')
+        if samples_per_block % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
 
         encode.get_pcm(file_path, sample_rate, nsr)
         sample_rate = nsr is not None and nsr or sample_rate
@@ -122,13 +122,13 @@ class encode:
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(samples_per_block * 4 * channels)                 # Reading PCM
-                    if not p: break                                                # if no data, Break
-                    # pcm.seek(samples_per_block * -2 * channels, 1)
-                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels) # RAW PCM to Numpy
+                    p = pcm.read(samples_per_block * 4 * channels)                      # Reading PCM
+                    if not p: break                                                     # if no data, Break
+                    pcm.seek(samples_per_block//32 * -4 * channels, 1)
+                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)      # RAW PCM to Numpy
                     block = block.astype(float) / np.iinfo(np.int32).max
-                    # segment = fourier.analogue(block, bits, channels, endian)      # Fourier Transform
-                    segment = fourier.analogue_lc(block, bits, channels, endian, sample_rate)
+                    # segment, bt = fourier.analogue(block, bits, channels, endian) # Fourier Transform
+                    segment, bt = fourier.analogue_lc(block, bits, channels, endian)    # Fourier Transform
 
                     segment = zlib.compress(segment)
 
@@ -143,7 +143,7 @@ class encode:
                             # Segment length(Processed)
                             struct.pack('>I', len(segment)) +
 
-                            headb.encode_efb(apply_ecc, endian, bits) +           # EFB
+                            headb.encode_efb(apply_ecc, endian, bt) +           # EFB
                             struct.pack('>B', channels - 1) +                     # Channels
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
