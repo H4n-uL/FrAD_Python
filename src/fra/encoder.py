@@ -135,11 +135,8 @@ class encode:
                     block = block.astype(float) / np.iinfo(np.int32).max
 
                     # MDCT
-                    if lossy:
-                        segment, bt = fourier.analogue_lc(block, bits, channels, endian, sample_rate, loss_level)
-                        segment = zlib.compress(segment, level=9)
-                    else:
-                        segment, bt = fourier.analogue(block, bits, channels, endian)
+                    segment, bt = fourier.analogue(block, bits, channels, endian, lossy, sample_rate, loss_level)
+                    if lossy: segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
