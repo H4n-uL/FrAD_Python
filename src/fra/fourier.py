@@ -27,14 +27,11 @@ class fourier:
         f = np.linspace(0, sample_rate/2, block_size)
 
         LTQ=-6.5*np.exp(-0.6*(f/1000.-3.3)**2.)+1e-3*((f/1000.)**3.4)
-        thres = 10 ** (LTQ / 20) / 8
+        thres = 10 ** (LTQ / 20)
 
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
         data = np.pad(data, ((0, -len(data[:, 0])%4), (0, 0)), mode='constant')
-        # window = np.hanning(block_size)
-        # for i in range(channels):
-        #     data[:, i] *= window
 
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
@@ -47,11 +44,11 @@ class fourier:
             fft_data[i][np.abs(fft_data[i]) < thres] = 0
 
         data = [imdct(c, N=len(c)*2) for c in fft_data]
-        fade_in = np.linspace(0, 1, 32)
-        fade_out = np.linspace(1, 0, 32)
+        fade_in = np.linspace(0, 1, block_size//32)
+        fade_out = np.linspace(1, 0, block_size//32)
         for i in range(channels):
-            data[i, :32] *= fade_in
-            data[i, -32:] *= fade_out
+            data[i][:block_size//32] *= fade_in
+            data[i][-block_size//32:] *= fade_out
         fft_data = [mdct(c, N=len(c)*2) for c in data]
 
         data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
@@ -78,4 +75,4 @@ class fourier:
         freq = [data_numpy[i::channels] for i in range(channels)]
         freq = np.where(np.isnan(freq) | np.isinf(freq), 0, freq)
 
-        return data, data[-1]
+        return np.column_stack([imdct(d, N=len(d)*2) for d in freq])

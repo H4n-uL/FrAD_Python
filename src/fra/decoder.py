@@ -99,13 +99,11 @@ class decode:
 
                     block = zlib.decompress(block)
 
-                    segment, prev = fourier.digital(block, float_bits, channels_frame, endian, prev) # Inversing
-
-                    # if prev is None:
-                    #     prev = segment
-                    # else:
-                    #     curr = segment[:len(prev)]  # First half of segment
-                    #     segment, prev = prev + curr, segment[len(prev):]  # Add overlap
+                    segment = fourier.digital(block, float_bits, channels_frame, endian) # Inversing
+                    if prev is not None:
+                        segment[:len(segment)//32] += prev
+                    prev = segment[-len(segment)//32:]
+                    segment = segment[:-len(segment)//32]
 
                     if play:
                         if channels != channels_frame or sample_rate != srate_frame:

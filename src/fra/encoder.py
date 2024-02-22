@@ -128,9 +128,9 @@ class encode:
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)      # RAW PCM to Numpy
                     block = block.astype(float) / np.iinfo(np.int32).max
                     # segment, bt = fourier.analogue(block, bits, channels, endian) # Fourier Transform
-                    segment, bt = fourier.analogue_lc(block, bits, channels, endian)    # Fourier Transform
+                    segment, bt = fourier.analogue_lc(block, bits, channels, endian, sample_rate) # Fourier Transform
 
-                    segment = zlib.compress(segment)
+                    segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding thousands of times slower)
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
