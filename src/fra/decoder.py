@@ -52,10 +52,9 @@ class decode:
                         print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
 
                 if is_ecc_on: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
-                # block = zlib.decompress(block)
+                block = zlib.decompress(block)
                 ssize_dict = {0b110: 16*channels_frame, 0b101: 8*channels_frame, 0b100: 6*channels_frame, 0b011: 4*channels_frame, 0b010: 3*channels_frame, 0b001: 2*channels_frame}
-                duration += (len(block) // ssize_dict[float_bits]) / (srate_frame * speed)
-
+                duration += ((len(block) - len(block)//16) // ssize_dict[float_bits]) / (srate_frame * speed)
                 dlen += len(block)
                 framescount += 1
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
@@ -101,9 +100,9 @@ class decode:
 
                     segment = fourier.digital(block, float_bits, channels_frame, endian) # Inversing
                     if prev is not None:
-                        segment[:len(segment)//32] += prev
-                    prev = segment[-len(segment)//32:]
-                    segment = segment[:-len(segment)//32]
+                        segment[:len(segment)//16] += prev
+                    prev = segment[-len(segment)//16:]
+                    segment = segment[:-len(segment)//16]
 
                     if play:
                         if channels != channels_frame or sample_rate != srate_frame:

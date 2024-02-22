@@ -27,11 +27,17 @@ class fourier:
         f = np.linspace(0, sample_rate/2, block_size)
 
         LTQ=-6.5*np.exp(-0.6*(f/1000.-3.3)**2.)+1e-3*((f/1000.)**3.4)
-        thres = 10 ** (LTQ / 20)
+        thres = 10 ** (LTQ / 20) / 40 * np.log2(block_size)
 
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
         data = np.pad(data, ((0, -len(data[:, 0])%4), (0, 0)), mode='constant')
+
+        fade_in = np.linspace(0, 1, block_size//16)
+        fade_out = np.linspace(1, 0, block_size//16)
+        for i in range(channels):
+            data[:block_size//16, i] *= fade_in
+            data[-block_size//16:, i] *= fade_out
 
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
@@ -42,14 +48,6 @@ class fourier:
 
         for i in range(channels):
             fft_data[i][np.abs(fft_data[i]) < thres] = 0
-
-        data = [imdct(c, N=len(c)*2) for c in fft_data]
-        fade_in = np.linspace(0, 1, block_size//32)
-        fade_out = np.linspace(1, 0, block_size//32)
-        for i in range(channels):
-            data[i][:block_size//32] *= fade_in
-            data[i][-block_size//32:] *= fade_out
-        fft_data = [mdct(c, N=len(c)*2) for c in data]
 
         data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         if bits in [64, 32, 16]:
