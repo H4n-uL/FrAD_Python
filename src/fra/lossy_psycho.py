@@ -9,7 +9,6 @@ class psycho:
         return sprfuncBarkdB
 
     def sprfuncmat(sprfuncBarkdB,alpha,nfilts):
-        
         sprfuncBVolt=10.0**(sprfuncBarkdB/20.0*alpha)
         sprfuncmatrix=np.zeros((nfilts,nfilts))
         for k in range(nfilts):
@@ -37,9 +36,9 @@ class psycho:
         Fhz = 600. * np.sinh(Brk/6.)
         return Fhz
 
-    def mapping2barkmat(fs, nfilts,nfft):
+    def mapping2barkmat(fs, nfilts, nfft):
         maxbark = psycho.hz2bark(fs/2)
-        nfreqs = nfft/2; step_bark = maxbark/(nfilts-1)
+        step_bark = maxbark/(nfilts-1)
         binbark = psycho.hz2bark(np.linspace(0,(nfft/2),int(nfft/2)+1)*fs/nfft)
         W = np.zeros((nfilts, nfft))
         for i in range(nfilts):
