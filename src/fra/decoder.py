@@ -106,6 +106,11 @@ class decode:
                     segment = fourier.digital(block, float_bits, channels_frame, endian) # Inversing
 
                     if lossy:
+                        fade_in = np.linspace(0, 1, len(segment)//16)
+                        fade_out = np.linspace(1, 0, len(segment)//16)
+                        for i in range(channels_frame):
+                            segment[:len(segment)//16, i] *= fade_in
+                            segment[-len(segment)//16:, i] *= fade_out
                         if prev is not None:
                             segment[:len(segment)//16] += prev
                         prev = segment[-len(segment)//16:]
