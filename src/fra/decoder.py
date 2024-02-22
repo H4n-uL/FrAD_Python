@@ -138,7 +138,7 @@ class decode:
                                 print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
                                 return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
-                        stream.write(np.int32(segment*np.iinfo(np.int32).max))
+                        stream.write(np.int32(np.clip(segment, -1, 1)*np.iinfo(np.int32).max))
                         i += blocklength + 32
                         if verbose:
                             elapsed_time = time.time() - start_time
