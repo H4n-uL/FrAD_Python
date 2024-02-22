@@ -89,10 +89,10 @@ class encode:
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
-        segmax = (2**31 // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//4)*4
+        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//2)*2
         if samples_per_block > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if samples_per_block < 4: raise ValueError(f'Sample size must be at least 4.')
-        if samples_per_block % 4 != 0: raise ValueError('Sample size must be multiple of 4.')
+        if samples_per_block < 2: raise ValueError(f'Sample size must be at least 2.')
+        if samples_per_block % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
 
         encode.get_pcm(file_path, sample_rate, nsr)
         sample_rate = nsr is not None and nsr or sample_rate
