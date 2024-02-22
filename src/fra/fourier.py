@@ -26,7 +26,7 @@ class fourier:
         block_size = len(data)
         f = np.linspace(0, sample_rate/2, block_size)
 
-        LTQ=-6.5*np.exp(-0.6*(f/1000.-3.3)**2.)+1e-3*((f/1000.)**3.4)
+        LTQ=-6.5*np.exp(-0.6*(f/1000.-3.3)**2.)+1e-3*((f/1000.)**3)
         thres = 10 ** (LTQ / 20) / 40 * np.log2(block_size) * 1.25**level
 
         endian = big_endian and '>' or '<'
@@ -41,13 +41,13 @@ class fourier:
 
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
+        for i in range(channels):
+            fft_data[i][np.abs(fft_data[i]) < thres] = 0
+
         while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128) 
             dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
-
-        for i in range(channels):
-            fft_data[i][np.abs(fft_data[i]) < thres] = 0
 
         data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         if bits in [64, 32, 16]:
