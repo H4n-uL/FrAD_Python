@@ -174,6 +174,7 @@ class encode:
 
                     if verbose:
                         total_bytes += len(block) * sample_size
+                        if lossy: total_bytes -= len(block)//16 * sample_size
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / sample_rate / sample_size

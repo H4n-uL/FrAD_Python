@@ -1,5 +1,8 @@
 from mdctn import mdct, imdct
 import numpy as np
+from .lossy_psycho import psycho
+nfilts=64
+alpha=0.8
 
 class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool):
@@ -24,18 +27,22 @@ class fourier:
 
     def analogue_lc(data: np.ndarray, bits: int, channels: int, big_endian: bool, sample_rate: int, level: int):
         block_size = len(data)
-        f = np.linspace(0, sample_rate/2, block_size)
 
-        LTQ=-6.5*np.exp(-0.6*(f/1000.-3.3)**2.)+1e-3*((f/1000.)**3)
-        thres = 10 ** (LTQ / 20) / 40 * np.log2(block_size) * 1.2**level
+        W = psycho.mapping2barkmat(sample_rate,nfilts,block_size*2)
+        W_inv = psycho.mappingfrombarkmat(W,block_size*2)
+        sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2,nfilts)
+        sprfuncmat = psycho.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
 
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
         data = np.pad(data, ((0, -len(data[:, 0])%4), (0, 0)), mode='constant')
 
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
-        for i in range(channels):
-            fft_data[i][np.abs(fft_data[i]) < thres] = 0
+        for c in range(channels):
+            mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,block_size*2)
+            mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts)
+            thres =  psycho.mappingfrombark(mTbark,W_inv,block_size*2) / 2 * 1.1**level
+            fft_data[c][np.abs(fft_data[c]) < thres[1:]] = 0
 
         while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
