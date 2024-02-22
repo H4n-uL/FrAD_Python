@@ -38,11 +38,13 @@ class fourier:
         data = np.pad(data, ((0, -len(data[:, 0])%4), (0, 0)), mode='constant')
 
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
+
+        v = len(fft_data) // 16
         for c in range(channels):
             mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,block_size*2)
             mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts)
-            thres =  psycho.mappingfrombark(mTbark,W_inv,block_size*2) / 2 * 1.1**level
-            fft_data[c][np.abs(fft_data[c]) < thres[1:]] = 0
+            thres =  psycho.mappingfrombark(mTbark,W_inv,block_size*2) / 4 * 1.15**level
+            fft_data[c][v:][np.abs(fft_data[c][v:]) < thres[v:-1]] = 0
 
         while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
