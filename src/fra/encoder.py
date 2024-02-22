@@ -124,7 +124,7 @@ class encode:
                 while True:
                     p = pcm.read(samples_per_block * 4 * channels)                      # Reading PCM
                     pcm.seek(samples_per_block//16 * -4 * channels, 1)
-                    if not p: break                                                     # if no data, Break
+                    if pcm.tell()%(samples_per_block-samples_per_block//16)!=0: break   # if at the end, Break
                     block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)      # RAW PCM to Numpy
                     block = block.astype(float) / np.iinfo(np.int32).max
                     # segment, bt = fourier.analogue(block, bits, channels, endian) # Fourier Transform
