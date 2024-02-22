@@ -79,13 +79,17 @@ class encode:
         return image
 
     def enc(file_path: str, bits: int, endian: bool = False,
-                out: str = None, samples_per_block: int = 2048,
+                out: str = None, lossy: bool = False, loss_level: int = 0,
+                samples_per_block: int = 2048,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
                 nsr: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
         ecc_dsize = int(ecc_sizes[0])
         ecc_codesize = int(ecc_sizes[1])
+
+        if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
+        if lossy and input('Compression will severely reduce the immunity from damage. Proceed? (Y/N) ').lower()!='y': sys.exit('Aborted.')
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
@@ -122,17 +126,22 @@ class encode:
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(samples_per_block * 4 * channels)                      # Reading PCM
-                    pcm.seek(samples_per_block//16 * -4 * channels, 1)
-                    if pcm.tell()%(samples_per_block-samples_per_block//16)!=0: break   # if at the end, Break
-                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)      # RAW PCM to Numpy
+                    p = pcm.read(samples_per_block * 4 * channels)                        # Reading PCM
+                    if lossy:
+                        pcm.seek(samples_per_block//16 * -4 * channels, 1)
+                        if pcm.tell()%(samples_per_block-samples_per_block//16)!=0: break # if at the end, Break
+                    if not p: break                                                       # if no data, Break
+                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)        # RAW PCM to Numpy
                     block = block.astype(float) / np.iinfo(np.int32).max
-                    # segment, bt = fourier.analogue(block, bits, channels, endian) # Fourier Transform
-                    segment, bt = fourier.analogue_lc(block, bits, channels, endian, sample_rate) # Fourier Transform
 
-                    segment = zlib.compress(segment, level=9)
+                    # MDCT
+                    if lossy:
+                        segment, bt = fourier.analogue_lc(block, bits, channels, endian, sample_rate, loss_level)
+                        segment = zlib.compress(segment, level=9)
+                    else:
+                        segment, bt = fourier.analogue(block, bits, channels, endian)
 
-                    # Applying ECC (This will make encoding thousands of times slower)
+                    # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
 
                     data = bytes(
@@ -143,7 +152,7 @@ class encode:
                             # Segment length(Processed)
                             struct.pack('>I', len(segment)) +
 
-                            headb.encode_efb(apply_ecc, endian, bt) +           # EFB
+                            headb.encode_efb(lossy, apply_ecc, endian, bt) +      # EFB
                             struct.pack('>B', channels - 1) +                     # Channels
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size

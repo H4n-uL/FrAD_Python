@@ -23,7 +23,7 @@ def main(action, args):
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
                 input, int(args.bits), endian=args.big_endian,
-                out=args.output,
+                out=args.output, lossy=args.lossy, loss_level=int(args.losslevel),
                 samples_per_block=int(args.sample_size),
                 apply_ecc=args.ecc,
                 ecc_sizes=args.data_ecc_size,
@@ -97,6 +97,8 @@ if __name__ == '__main__':
     parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',       help='Metadata in "key" "value" format')
     parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                 help='Metadata in json, This will override --meta option.')
     parser.add_argument('-be',  '--big_endian',                                                      action='store_true',   help='Big Endian Toggle')
+    parser.add_argument('-l',   '--lossy',                                                           action='store_true',   help='Lossy compression Toggle, THIS OPTION IS HIGHLY RECOMMENDED NOT TO ENABLE.')
+    parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='2',           help='Lossy compression level')
     parser.add_argument('-v',   '--verbose',                                                         action='store_true',   help='Verbose CLI Toggle')
 
     args = parser.parse_args()

@@ -22,12 +22,12 @@ class fourier:
 
         return data, bits
 
-    def analogue_lc(data: np.ndarray, bits: int, channels: int, big_endian: bool, sample_rate: int):
+    def analogue_lc(data: np.ndarray, bits: int, channels: int, big_endian: bool, sample_rate: int, level: int):
         block_size = len(data)
         f = np.linspace(0, sample_rate/2, block_size)
 
         LTQ=-6.5*np.exp(-0.6*(f/1000.-3.3)**2.)+1e-3*((f/1000.)**3.4)
-        thres = 10 ** (LTQ / 20) / 40 * np.log2(block_size)
+        thres = 10 ** (LTQ / 20) / 40 * np.log2(block_size) * 1.25**level
 
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]

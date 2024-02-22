@@ -38,7 +38,7 @@ class decode:
                 if not frame: break
                 blocklength = struct.unpack('>I', frame[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                 efb = struct.unpack('>B', frame[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
-                is_ecc_on, endian, float_bits = headb.decode_efb(efb)
+                lossy, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
                 channels_frame = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
                 ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]          # 0x0a:    ECC Data block size
                 ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0]       # 0x0b:    ECC Code size
@@ -52,9 +52,13 @@ class decode:
                         print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
 
                 if is_ecc_on: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
-                block = zlib.decompress(block)
                 ssize_dict = {0b110: 16*channels_frame, 0b101: 8*channels_frame, 0b100: 6*channels_frame, 0b011: 4*channels_frame, 0b010: 3*channels_frame, 0b001: 2*channels_frame}
-                duration += ((len(block) - len(block)//16) // ssize_dict[float_bits]) / (srate_frame * speed)
+                if lossy:
+                    block = zlib.decompress(block)
+                    duration += ((len(block) - len(block)//16) // ssize_dict[float_bits]) / (srate_frame * speed)
+                else:
+                    duration += (len(block) // ssize_dict[float_bits]) / (srate_frame * speed)
+
                 dlen += len(block)
                 framescount += 1
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
@@ -74,13 +78,14 @@ class decode:
                     start_time = time.time()
                     if verbose: print('\n\n')
                 prev = None
+
                 while True:
                     # Reading Frame Header
                     frame = f.read(32)
                     if not frame: break
                     blocklength = struct.unpack('>I', frame[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                     efb = struct.unpack('>B', frame[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
-                    is_ecc_on, endian, float_bits = headb.decode_efb(efb)
+                    lossy, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
                     channels_frame = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
                     ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]          # 0x0a:    ECC Data block size
                     ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0]       # 0x0b:    ECC Code size
@@ -96,13 +101,15 @@ class decode:
                             block = ecc.decode(block, ecc_dsize, ecc_codesize)
                         else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
 
-                    block = zlib.decompress(block)
+                    if lossy: block = zlib.decompress(block)
 
                     segment = fourier.digital(block, float_bits, channels_frame, endian) # Inversing
-                    if prev is not None:
-                        segment[:len(segment)//16] += prev
-                    prev = segment[-len(segment)//16:]
-                    segment = segment[:-len(segment)//16]
+
+                    if lossy:
+                        if prev is not None:
+                            segment[:len(segment)//16] += prev
+                        prev = segment[-len(segment)//16:]
+                        segment = segment[:-len(segment)//16]
 
                     if play:
                         if channels != channels_frame or sample_rate != srate_frame:
