@@ -113,10 +113,10 @@ class decode:
                         fade_out = np.linspace(1, 0, len(segment)//16)
                         for c in range(channels_frame):
                             segment[:prev_len, c] *= fade_in
-                            segment[-len(segment)//16:, c] *= fade_out
+                            segment[-len(fade_out):, c] *= fade_out
                         if prev is not None:
                             segment[:prev_len] += prev
-                        prev = segment[-len(segment)//16:]
+                        prev = segment[-len(fade_out):]
                         segment = segment[:-len(prev)]
 
                     # for i in range(channels_frame):
