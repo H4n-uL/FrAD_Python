@@ -1,5 +1,7 @@
 from .common import variables, methods
 from .fourier import fourier
+# import matplotlib.pyplot as plt
+# from mdctn import mdct
 import numpy as np
 import os, platform, shutil, struct, subprocess, sys, time, zlib
 import sounddevice as sd
@@ -116,6 +118,16 @@ class decode:
                             segment[:prev_len] += prev
                         prev = segment[-len(segment)//16:]
                         segment = segment[:-len(prev)]
+
+                    # for i in range(channels_frame):
+                    #     plt.subplot(channels_frame, 1, i+1)
+                    #     plt.plot(segment[:, i])
+                    #     y=(np.abs(mdct(segment[:, i], N=len(segment)*2)) / len(segment)*20) - 1
+                    #     plt.fill_between(range(len(y)), y, -1, alpha=0.7, color='violet')
+                    #     plt.ylim(-1, 1)
+                    # plt.draw()
+                    # plt.pause(0.000001)
+                    # plt.clf()
 
                     if play:
                         if channels != channels_frame or sample_rate != srate_frame:
