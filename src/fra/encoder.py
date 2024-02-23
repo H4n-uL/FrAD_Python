@@ -89,7 +89,7 @@ class encode:
         ecc_codesize = int(ecc_sizes[1])
 
         if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
-        if lossy and input('Compression will severely reduce the immunity from damage. Proceed? (Y/N) ').lower()!='y': sys.exit('Aborted.')
+        if lossy and input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower()!='y': sys.exit('Aborted.')
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
