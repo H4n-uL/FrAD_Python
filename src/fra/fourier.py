@@ -23,7 +23,7 @@ class fourier:
             for c in range(channels):
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,block_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts)
-                thres =  psycho.mappingfrombark(mTbark,W_inv,block_size*2) / 4 * 1.15**level
+                thres =  (psycho.mappingfrombark(mTbark,W_inv,block_size*2) / 4) ** (1.01*(level/3)+1)
                 fft_data[c][v:][np.abs(fft_data[c][v:]) < thres[v:-1]] = 0
 
         while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
