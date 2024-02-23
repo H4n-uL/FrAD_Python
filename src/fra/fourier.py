@@ -21,7 +21,7 @@ class fourier:
         if lossy:
             v = len(fft_data) // 16
             for c in range(channels):
-                fft_data[c] = np.around(fft_data[c] / (len(data) / 2048)) * (len(data) / 2048)
+                fft_data[c] = np.around(fft_data[c] / (block_size / 4096)) * (block_size / 4096)
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,block_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts)
                 thres =  psycho.mappingfrombark(mTbark,W_inv,block_size*2) / 4 * 1.15**level
