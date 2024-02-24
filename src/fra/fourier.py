@@ -2,12 +2,11 @@ from mdctn import mdct, imdct
 import numpy as np
 from .tools.lossy_psycho import psycho
 nfilts=64
-alpha=0.8
 
 class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool, lossy: bool, sample_rate: int, level: int):
         if lossy:
-            block_size = len(data)
+            block_size, alpha = len(data), (800 - (1.2**level))*0.001
             W = psycho.mapping2barkmat(sample_rate,nfilts,block_size*2)
             W_inv = psycho.mappingfrombarkmat(W,block_size*2)
             sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2,nfilts)
