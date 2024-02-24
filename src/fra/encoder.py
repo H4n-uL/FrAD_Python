@@ -122,17 +122,18 @@ class encode:
             cli_width = 40
             sample_size = bits // 4 * channels
             dlen = os.path.getsize(variables.temp_pcm)
-            brk=False
+            brk=0
 
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(samples_per_block * 4 * channels)                             # Reading PCM
+                    p = pcm.read(samples_per_block * 4 * channels)                           # Reading PCM
                     if lossy:
                         pcm.seek(samples_per_block//16 * -4 * channels, 1)
-                        if pcm.tell()%(samples_per_block-samples_per_block//16)!=0: brk = True # if at the end, Break
-                    if not p: break                                                            # if no data, Break
-                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)             # RAW PCM to Numpy
+                        # if at the end, Break
+                        if pcm.tell()%(samples_per_block-samples_per_block//16)!=0 or brk==1: brk += 1
+                    if not p: break                                                          # if no data, Break
+                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)           # RAW PCM to Numpy
                     block = block.astype(float) / np.iinfo(np.int32).max
 
                     # MDCT
@@ -183,7 +184,7 @@ class encode:
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                         print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                         print(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
-                    if brk == True: break
+                    if brk > 1: break
 
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt:
