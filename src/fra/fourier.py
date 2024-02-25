@@ -5,18 +5,21 @@ nfilts=64
 
 class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool, lossy: bool, sample_rate: int, level: int):
+        # MARK: Temporary Psychoacoustic Model
         if lossy:
             block_size, alpha = len(data), (800 - (1.2**level))*0.001
             W = psycho.mapping2barkmat(sample_rate,nfilts,block_size*2)
             W_inv = psycho.mappingfrombarkmat(W,block_size*2)
             sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2,nfilts)
             sprfuncmat = psycho.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
+        # ENDMARK
 
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2'}[bits]
         data = np.pad(data, ((0, -len(data[:, 0])%2), (0, 0)), mode='constant')
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
+        # MARK: Temporary Lossy compression method
         if lossy:
             v = len(fft_data) // 16
             for c in range(channels):
@@ -25,6 +28,7 @@ class fourier:
                 mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts) * np.log2(level+1)/2
                 thres =  psycho.mappingfrombark(mTbark,W_inv,block_size*2) / 4
                 fft_data[c][v:][np.abs(fft_data[c][v:]) < thres[v:-1]] = 0
+        # ENDMARK
 
         while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
