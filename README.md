@@ -102,11 +102,13 @@ Everyone is permitted to use, reproduce, redistribute, improve and contribute to
 
 ### Restrictions
 
-Solo commercial use of any implementation of this project is prohibited.
+Solo commercial use of this repository is prohibited.
 
 The original authors of the project do not need to be acknowledged. However, third parties who have not contributed are prohibited from claiming copyright in this project. If a contribution is made, the contributor's name can be included next to the original author's name.
 
 The core concepts of this project may not be patented or trademarked. However, if additional features are developed and applied, independent patent or trademark rights may be claimed for those features only.
+
+DRM is strictly prohibited. Applying DRM to Fourier Analogue-in-Digital, a format that is open to all, is absolutely forbidden.
 
 ### Disclaimer
 
