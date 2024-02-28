@@ -15,6 +15,18 @@ Note: The purpose of an archive is always to make it easy for you to access impo
 
 Installation is still only supported on Unix-like OS.
 
+## External Resources
+
+[Python](https://github.com/python/cpython), [FFmpeg](https://github.com/FFmpeg/FFmpeg), [QAAC](https://github.com/nu774/qaac), [QTFiles](https://github.com/AnimMouse/QTFiles), afconvert
+
+### pip Packages
+
+1. mdctn
+2. numpy
+3. reedsolo
+4. scipy
+5. sounddevice
+
 ## How to use
 
 Encoding

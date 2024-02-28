@@ -15,6 +15,18 @@ Project Archivist의 일환으로 아날로그 신호를 그대로 디지털 속
 
 설치는 아직 유닉스 계열 OS에서만 지원합니다.
 
+## 외부 리소스
+
+[Python](https://github.com/python/cpython), [FFmpeg](https://github.com/FFmpeg/FFmpeg), [QAAC](https://github.com/nu774/qaac), [QTFiles](https://github.com/AnimMouse/QTFiles), afconvert
+
+### pip 패키지
+
+1. mdctn
+2. numpy
+3. reedsolo
+4. scipy
+5. sounddevice
+
 ## 사용 방법
 
 인코딩

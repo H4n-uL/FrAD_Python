@@ -15,6 +15,18 @@ Project Archivistの一環として、アナログ信号をそのままデジタ
 
 インストールはまだUnix系OSだけサポートします。
 
+## 外部リソース
+
+[Python](https://github.com/python/cpython), [FFmpeg](https://github.com/FFmpeg/FFmpeg), [QAAC](https://github.com/nu774/qaac), [QTFiles](https://github.com/AnimMouse/QTFiles), afconvert
+
+### pipパッケージ
+
+1. mdctn
+2. numpy
+3. reedsolo
+4. scipy
+5. sounddevice
+
 ## 使用方法
 
 エンコーディング
