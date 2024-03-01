@@ -24,7 +24,7 @@ def main(action, args):
         encode.enc(
                 input, int(args.bits), endian=args.big_endian,
                 out=args.output, lossy=args.lossy, loss_level=int(args.losslevel),
-                samples_per_block=int(args.sample_size),
+                samples_per_frame=int(args.sample_size),
                 apply_ecc=args.ecc,
                 ecc_sizes=args.data_ecc_size,
                 nsr=nsr, meta=meta, img=img,
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('-b',   '--bits', '--bit',                          required=False,                                 help='Output file bit depth')
     parser.add_argument('-img', '--image',                                  required=False,                                 help='Image file path')
     parser.add_argument('-n',   '-nsr', '--new_sample_rate', '--resample',  required=False,                                 help='Resample as new sample rate')
-    parser.add_argument('-smp', '--sample_size', '--samples_per_block',     required=False,          default='2048',        help='Samples per block')
+    parser.add_argument('-smp', '--sample_size', '--samples_per_frame',     required=False,          default='2048',        help='Samples per frame')
     parser.add_argument('-c',   '--codec',                                  required=False,                                 help='Codec type')
     parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true',   help='Error Correction Code toggle')
     parser.add_argument('-ds',  '--data_ecc_size', '--data_ecc_ratio',      required=False, nargs=2, default=['128', '20'], help='Original data size and ECC data size(in Data size : ECC size)')

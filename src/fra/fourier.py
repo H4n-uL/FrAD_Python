@@ -7,9 +7,9 @@ class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool, lossy: bool, sample_rate: int, level: int):
         # MARK: Temporary Psychoacoustic Model
         if lossy:
-            block_size, alpha = len(data), (800 - (1.2**level))*0.001
-            W = psycho.mapping2barkmat(sample_rate,nfilts,block_size*2)
-            W_inv = psycho.mappingfrombarkmat(W,block_size*2)
+            frame_size, alpha = len(data), (800 - (1.2**level))*0.001
+            W = psycho.mapping2barkmat(sample_rate,nfilts,frame_size*2)
+            W_inv = psycho.mappingfrombarkmat(W,frame_size*2)
             sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2,nfilts)
             sprfuncmat = psycho.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
         # ENDMARK
@@ -23,10 +23,10 @@ class fourier:
         if lossy:
             v = len(fft_data) // 16
             for c in range(channels):
-                fft_data[c] = np.around(fft_data[c] / (block_size / 16384)) * (block_size / 16384)
-                mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,block_size*2)
+                fft_data[c] = np.around(fft_data[c] / (frame_size / 16384)) * (frame_size / 16384)
+                mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,frame_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts) * np.log2(level+1)/2
-                thres =  psycho.mappingfrombark(mTbark,W_inv,block_size*2) / 4
+                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2) / 4
                 fft_data[c][v:][np.abs(fft_data[c][v:]) < thres[v:-1]] = 0
         # ENDMARK
 

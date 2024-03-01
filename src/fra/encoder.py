@@ -80,7 +80,7 @@ class encode:
 
     def enc(file_path: str, bits: int, endian: bool = False,
                 out: str = None, lossy: bool = False, loss_level: int = 0,
-                samples_per_block: int = 2048,
+                samples_per_frame: int = 2048,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
                 nsr: int = None,
                 meta = None, img: bytes = None,
@@ -94,9 +94,9 @@ class encode:
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//2)*2
-        if samples_per_block > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if samples_per_block < 2: raise ValueError(f'Sample size must be at least 2.')
-        if samples_per_block % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
+        if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
+        if samples_per_frame < 2: raise ValueError(f'Sample size must be at least 2.')
+        if samples_per_frame % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
 
         encode.get_pcm(file_path, sample_rate, nsr)
         sample_rate = nsr is not None and nsr or sample_rate
@@ -127,17 +127,17 @@ class encode:
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(samples_per_block * 4 * channels)                           # Reading PCM
+                    p = pcm.read(samples_per_frame * 4 * channels)                           # Reading PCM
                     if lossy:
-                        pcm.seek(samples_per_block//16 * -4 * channels, 1)
+                        pcm.seek(samples_per_frame//16 * -4 * channels, 1)
                         # if at the end, Break
-                        if pcm.tell()%(samples_per_block-samples_per_block//16)!=0 or brk==1: brk += 1
+                        if pcm.tell()%(samples_per_frame-samples_per_frame//16)!=0 or brk==1: brk += 1
                     if not p: break                                                          # if no data, Break
-                    block = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)           # RAW PCM to Numpy
-                    block = block.astype(float) / np.iinfo(np.int32).max
+                    frame = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)           # RAW PCM to Numpy
+                    frame = frame.astype(float) / np.iinfo(np.int32).max
 
                     # MDCT
-                    segment, bt = fourier.analogue(block, bits, channels, endian, lossy, sample_rate, loss_level)
+                    segment, bt = fourier.analogue(frame, bits, channels, endian, lossy, sample_rate, loss_level)
                     if lossy: segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
@@ -145,7 +145,7 @@ class encode:
 
                     data = bytes(
                         #-- 0x00 ~ 0x0f --#
-                            # Block Signature
+                            # Frame Signature
                             b'\xff\xd0\xd2\x97' +
 
                             # Segment length(Processed)
@@ -172,8 +172,8 @@ class encode:
                     file.write(data)
 
                     if verbose:
-                        total_bytes += len(block) * sample_size
-                        if lossy: total_bytes -= len(block)//16 * sample_size
+                        total_bytes += len(frame) * sample_size
+                        if lossy: total_bytes -= len(frame)//16 * sample_size
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / sample_rate / sample_size

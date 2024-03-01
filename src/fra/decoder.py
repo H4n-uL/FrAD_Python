@@ -36,32 +36,32 @@ class decode:
             warned = False
             error_dir = []
             while True:
-                frame = f.read(32)
-                if not frame: break
-                blocklength = struct.unpack('>I', frame[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
-                efb = struct.unpack('>B', frame[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
+                fhead = f.read(32)
+                if not fhead: break
+                framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
+                efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
                 lossy, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
-                channels_frame = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
-                ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]          # 0x0a:    ECC Data block size
-                ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0]       # 0x0b:    ECC Code size
-                srate_frame = struct.unpack('>I', frame[0xc:0x10])[0]       # 0x0c-4B: Sample rate
-                crc32 = frame[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
-                block = f.read(blocklength)
-                if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
+                channels_frame = struct.unpack('>B', fhead[0x9:0xa])[0] + 1 # 0x09:    Channels
+                ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]          # 0x0a:    ECC Data block size
+                ecc_codesize = struct.unpack('>B', fhead[0xb:0xc])[0]       # 0x0b:    ECC Code size
+                srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
+                crc32 = fhead[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+                frame = f.read(framelength)
+                if e and zlib.crc32(frame) != struct.unpack('>I', crc32)[0]:
                     error_dir.append(str(framescount))
                     if not warned:
                         warned = True
                         print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
 
-                if is_ecc_on: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+                if is_ecc_on: frame = ecc.unecc(frame, ecc_dsize, ecc_codesize)
                 ssize_dict = {0b110: 16*channels_frame, 0b101: 8*channels_frame, 0b100: 6*channels_frame, 0b011: 4*channels_frame, 0b010: 3*channels_frame, 0b001: 2*channels_frame}
                 if lossy:
-                    block = zlib.decompress(block)
-                    duration += ((len(block) - len(block)//16) // ssize_dict[float_bits]) / (srate_frame * speed)
+                    frame = zlib.decompress(frame)
+                    duration += ((len(frame) - len(frame)//16) // ssize_dict[float_bits]) / (srate_frame * speed)
                 else:
-                    duration += (len(block) // ssize_dict[float_bits]) / (srate_frame * speed)
+                    duration += (len(frame) // ssize_dict[float_bits]) / (srate_frame * speed)
 
-                dlen += len(block)
+                dlen += len(frame)
                 framescount += 1
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
 
@@ -83,29 +83,29 @@ class decode:
 
                 while True:
                     # Reading Frame Header
-                    frame = f.read(32)
-                    if not frame: break
-                    blocklength = struct.unpack('>I', frame[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
-                    efb = struct.unpack('>B', frame[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
+                    fhead = f.read(32)
+                    if not fhead: break
+                    framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
+                    efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
                     lossy, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
-                    channels_frame = struct.unpack('>B', frame[0x9:0xa])[0] + 1 # 0x09:    Channels
-                    ecc_dsize = struct.unpack('>B', frame[0xa:0xb])[0]          # 0x0a:    ECC Data block size
-                    ecc_codesize = struct.unpack('>B', frame[0xb:0xc])[0]       # 0x0b:    ECC Code size
-                    srate_frame = struct.unpack('>I', frame[0xc:0x10])[0]       # 0x0c-4B: Sample rate
-                    crc32 = frame[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+                    channels_frame = struct.unpack('>B', fhead[0x9:0xa])[0] + 1 # 0x09:    Channels
+                    ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]          # 0x0a:    ECC Data block size
+                    ecc_codesize = struct.unpack('>B', fhead[0xb:0xc])[0]       # 0x0b:    ECC Code size
+                    srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
+                    crc32 = fhead[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
                     ssize_dict = {0b110: 16*channels_frame, 0b101: 8*channels_frame, 0b100: 6*channels_frame, 0b011: 4*channels_frame, 0b010: 3*channels_frame, 0b001: 2*channels_frame}
 
                     # Reading Block
-                    block = f.read(blocklength)
+                    frame = f.read(framelength)
 
                     if is_ecc_on:
-                        if e and zlib.crc32(block) != struct.unpack('>I', crc32)[0]:
-                            block = ecc.decode(block, ecc_dsize, ecc_codesize)
-                        else: block = ecc.unecc(block, ecc_dsize, ecc_codesize)
+                        if e and zlib.crc32(frame) != struct.unpack('>I', crc32)[0]:
+                            frame = ecc.decode(frame, ecc_dsize, ecc_codesize)
+                        else: frame = ecc.unecc(frame, ecc_dsize, ecc_codesize)
 
-                    if lossy: block = zlib.decompress(block)
+                    if lossy: frame = zlib.decompress(frame)
 
-                    segment = fourier.digital(block, float_bits, channels_frame, endian) # Inversing
+                    segment = fourier.digital(frame, float_bits, channels_frame, endian) # Inversing
 
                     if lossy:
                         prev_len = prev is not None and len(prev) or 0
@@ -155,7 +155,7 @@ class decode:
                                 return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
                         stream.write(np.int32(np.clip(segment, -1, 1)*np.iinfo(np.int32).max))
-                        i += blocklength + 32
+                        i += framelength + 32
                         if verbose:
                             elapsed_time = time.time() - start_time
                             bps = i / elapsed_time
