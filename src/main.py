@@ -4,7 +4,7 @@ def main(action, args):
     input = args.input
     meta = args.meta
     if args.jsonmeta is not None:
-        with open(args.jsonmeta, 'r') as f:
+        with open(args.jsonmeta, 'r', encoding='utf-8') as f:
             jsonmeta = json.load(f)
         meta = []
         for item in jsonmeta:
@@ -57,7 +57,7 @@ def main(action, args):
                     item_dict["value"] = base64.b64encode(value).decode('utf-8')
             result_list.append(item_dict)
         try:
-            with open(output+'.meta.json', 'w') as m: m.write(json.dumps(result_list, ensure_ascii=False))
+            with open(output+'.meta.json', 'w', encoding='utf-8') as m: m.write(json.dumps(result_list, ensure_ascii=False))
             with open(output+'.meta.image', 'wb') as m: m.write(img)
         except KeyboardInterrupt:
             os.remove(output+'.meta.json')

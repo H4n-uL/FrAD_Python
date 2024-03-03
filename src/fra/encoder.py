@@ -44,7 +44,7 @@ class encode:
             variables.meta
         ]
         subprocess.run(command)
-        with open(variables.meta, 'r') as m:
+        with open(variables.meta, 'r', encoding='utf-8') as m:
             meta = m.read()
         metadata_lines = meta.split("\n")[1:]
         metadata = []
