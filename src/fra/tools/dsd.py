@@ -111,7 +111,7 @@ class dsd:
 
             delta_sigma = [DeltaSigma() for _ in range(channels)]
             command = [
-                'ffmpeg',
+                variables.ffmpeg,
                 '-v', 'quiet',
                 '-f', 's32le',
                 '-ar', str(srate),
