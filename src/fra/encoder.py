@@ -93,7 +93,7 @@ class encode:
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec = encode.get_info(file_path)
-        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//2)*2
+        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)*2
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if samples_per_frame < 2: raise ValueError(f'Sample size must be at least 2.')
         if samples_per_frame % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
@@ -122,7 +122,7 @@ class encode:
             cli_width = 40
             sample_size = bits // 4 * channels
             dlen = os.path.getsize(variables.temp_pcm)
-            brk=0
+            pointer = 0
 
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
@@ -130,8 +130,8 @@ class encode:
                     p = pcm.read(samples_per_frame * 8 * channels)                   # Reading PCM
                     if lossy:
                         pcm.seek(samples_per_frame//16 * -8 * channels, 1)
-                        # if at the end, Break
-                        if pcm.tell()%(samples_per_frame-samples_per_frame//16)!=0 or brk==1: brk += 1
+                        if pcm.tell()==pointer: break                                # if at the end, Break
+                        pointer = pcm.tell()
                     if not p: break                                                  # if no data, Break
                     frame = np.frombuffer(p, dtype=np.float64).reshape(-1, channels) # RAW PCM to Numpy
                     if 'dsd' in codec: frame *= 2
@@ -184,7 +184,6 @@ class encode:
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                         print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                         print(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
-                    if brk > 1: break
 
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt:
