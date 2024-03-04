@@ -42,8 +42,7 @@ class fourier:
             data = b''.join([big_endian and data[i:i+(bits//8)] or data[i+(bits//24):i+(bits//6)] for i in range(0, len(data), bits//6)])
         elif bits == 12:
             data = data.hex()
-            if endian == '<': data = ''.join([data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)])
-            else: data = ''.join([data[i:i+3] for i in range(0, len(data), 4)])
+            data = ''.join([big_endian and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)])
             data = bytes.fromhex(data)
         else: raise Exception('Illegal bits value.')
 
