@@ -133,8 +133,9 @@ class encode:
                         # if at the end, Break
                         if pcm.tell()%(samples_per_frame-samples_per_frame//16)!=0 or brk==1: brk += 1
                     if not p: break                                                          # if no data, Break
-                    frame = np.frombuffer(p, dtype=np.float64).reshape(-1, channels)           # RAW PCM to Numpy
+                    frame = np.frombuffer(p, dtype=np.float64).reshape(-1, channels)         # RAW PCM to Numpy
                     frame = frame.astype(float)
+                    if 'dsd' in codec: frame *= 2
 
                     # MDCT
                     segment, bt = fourier.analogue(frame, bits, channels, endian, lossy, sample_rate, loss_level)
