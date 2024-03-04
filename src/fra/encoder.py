@@ -127,14 +127,13 @@ class encode:
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(samples_per_frame * 4 * channels)                           # Reading PCM
+                    p = pcm.read(samples_per_frame * 4 * channels)                   # Reading PCM
                     if lossy:
                         pcm.seek(samples_per_frame//16 * -4 * channels, 1)
                         # if at the end, Break
                         if pcm.tell()%(samples_per_frame-samples_per_frame//16)!=0 or brk==1: brk += 1
-                    if not p: break                                                          # if no data, Break
-                    frame = np.frombuffer(p, dtype=np.float64).reshape(-1, channels)         # RAW PCM to Numpy
-                    frame = frame.astype(float)
+                    if not p: break                                                  # if no data, Break
+                    frame = np.frombuffer(p, dtype=np.float64).reshape(-1, channels) # RAW PCM to Numpy
                     if 'dsd' in codec: frame *= 2
 
                     # MDCT
