@@ -154,7 +154,7 @@ class decode:
                                 print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
                                 return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
-                        stream.write(np.int32(np.clip(segment, -1, 1)*np.iinfo(np.int32).max))
+                        stream.write(segment.astype(np.float64).tobytes())
                         i += framelength + 32
                         if verbose:
                             elapsed_time = time.time() - start_time
@@ -204,7 +204,7 @@ class decode:
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
-            '-f', 's32le',
+            '-f', 'f64le',
             '-ar', str(sample_rate),
             '-ac', str(channels),
             '-i', variables.temp_pcm
@@ -250,7 +250,7 @@ class decode:
             command = [
                 variables.ffmpeg, '-y',
                 '-loglevel', 'error',
-                '-f', 's32le',
+                '-f', 'f64le',
                 '-ar', str(sample_rate),
                 '-ac', str(channels),
                 '-i', variables.temp_pcm,
@@ -291,7 +291,7 @@ class decode:
                 '--raw', variables.temp_pcm,
                 '--raw-channels', str(channels),
                 '--raw-rate', str(sample_rate),
-                '--raw-format', 's32l',
+                '--raw-format', 'f64l',
                 '--adts',
                 '-c', quality,
                 '-o', f'{out}.aac',

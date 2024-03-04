@@ -26,8 +26,8 @@ class encode:
             variables.ffmpeg,
             '-v', 'quiet',
             '-i', file_path,
-            '-f', 's32le',
-            '-acodec', 'pcm_s32le',
+            '-f', 'f64le',
+            '-acodec', 'pcm_f64le',
             '-vn'
         ]
         if nsr not in [osr, None]:
@@ -133,8 +133,8 @@ class encode:
                         # if at the end, Break
                         if pcm.tell()%(samples_per_frame-samples_per_frame//16)!=0 or brk==1: brk += 1
                     if not p: break                                                          # if no data, Break
-                    frame = np.frombuffer(p, dtype=np.int32).reshape(-1, channels)           # RAW PCM to Numpy
-                    frame = frame.astype(float) / np.iinfo(np.int32).max
+                    frame = np.frombuffer(p, dtype=np.float64).reshape(-1, channels)           # RAW PCM to Numpy
+                    frame = frame.astype(float)
 
                     # MDCT
                     segment, bt = fourier.analogue(frame, bits, channels, endian, lossy, sample_rate, loss_level)

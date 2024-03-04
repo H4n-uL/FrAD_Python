@@ -113,12 +113,12 @@ class dsd:
             command = [
                 variables.ffmpeg,
                 '-v', 'quiet',
-                '-f', 's32le',
+                '-f', 'f64le',
                 '-ar', str(srate),
                 '-ac', str(channels),
                 '-i', variables.temp_pcm,
                 '-ar', str(dsd_srate),
-                '-f', 's32le',
+                '-f', 'f64le',
                 'pipe:1']
 
             pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
