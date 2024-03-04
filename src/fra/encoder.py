@@ -127,9 +127,9 @@ class encode:
             with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(samples_per_frame * 4 * channels)                   # Reading PCM
+                    p = pcm.read(samples_per_frame * 8 * channels)                   # Reading PCM
                     if lossy:
-                        pcm.seek(samples_per_frame//16 * -4 * channels, 1)
+                        pcm.seek(samples_per_frame//16 * -8 * channels, 1)
                         # if at the end, Break
                         if pcm.tell()%(samples_per_frame-samples_per_frame//16)!=0 or brk==1: brk += 1
                     if not p: break                                                  # if no data, Break
@@ -177,7 +177,7 @@ class encode:
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / sample_rate / sample_size
-                        percent = total_bytes / dlen / bits * 1600
+                        percent = total_bytes / dlen / bits * 3200
                         prgbar = int(percent / 100 * cli_width)
                         eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
                         print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
