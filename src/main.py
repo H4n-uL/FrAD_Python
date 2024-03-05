@@ -20,6 +20,7 @@ def main(action, args):
 
     if action == 'encode':
         from fra import encode
+        if args.bits is None: raise ValueError('--bits option is required for encoding.')
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
                 input, int(args.bits), endian=args.big_endian,
