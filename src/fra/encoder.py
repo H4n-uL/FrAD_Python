@@ -138,13 +138,13 @@ class encode:
                         rlen = samples_per_frame * 8 * channels
                     else: rlen = (samples_per_frame - len(last)//8//channels) * 8 * channels
 
-                    p = process.stdout.read(rlen) # Reading PCM
-                    if not p: break               # if no data, Break
-                    p = last + p
-                    last = p[-samples_per_frame*8*channels//16:]
+                    data = process.stdout.read(rlen) # Reading PCM
+                    if not data: break               # if no data, Break
+                    data = last + data
+                    last = data[-samples_per_frame*8*channels//16:]
 
                     # RAW PCM to Numpy
-                    frame = np.frombuffer(p, dtype='<d').reshape(-1, channels)
+                    frame = np.frombuffer(data, dtype='<d').reshape(-1, channels)
                     if 'dsd' in codec: frame *= 2
 
                     # MDCT
