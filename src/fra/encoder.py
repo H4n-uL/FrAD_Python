@@ -123,23 +123,28 @@ class encode:
             total_bytes = 0
             cli_width = 40
             sample_size = bits // 4 * channels
-            pointer = 0
 
             # Open FFmpeg
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+
+            last = b''
 
             # Write file
             open(out, 'wb').write(headb.uilder(meta, img))
             with open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = process.stdout.read(samples_per_frame * 8 * channels)        # Reading PCM
-                    if lossy:
-                        process.stdout.seek(samples_per_frame//16 * -8 * channels, 1)
-                        if process.stdout.tell()==pointer: break                     # if at the end, Break
-                        pointer = process.stdout.tell()
-                    if not p: break                                                  # if no data, Break
-                    frame = np.frombuffer(p, dtype='<d').reshape(-1, channels) # RAW PCM to Numpy
+                    if not lossy or last == b'':
+                        rlen = samples_per_frame * 8 * channels
+                    else: rlen = (samples_per_frame - len(last)//8//channels) * 8 * channels
+
+                    p = process.stdout.read(rlen) # Reading PCM
+                    if not p: break               # if no data, Break
+                    p = last + p
+                    last = p[-samples_per_frame*8*channels//16:]
+
+                    # RAW PCM to Numpy
+                    frame = np.frombuffer(p, dtype='<d').reshape(-1, channels)
                     if 'dsd' in codec: frame *= 2
 
                     # MDCT

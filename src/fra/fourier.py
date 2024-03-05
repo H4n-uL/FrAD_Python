@@ -5,23 +5,19 @@ nfilts=64
 
 class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool, lossy: bool, sample_rate: int, level: int):
-        # MARK: Temporary Psychoacoustic Model
-        if lossy:
-            frame_size, alpha = len(data), (800 - (1.2**level))*0.001
-            W = psycho.mapping2barkmat(sample_rate,nfilts,frame_size*2)
-            W_inv = psycho.mappingfrombarkmat(W,frame_size*2)
-            sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2,nfilts)
-            sprfuncmat = psycho.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
-        # ENDMARK
-
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}[bits]
         data = np.pad(data, ((0, -len(data[:, 0])%2), (0, 0)), mode='constant')
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
-        # MARK: Temporary Lossy compression method
+        # MARK: Temporary Psychoacoustic Filtering
         if lossy:
             v = len(fft_data) // 16
+            frame_size, alpha = len(data), (800 - (1.2**level))*0.001
+            W = psycho.mapping2barkmat(sample_rate,nfilts,frame_size*2)
+            W_inv = psycho.mappingfrombarkmat(W,frame_size*2)
+            sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2,nfilts)
+            sprfuncmat = psycho.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
             for c in range(channels):
                 fft_data[c] = np.around(fft_data[c] / (frame_size / 16384)) * (frame_size / 16384)
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,frame_size*2)
