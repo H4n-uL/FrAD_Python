@@ -1,6 +1,6 @@
 from .common import variables, methods
 from .fourier import fourier
-import json, os, struct, subprocess, sys, time, zlib
+import json, os, struct, subprocess, sys, time, traceback, zlib
 import numpy as np
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -89,8 +89,10 @@ class encode:
         ecc_dsize = int(ecc_sizes[0])
         ecc_codesize = int(ecc_sizes[1])
 
+        methods.cantreencode(open(file_path, 'rb').read(4))
+
         if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
-        if lossy and input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower()!='y': sys.exit('Aborted.')
+        if lossy and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec, duration = encode.get_info(file_path)
@@ -112,6 +114,8 @@ class encode:
         if not (out.lower().endswith('.frad') or out.lower().endswith('.dsin') or out.lower().endswith('.fra') or out.lower().endswith('.dsn')):
             if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.fra'
             else: out += '.frad'
+        
+        if os.path.exists(out) and 'y' not in input(f'{out} Already exists. Proceed? ').lower(): sys.exit('Aborted.')
 
         # Fourier Transform
         try:
@@ -190,5 +194,7 @@ class encode:
                 if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt:
             print('Aborting...')
-        finally:
-            sys.exit(0)
+        except Exception as e:
+            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+            sys.exit(traceback.format_exc())
+        sys.exit(0)
