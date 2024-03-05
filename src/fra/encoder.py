@@ -18,10 +18,11 @@ class encode:
 
         for stream in info['streams']:
             if stream['codec_type'] == 'audio':
-                return int(stream['channels']), int(stream['sample_rate']), stream['codec_name']
+                duration = stream['duration_ts'] * int(stream['sample_rate']) // int(stream['time_base'][2:])
+                return int(stream['channels']), int(stream['sample_rate']), stream['codec_name'], duration
         return None
 
-    def get_pcm(file_path: str, osr: int, nsr: int):
+    def get_pcm_command(file_path: str, osr: int, nsr: int):
         command = [
             variables.ffmpeg,
             '-v', 'quiet',
@@ -32,8 +33,8 @@ class encode:
         ]
         if nsr not in [osr, None]:
             command.extend(['-ar', str(nsr)])
-        command.append(variables.temp_pcm)
-        subprocess.run(command)
+        command.append('pipe:1')
+        return command
 
     def get_metadata(file_path: str):
         excluded = ['major_brand', 'minor_version', 'compatible_brands', 'encoder']
@@ -92,13 +93,14 @@ class encode:
         if lossy and input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower()!='y': sys.exit('Aborted.')
 
         # Getting Audio info w. ffmpeg & ffprobe
-        channels, sample_rate, codec = encode.get_info(file_path)
+        channels, sample_rate, codec, duration = encode.get_info(file_path)
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)*2
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if samples_per_frame < 2: raise ValueError(f'Sample size must be at least 2.')
         if samples_per_frame % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
 
-        encode.get_pcm(file_path, sample_rate, nsr)
+        # Getting command and new sample rate
+        cmd = encode.get_pcm_command(file_path, sample_rate, nsr)
         sample_rate = nsr is not None and nsr or sample_rate
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
@@ -111,29 +113,29 @@ class encode:
             if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.fra'
             else: out += '.frad'
 
-        with open(out, 'wb') as file:
-            h = headb.uilder(meta, img)
-            file.write(h)
-
         # Fourier Transform
         try:
             start_time = time.time()
             total_bytes = 0
             cli_width = 40
             sample_size = bits // 4 * channels
-            dlen = os.path.getsize(variables.temp_pcm)
             pointer = 0
 
-            with open(variables.temp_pcm, 'rb') as pcm, open(out, 'ab') as file:
+            # Open FFmpeg
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+
+            # Write file
+            open(out, 'wb').write(headb.uilder(meta, img))
+            with open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    p = pcm.read(samples_per_frame * 8 * channels)                   # Reading PCM
+                    p = process.stdout.read(samples_per_frame * 8 * channels)        # Reading PCM
                     if lossy:
-                        pcm.seek(samples_per_frame//16 * -8 * channels, 1)
-                        if pcm.tell()==pointer: break                                # if at the end, Break
-                        pointer = pcm.tell()
+                        process.stdout.seek(samples_per_frame//16 * -8 * channels, 1)
+                        if process.stdout.tell()==pointer: break                     # if at the end, Break
+                        pointer = process.stdout.tell()
                     if not p: break                                                  # if no data, Break
-                    frame = np.frombuffer(p, dtype=np.float64).reshape(-1, channels) # RAW PCM to Numpy
+                    frame = np.frombuffer(p, dtype='<d').reshape(-1, channels) # RAW PCM to Numpy
                     if 'dsd' in codec: frame *= 2
 
                     # MDCT
@@ -177,7 +179,7 @@ class encode:
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / sample_rate / sample_size
-                        percent = total_bytes / dlen / bits * 3200
+                        percent = total_bytes / duration / bits * 200
                         prgbar = int(percent / 100 * cli_width)
                         eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
                         print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
@@ -189,5 +191,4 @@ class encode:
         except KeyboardInterrupt:
             print('Aborting...')
         finally:
-            os.remove(variables.temp_pcm)
             sys.exit(0)
