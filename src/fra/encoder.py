@@ -134,9 +134,9 @@ class encode:
             with open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    if not lossy or last == b'':
-                        rlen = samples_per_frame * 8 * channels
-                    else: rlen = (samples_per_frame - len(last)//8//channels) * 8 * channels
+                    rlen = samples_per_frame * 8 * channels
+                    if lossy and len(last) != 0:
+                        rlen -= len(last)
 
                     data = process.stdout.read(rlen) # Reading PCM
                     if not data: break               # if no data, Break
