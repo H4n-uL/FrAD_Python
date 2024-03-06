@@ -96,6 +96,21 @@ fourier ecc "path/to/fourierAnalogue.frad" \
 --verbose
 ```
 
+ソフトウェアレコーディング
+
+```bash
+fourier encode "path/to/fourierAnalogue.frad" \
+\  # オプション
+--bits 32 \                                        # ビット深度
+--samples_per_block 2048 \                         # ブロックあたりのサンプル数
+--enable_ecc \                                     # ECC使用可否
+--data_ecc_size 128 20 \                           # データブロックとECCブロックのサイズ
+--big_endian \                                     # エンディアン
+--metadata "Metadata Title" "Metadata contents" \  # メタデータ
+--jsonmeta "path/to/metadata.json" \               # メタデータ json, --metadata より優先されます。
+--image "path/to/image/file" \                     # 画像ファイル
+```
+
 .jsonファイルの例はExamplesフォルダにあります。
 
 ## 寄付方法

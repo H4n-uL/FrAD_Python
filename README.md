@@ -96,6 +96,21 @@ fourier ecc "path/to/fourierAnalogue.frad" \
 --verbose
 ```
 
+Software Recording
+
+```bash
+fourier record "path/to/fourierAnalogue.frad" \
+\  # Optional
+--bits 32 \                                        # Bit depth
+--samples_per_block 2048 \                         # Samples per block
+--enable_ecc \                                     # ECC enabled or not
+--data_ecc_size 128 20 \                           # Sizes of data block and ECC block when ECC enabled
+--big_endian \                                     # Endianness
+--metadata "Metadata Title" "Metadata contents" \  # Metadata
+--jsonmeta "path/to/metadata.json" \               # Metadata json, will override --metadata.
+--image "path/to/image/file" \                     # Image file
+```
+
 Example of .json file is in Example folder.
 
 ## How to contribute

@@ -96,6 +96,21 @@ fourier ecc "path/to/fourierAnalogue.frad" \
 --verbose
 ```
 
+소프트웨어 녹음
+
+```bash
+fourier record "path/to/fourierAnalogue.frad" \
+\  # 선택 사항
+--bits 32 \                                        # 비트 심도
+--samples_per_block 2048 \                         # 블록당 샘플 수
+--enable_ecc \                                     # ECC 활성화 여부
+--data_ecc_size 128 20 \                           # 데이터 블록과 ECC 블록의 크기
+--big_endian \                                     # 엔디언
+--metadata "Metadata Title" "Metadata contents" \  # 메타데이터
+--jsonmeta "path/to/metadata.json" \               # 메타데이터 json, --metadata보다 우선시됩니다.
+--image "path/to/image/file" \                     # 이미지 파일
+```
+
 .json 파일의 예시는 Examples 폴더에 들어 있습니다.
 
 ## 기여 방법
