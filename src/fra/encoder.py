@@ -140,8 +140,10 @@ class encode:
 
                     data = process.stdout.read(rlen) # Reading PCM
                     if not data: break               # if no data, Break
-                    data = last + data
-                    last = data[-samples_per_frame*8*channels//16:]
+
+                    if lossy:
+                        data = last + data
+                        last = data[-samples_per_frame//16*8*channels:]
 
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data, dtype='<d').reshape(-1, channels)
