@@ -69,10 +69,7 @@ class decode:
 
             try:
                 # Starting stream
-                if play:
-                    stream = sd.OutputStream(samplerate=44100, channels=2)
-                    stream.start()
-                    print()
+                if play: print()
                 else:
                     stream = open(variables.temp_pcm, 'ab')
                     dlen = os.path.getsize(file_path) - header_length
