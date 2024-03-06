@@ -183,7 +183,7 @@ class decode:
 
     def split_q(s):
         if s == None: 
-            return None, None
+            return None, 'c'
         if not s[0].isdigit():
             raise ValueError('Quality format should be [{Positive integer}{c/v/a}]')
         number = ''.join(filter(str.isdigit, s))
@@ -294,10 +294,11 @@ class decode:
                 '--raw-rate', str(sample_rate),
                 '--raw-format', 'f64l',
                 '--adts',
-                '-c', quality,
+                '-c', str(quality),
                 '-o', f'{out}.aac',
                 '-s'
             ]
+            print(command)
             subprocess.run(command)
             os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
