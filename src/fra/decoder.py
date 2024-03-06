@@ -176,6 +176,7 @@ class decode:
             except KeyboardInterrupt:
                 if play: stream.abort()
                 else:
+                    stream.close()
                     print('Aborting...')
                     os.remove(variables.temp_pcm)
                 sys.exit(0)
