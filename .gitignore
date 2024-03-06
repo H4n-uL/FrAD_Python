@@ -20,7 +20,7 @@ music/*
 *.mp4
 *.ogg
 *.mp3
-*.wav
+*.opus
 *.wma
 
 *.dsd
