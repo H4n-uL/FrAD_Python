@@ -1,7 +1,7 @@
 import argparse, base64, json, os, sys, traceback
 
 def main(action, args):
-    input = args.input
+    file_path = args.file_path
     meta = args.meta
     if args.jsonmeta is not None:
         with open(args.jsonmeta, 'r', encoding='utf-8') as f:
@@ -23,7 +23,7 @@ def main(action, args):
         if args.bits is None: raise ValueError('--bits option is required for encoding.')
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
-                input, int(args.bits), endian=args.big_endian,
+                file_path, int(args.bits), endian=args.big_endian,
                 out=args.output, lossy=args.lossy, loss_level=int(args.losslevel),
                 samples_per_frame=int(args.sample_size),
                 apply_ecc=args.ecc,
@@ -35,7 +35,7 @@ def main(action, args):
         bits = 32 if args.bits == None else int(args.bits)
         codec = args.codec if args.codec is not None else None
         decode.dec(
-                input,
+                file_path,
                 out=args.output, bits=bits,
                 codec=codec, quality=args.quality,
                 e=args.ecc, nsr=args.new_sample_rate,
@@ -43,7 +43,7 @@ def main(action, args):
     elif action == 'parse':
         from fra import header
         output = args.output if args.output is not None else 'metadata'
-        head, img = header.parse(input)
+        head, img = header.parse(file_path)
         result_list = []
         for item in head:
             key, value = item
@@ -66,24 +66,31 @@ def main(action, args):
             sys.exit(0)
     elif action == 'modify' or action == 'meta-modify':
         from fra import header
-        header.modify(input, meta=meta, img=img)
+        header.modify(file_path, meta=meta, img=img)
     elif action == 'ecc':
         from fra import repack
-        repack.ecc(input, args.data_ecc_size, args.verbose)
+        repack.ecc(file_path, args.data_ecc_size, args.verbose)
     elif action == 'play':
         from fra import player
         player.play(
-                input,
+                file_path,
                 keys=int(args.keys) if args.keys is not None else None,
                 speed_in_times=float(args.speed) if args.speed is not None else None,
                 e=args.ecc, verbose=args.verbose)
+    elif action == 'record':
+        from fra import recorder
+        bits = 24 if args.bits == None else int(args.bits)
+        recorder.record_audio(args.file_path, sample_rate=48000, channels=1,
+            bit_depth=bits,
+            apply_ecc=args.ecc, ecc_sizes=args.data_ecc_size,
+            lossy=args.lossy, loss_level=int(args.losslevel), big_endian=args.big_endian)
     else:
         raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fourier Analogue-in-Digital Codec')
-    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'],            help='Codec action')
-    parser.add_argument('input',                                                                                            help='Input file path')
+    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play', 'record'],  help='Codec action')
+    parser.add_argument('file_path',                                                                                        help='File path')
     parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                                 help='Output file path')
     parser.add_argument('-b',   '--bits', '--bit',                          required=False,                                 help='Output file bit depth')
     parser.add_argument('-img', '--image',                                  required=False,                                 help='Image file path')
