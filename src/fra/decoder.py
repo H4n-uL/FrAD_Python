@@ -298,7 +298,6 @@ class decode:
                 '-o', f'{out}.aac',
                 '-s'
             ]
-            print(command)
             subprocess.run(command)
             os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
