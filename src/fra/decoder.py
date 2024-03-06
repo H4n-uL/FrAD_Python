@@ -331,9 +331,9 @@ class decode:
 
             # Checking Codec and Muxers
             if codec in ['vorbis', 'opus', 'speex']:
-                codec = 'lib' + codec
                 if codec in ['vorbis', 'speex']:
                     ext = 'ogg'
+                codec = 'lib' + codec
             if codec == 'ogg': codec = 'libvorbis'
             if codec == 'mp3': codec = 'libmp3lame'
 
