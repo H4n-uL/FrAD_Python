@@ -55,7 +55,7 @@ class fourier:
         elif fb == 0b000:
             data = data.hex()
             if endian == '<': data = ''.join([data[i:i+3][0] + '0' + data[i:i+3][1:] for i in range(0, len(data), 3)])
-            else: data = ''.join([data[i:i+2] + '0' for i in range(0, len(data), 2)])
+            else: data = ''.join([data[i:i+3] + '0' for i in range(0, len(data), 3)])
             data = bytes.fromhex(data)
         else:
             raise Exception('Illegal bits value.')
