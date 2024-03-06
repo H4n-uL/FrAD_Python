@@ -87,7 +87,7 @@ class repack:
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
                             print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-                    if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                    if verbose: print('\x1b[1A\x1b[2K', end='')
 
                 f.seek(0)
                 head = f.read(header_length)

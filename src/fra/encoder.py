@@ -198,7 +198,7 @@ class encode:
                         print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                         print(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
 
-                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                if verbose: print('\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt:
             print('Aborting...')
         except Exception as e:

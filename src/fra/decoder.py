@@ -168,10 +168,8 @@ class decode:
                             print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 stream.close()
-                if play:
+                if play or verbose:
                     print('\x1b[1A\x1b[2K', end='')
-                elif verbose:
-                    print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                 return sample_rate, channels
             except KeyboardInterrupt:
                 if play: stream.abort()
