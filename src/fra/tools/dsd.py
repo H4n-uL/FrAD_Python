@@ -152,7 +152,7 @@ class dsd:
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 with open(f'{out}.{ext}', 'wb') as f, open(variables.temp_dsd, 'rb') as temp:
                     f.write(h + temp.read())
-                if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                if verbose: print('\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt: pass
         finally:
             dlen = os.path.getsize(variables.temp_dsd)
