@@ -4,7 +4,7 @@ from .tools.lossy_psycho import psycho
 nfilts=64
 
 class fourier:
-    def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool, lossy: bool, sample_rate: int, level: int):
+    def analogue(data: np.ndarray, bits: int, channels: int, big_endian: bool, *, lossy: bool, sample_rate: int, level: int):
         endian = big_endian and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}[bits]
         data = np.pad(data, ((0, -len(data[:, 0])%2), (0, 0)), mode='constant')

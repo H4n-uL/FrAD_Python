@@ -35,7 +35,7 @@ class recorder:
             while True:
                 try:
                     data = record.read(samples_per_frame)[0]
-                    data, bits = fourier.analogue(data, bit_depth, 1, big_endian, lossy, sample_rate, loss_level)
+                    data, bits = fourier.analogue(data, bit_depth, channels, big_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level)
                     if lossy: data = zlib.compress(data, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
