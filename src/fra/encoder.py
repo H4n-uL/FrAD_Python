@@ -81,7 +81,7 @@ class encode:
 
     def enc(file_path: str, bits: int, endian: bool = False,
                 out: str = None, lossy: bool = False, loss_level: int = 0,
-                samples_per_frame: int = 2048,
+                samples_per_frame: int = 2048, gain: str = None,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
                 nsr: int = None,
                 meta = None, img: bytes = None,
@@ -90,6 +90,7 @@ class encode:
         ecc_codesize = int(ecc_sizes[1])
 
         methods.cantreencode(open(file_path, 'rb').read(4))
+        gain = methods.get_gain(gain)
 
         if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
         if lossy and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
@@ -146,11 +147,10 @@ class encode:
                         last = data[-samples_per_frame//16*8*channels:]
 
                     # RAW PCM to Numpy
-                    frame = np.frombuffer(data, dtype='<d').reshape(-1, channels)
-                    if 'dsd' in codec: frame *= 2
+                    frame = np.frombuffer(data, dtype='<d').reshape(-1, channels) * gain
 
                     # MDCT
-                    segment, bt = fourier.analogue(frame, bits, channels, endian, lossy, sample_rate, loss_level)
+                    segment, bt = fourier.analogue(frame, bits, channels, endian, lossy=lossy, sample_rate=sample_rate, level=loss_level)
                     if lossy: segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)

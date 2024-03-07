@@ -1,4 +1,4 @@
-import base64, os, platform, secrets, shutil, subprocess
+import base64, os, platform, re, secrets, shutil, subprocess
 
 class variables:
     hash_block_size = 2**20
@@ -58,3 +58,14 @@ class methods:
             shutil.move(variables.temp2_pcm, variables.temp_pcm)
             return new_sample_rate
         return sample_rate
+
+    def get_gain(g):
+        if g is None: return 1
+        if 'db' in g.lower():
+            g = g.lower().replace('db', '')
+            if bool(re.match("^\d+?\.\d+?$", g)) or bool(re.match("^\d+?$", g)):
+                return 10 ** (float(g) / 20)
+        else:
+            if bool(re.match("^\d+?\.\d+?$", g)) or bool(re.match("^\d+?$", g)):
+                return float(g)
+        raise ValueError("Gain should be in the following format: [real number] or [real number]dB.")

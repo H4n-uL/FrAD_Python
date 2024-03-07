@@ -10,7 +10,7 @@ from .tools.headb import headb
 from .tools.dsd import dsd
 
 class decode:
-    def internal(file_path, play: bool = False, speed: float = 1, e: bool = False, verbose: bool = False):
+    def internal(file_path, play: bool = False, speed: float = 1, e: bool = False, gain: float = 1, verbose: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
             header = f.read(64)
@@ -102,7 +102,7 @@ class decode:
 
                     if lossy: frame = zlib.decompress(frame)
 
-                    segment = fourier.digital(frame, float_bits, channels_frame, endian) # Inversing
+                    segment = fourier.digital(frame, float_bits, channels_frame, endian) * gain # Inversing
 
                     if lossy:
                         prev_len = prev is not None and len(prev) or 0
@@ -300,9 +300,9 @@ class decode:
             os.remove(variables.temp_pcm)
             sys.exit(0)
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, nsr: int = None, verbose: bool = False):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: str = None, nsr: int = None, verbose: bool = False):
         # Decoding
-        sample_rate, channels = decode.internal(file_path, e=e, verbose=verbose)
+        sample_rate, channels = decode.internal(file_path, e=e, gain=methods.get_gain(gain), verbose=verbose)
         sample_rate = methods.resample_pcm(channels, sample_rate, nsr)
 
         try:
