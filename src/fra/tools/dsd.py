@@ -104,10 +104,10 @@ class dsd:
         cli_width = 40
         i = 0
 
-        dsd_srate = 2822400
+        dsd_srate = 2822400 // 4
         pred_size = os.path.getsize(variables.temp_pcm) // srate * dsd_srate // 32
         try:
-            BUFFER_SIZE = 262144 * 4 * channels
+            BUFFER_SIZE = 262144 * 8 * channels
 
             delta_sigma = [DeltaSigma() for _ in range(channels)]
             command = [
