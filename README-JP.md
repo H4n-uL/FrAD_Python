@@ -40,6 +40,7 @@ fourier encode "path/to/audio.flac" \
 --enable_ecc \                                     # ECC使用可否
 --data_ecc_size 128 20 \                           # データブロックとECCブロックのサイズ
 --big_endian \                                     # エンディアン
+--gain 0.7 \                                       # ゲイン
 --metadata "Metadata Title" "Metadata contents" \  # メタデータ
 --jsonmeta "path/to/metadata.json" \               # メタデータ json, --metadata より優先されます。
 --image "path/to/image/file" \                     # 画像ファイル
@@ -53,6 +54,7 @@ fourier decode "path/to/fourierAnalogue.frad" \
 \  # オプション
 --bits 32 \                      # 無損失圧縮コーデックのビット深度(8, 16, 32をサポートします)
 --enable_ecc \                   # ECC使用可否
+--gain 1.2 \                     # ゲイン
 --output "path/for/audio.aac" \  # 出力ファイル
 --codec "codec" \                # コーデックの種類
 --quality "320000c" \            # 損失圧縮コーデックの品質 (例は固定320 kbps)
@@ -66,6 +68,7 @@ fourier play "path/to/fourierAnalogue.frad" \
 \  # オプション
 --key keys \     # プレーキー
 --speed speed \  # プレー速度
+--gain 0.5 \     # ゲイン
 --enable_ecc \   # ECC使用可否
 --verbose
 ```
@@ -111,7 +114,20 @@ fourier encode "path/to/fourierAnalogue.frad" \
 --image "path/to/image/file" \                     # 画像ファイル
 ```
 
-.jsonファイルの例はExamplesフォルダにあります。
+メタデータJSON
+
+```json
+[
+    {"key": "KEY",                              "type": "string", "value": "VALUE"},
+    {"key": "AUTHOR",                           "type": "string", "value": "H4n_uL"},
+    {"key": "Key & String value encoding type", "type": "string", "value": "UTF-8"},
+    {"key": "Base64 type Value",                "type": "base64", "value": "QmFzZTY0IEV4YW1wbGU="},
+    {"key": "File is also available",           "type": "base64", "value": "U3VwcG9ydHMgdXAgdG8gMjU2IFRpQg=="},
+    {"key": "No unsupported characters",        "type": "string", "value": "All utf-8/base64 metadata is allowed!"},
+    {"key": "Supports duplicate keys",          "type": "string", "value": "See what happens!"},
+    {"key": "Supports duplicate keys",          "type": "string", "value": "Voilà!"}
+]
+```
 
 ## 寄付方法
 

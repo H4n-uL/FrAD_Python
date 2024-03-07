@@ -40,6 +40,7 @@ fourier encode "path/to/audio.flac" \
 --enable_ecc \                                     # ECC enabled or not
 --data_ecc_size 128 20 \                           # Sizes of data block and ECC block when ECC enabled
 --big_endian \                                     # Endianness
+--gain 0.7 \                                       # Gain
 --metadata "Metadata Title" "Metadata contents" \  # Metadata
 --jsonmeta "path/to/metadata.json" \               # Metadata json, will override --metadata.
 --image "path/to/image/file" \                     # Image file
@@ -53,6 +54,7 @@ fourier decode "path/to/fourierAnalogue.frad" \
 \  # Optional
 --bits 32 \                      # Bit depth for lossless compression codecs (supports 8, 16, 32)
 --enable_ecc \                   # ECC verification or not
+--gain 1.2 \                     # Gain
 --output "path/for/audio.aac" \  # Output file
 --codec "codec" \                # Codec type
 --quality "320000c" \            # Quailty factor for lossy compression codecs (example is constant 320 kbps)
@@ -66,6 +68,7 @@ fourier play "path/to/fourierAnalogue.frad" \
 \  # Optional
 --key keys \     # Playback keys
 --speed speed \  # Playback speed
+--gain 0.5 \     # Gain
 --enable_ecc \   # ECC verification or not
 --verbose
 ```
@@ -111,7 +114,20 @@ fourier record "path/to/fourierAnalogue.frad" \
 --image "path/to/image/file" \                     # Image file
 ```
 
-Example of .json file is in Example folder.
+Metadata JSON
+
+```json
+[
+    {"key": "KEY",                              "type": "string", "value": "VALUE"},
+    {"key": "AUTHOR",                           "type": "string", "value": "H4n_uL"},
+    {"key": "Key & String value encoding type", "type": "string", "value": "UTF-8"},
+    {"key": "Base64 type Value",                "type": "base64", "value": "QmFzZTY0IEV4YW1wbGU="},
+    {"key": "File is also available",           "type": "base64", "value": "U3VwcG9ydHMgdXAgdG8gMjU2IFRpQg=="},
+    {"key": "No unsupported characters",        "type": "string", "value": "All utf-8/base64 metadata is allowed!"},
+    {"key": "Supports duplicate keys",          "type": "string", "value": "See what happens!"},
+    {"key": "Supports duplicate keys",          "type": "string", "value": "Voilà!"}
+]
+```
 
 ## How to contribute
 

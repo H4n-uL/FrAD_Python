@@ -40,6 +40,7 @@ fourier encode "path/to/audio.flac" \
 --enable_ecc \                                     # ECC 활성화 여부
 --data_ecc_size 128 20 \                           # 데이터 블록과 ECC 블록의 크기
 --big_endian \                                     # 엔디언
+--gain 0.7 \                                       # 게인
 --metadata "Metadata Title" "Metadata contents" \  # 메타데이터
 --jsonmeta "path/to/metadata.json" \               # 메타데이터 json, --metadata보다 우선시됩니다.
 --image "path/to/image/file" \                     # 이미지 파일
@@ -53,6 +54,7 @@ fourier decode "path/to/fourierAnalogue.frad" \
 \  # 선택 사항
 --bits 32 \                      # 무손실 압축 코덱의 비트 심도 (8, 16, 32를 지원합니다.)
 --enable_ecc \                   # ECC 확인 여부
+--gain 1.2 \                     # 게인
 --output "path/for/audio.aac" \  # 출력 파일
 --codec "codec" \                # 코덱 종류
 --quality "320000c" \            # 손실 압축 코덱의 품질 (예시는 고정 320 kbps)
@@ -66,6 +68,7 @@ fourier play "path/to/fourierAnalogue.frad" \
 \  # 선택 사항
 --key keys \     # 재생 키
 --speed speed \  # 재생 속도
+--gain 0.5 \     # 게인
 --enable_ecc \   # ECC 확인 여부
 --verbose
 ```
@@ -111,7 +114,20 @@ fourier record "path/to/fourierAnalogue.frad" \
 --image "path/to/image/file" \                     # 이미지 파일
 ```
 
-.json 파일의 예시는 Examples 폴더에 들어 있습니다.
+메타데이터 JSON
+
+```json
+[
+    {"key": "KEY",                              "type": "string", "value": "VALUE"},
+    {"key": "AUTHOR",                           "type": "string", "value": "H4n_uL"},
+    {"key": "Key & String value encoding type", "type": "string", "value": "UTF-8"},
+    {"key": "Base64 type Value",                "type": "base64", "value": "QmFzZTY0IEV4YW1wbGU="},
+    {"key": "File is also available",           "type": "base64", "value": "U3VwcG9ydHMgdXAgdG8gMjU2IFRpQg=="},
+    {"key": "No unsupported characters",        "type": "string", "value": "All utf-8/base64 metadata is allowed!"},
+    {"key": "Supports duplicate keys",          "type": "string", "value": "See what happens!"},
+    {"key": "Supports duplicate keys",          "type": "string", "value": "Voilà!"}
+]
+```
 
 ## 기여 방법
 
