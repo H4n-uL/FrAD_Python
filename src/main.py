@@ -73,7 +73,7 @@ def main(action, args):
     elif action == 'play':
         from fra import player
         player.play(
-                file_path,
+                file_path, gain=args.gain,
                 keys=int(args.keys) if args.keys is not None else None,
                 speed_in_times=float(args.speed) if args.speed is not None else None,
                 e=args.ecc, verbose=args.verbose)
