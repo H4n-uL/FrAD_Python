@@ -40,7 +40,8 @@ fourier encode "path/to/audio.flac" \
 --enable_ecc \                                     # ECC enabled or not
 --data_ecc_size 128 20 \                           # Sizes of data block and ECC block when ECC enabled
 --big_endian \                                     # Endianness
---gain 0.7 \                                       # Gain
+--gain -6 \                                        # Gain
+--dbfs \                                           # Gain units flag
 --metadata "Metadata Title" "Metadata contents" \  # Metadata
 --jsonmeta "path/to/metadata.json" \               # Metadata json, will override --metadata.
 --image "path/to/image/file" \                     # Image file
@@ -55,6 +56,7 @@ fourier decode "path/to/fourierAnalogue.frad" \
 --bits 32 \                      # Bit depth for lossless compression codecs (supports 8, 16, 32)
 --enable_ecc \                   # ECC verification or not
 --gain 1.2 \                     # Gain
+--dbfs \                         # Gain units flag
 --output "path/for/audio.aac" \  # Output file
 --codec "codec" \                # Codec type
 --quality "320000c" \            # Quailty factor for lossy compression codecs (example is constant 320 kbps)
@@ -68,7 +70,8 @@ fourier play "path/to/fourierAnalogue.frad" \
 \  # Optional
 --key keys \     # Playback keys
 --speed speed \  # Playback speed
---gain 0.5 \     # Gain
+--gain 3.4 \     # Gain
+--dbfs \         # Gain units flag
 --enable_ecc \   # ECC verification or not
 --verbose
 ```

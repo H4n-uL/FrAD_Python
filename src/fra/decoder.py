@@ -300,7 +300,7 @@ class decode:
             os.remove(variables.temp_pcm)
             sys.exit(0)
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: str = None, nsr: int = None, verbose: bool = False):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: list = None, nsr: int = None, verbose: bool = False):
         # Decoding
         sample_rate, channels = decode.internal(file_path, e=e, gain=methods.get_gain(gain), verbose=verbose)
         sample_rate = methods.resample_pcm(channels, sample_rate, nsr)

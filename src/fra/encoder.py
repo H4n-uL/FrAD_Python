@@ -81,7 +81,7 @@ class encode:
 
     def enc(file_path: str, bits: int, endian: bool = False,
                 out: str = None, lossy: bool = False, loss_level: int = 0,
-                samples_per_frame: int = 2048, gain: str = None,
+                samples_per_frame: int = 2048, gain: list = None,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
                 nsr: int = None,
                 meta = None, img: bytes = None,

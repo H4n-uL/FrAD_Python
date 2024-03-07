@@ -40,7 +40,8 @@ fourier encode "path/to/audio.flac" \
 --enable_ecc \                                     # ECC使用可否
 --data_ecc_size 128 20 \                           # データブロックとECCブロックのサイズ
 --big_endian \                                     # エンディアン
---gain 0.7 \                                       # ゲイン
+--gain -6 \                                        # ゲイン
+--dbfs \                                           # ゲイン単位フラグ
 --metadata "Metadata Title" "Metadata contents" \  # メタデータ
 --jsonmeta "path/to/metadata.json" \               # メタデータ json, --metadata より優先されます。
 --image "path/to/image/file" \                     # 画像ファイル
@@ -55,6 +56,7 @@ fourier decode "path/to/fourierAnalogue.frad" \
 --bits 32 \                      # 無損失圧縮コーデックのビット深度(8, 16, 32をサポートします)
 --enable_ecc \                   # ECC使用可否
 --gain 1.2 \                     # ゲイン
+--dbfs \                         # ゲイン単位フラグ
 --output "path/for/audio.aac" \  # 出力ファイル
 --codec "codec" \                # コーデックの種類
 --quality "320000c" \            # 損失圧縮コーデックの品質 (例は固定320 kbps)
@@ -68,7 +70,8 @@ fourier play "path/to/fourierAnalogue.frad" \
 \  # オプション
 --key keys \     # プレーキー
 --speed speed \  # プレー速度
---gain 0.5 \     # ゲイン
+--gain 3.4 \     # ゲイン
+--dbfs \         # ゲイン単位フラグ
 --enable_ecc \   # ECC使用可否
 --verbose
 ```
