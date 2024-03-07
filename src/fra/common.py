@@ -63,9 +63,9 @@ class methods:
         if g is None: return 1
         if 'db' in g.lower():
             g = g.lower().replace('db', '')
-            if bool(re.match("^\d+?\.\d+?$", g)) or bool(re.match("^\d+?$", g)):
+            if bool(re.match("^\\d+?\\.\\d+?$", g)) or bool(re.match("^\\d+?$", g)):
                 return 10 ** (float(g) / 20)
         else:
-            if bool(re.match("^\d+?\.\d+?$", g)) or bool(re.match("^\d+?$", g)):
+            if bool(re.match("^\\d+?\\.\\d+?$", g)) or bool(re.match("^\\d+?$", g)):
                 return float(g)
         raise ValueError("Gain should be in the following format: [real number] or [real number]dB.")
