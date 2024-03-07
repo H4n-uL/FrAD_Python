@@ -169,9 +169,12 @@ class decode:
                     print('\x1b[1A\x1b[2K', end='')
                 return sample_rate, channels
             except KeyboardInterrupt:
-                if play: stream.abort()
+                if play:
+                    try: stream.abort()
+                    except UnboundLocalError: pass
                 else:
-                    stream.close()
+                    try: stream.close()
+                    except UnboundLocalError: pass
                     print('Aborting...')
                     os.remove(variables.temp_pcm)
                 sys.exit(0)
