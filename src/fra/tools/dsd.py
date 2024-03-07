@@ -104,7 +104,7 @@ class dsd:
         cli_width = 40
         i = 0
 
-        dsd_srate = 2822400 // 4
+        dsd_srate = 2822400
         pred_size = os.path.getsize(variables.temp_pcm) // srate * dsd_srate // 64
         try:
             BUFFER_SIZE = 262144 * 8 * channels
