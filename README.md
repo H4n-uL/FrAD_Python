@@ -134,7 +134,7 @@ Metadata JSON
 
 ## How to contribute
 
-![Don?know](https://item.kakaocdn.net/do/4a675e36e71c3538c5e7ada87a2b28fef43ad912ad8dd55b04db6a64cddaf76d)
+Simply create a new branch in the repository, make your changes, and submit a merge request to me for approval. Pretty much anything will pass.
 
 ## Licence
 

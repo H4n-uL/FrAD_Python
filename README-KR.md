@@ -134,7 +134,7 @@ fourier record "path/to/fourierAnalogue.frad" \
 
 ## 기여 방법
 
-![몰?루](https://item.kakaocdn.net/do/4a675e36e71c3538c5e7ada87a2b28fef43ad912ad8dd55b04db6a64cddaf76d)
+레포지토리에서 새 브랜치를 만들고, 수정하고, 저에게 Merge 요청으로 심사를 받으시면 됩니다. 사실 웬만하면 다 통과됩니다.
 
 ## 라이선스
 

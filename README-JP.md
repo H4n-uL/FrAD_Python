@@ -134,7 +134,7 @@ fourier encode "path/to/fourierAnalogue.frad" \
 
 ## 寄付方法
 
-![わかん?にゃい](https://item.kakaocdn.net/do/4a675e36e71c3538c5e7ada87a2b28fef43ad912ad8dd55b04db6a64cddaf76d)
+リポジトリで新しいブランチを作成し、修正して、私にMergeリクエストで審査を受けてください。実はこいつはザコなので、大抵は全部通ります。
 
 ## ライセンス
 
