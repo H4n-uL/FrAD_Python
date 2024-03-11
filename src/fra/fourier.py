@@ -31,15 +31,14 @@ class fourier:
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128) 
             dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}[bits]
 
-        data = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
+        data: bytes = np.column_stack([d.astype(dt).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         if bits in [64, 32, 16]:
             pass
         elif bits in [48, 24]:
             data = b''.join([big_endian and data[i:i+(bits//8)] or data[i+(bits//24):i+(bits//6)] for i in range(0, len(data), bits//6)])
         elif bits == 12:
             data = data.hex()
-            data = ''.join([big_endian and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)])
-            data = bytes.fromhex(data)
+            data = bytes.fromhex(''.join([big_endian and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)]))
         else: raise Exception('Illegal bits value.')
 
         return data, bits
