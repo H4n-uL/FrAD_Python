@@ -153,8 +153,9 @@ class dsd:
                 with open(f'{out}.{ext}', 'wb') as f, open(variables.temp_dsd, 'rb') as temp:
                     f.write(h + temp.read())
                 if verbose: print('\x1b[1A\x1b[2K', end='')
-        except KeyboardInterrupt: pass
+        except KeyboardInterrupt: bstr.close()
         finally:
+            pipe.kill()
             dlen = os.path.getsize(variables.temp_dsd)
             h = dsd.build_dff_header(dlen, chb, dsd_srate)
             with open(f'{out}.{ext}', 'wb') as f, open(variables.temp_dsd, 'rb') as temp:
