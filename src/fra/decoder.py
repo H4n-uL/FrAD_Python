@@ -125,13 +125,12 @@ class decode:
 
                         # for i in range(channels_frame):
                         #     plt.subplot(channels_frame, 1, i+1)
-                        #     # plt.plot(segment[:, i])
+                        #     plt.plot(segment[:, i], alpha=0.5)
                         #     y=(np.abs(mdct(segment[:, i], N=len(segment)*2)) / len(segment)*5)
-                        #     # peaks=np.array([np.max(band) for band in np.array_split(y, 50)])
-                        #     plt.fill_between(range(1, len(y)+1), y, -y, color='violet', edgecolor='none')
+                        #     plt.fill_between(range(1, len(y)+1), y, 0, color='orange', edgecolor='none')
+                        #     # y=(np.abs(np.fft.fft(segment[:, i])) / len(segment)*5)
+                        #     # plt.fill_between(range(1, len(y)+1), 0, -y, color='violet', edgecolor='none')
                         #     plt.ylim(-1, 1)
-                        #     # plt.fill_between(range(1, len(peaks)+1), peaks, color='violet', edgecolor='none')
-                        #     # plt.ylim(0, 1)
                         # plt.draw()
                         # plt.pause(0.000001)
                         # plt.clf()
