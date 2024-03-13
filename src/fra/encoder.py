@@ -104,6 +104,7 @@ class encode:
 
         # Getting command and new sample rate
         cmd = encode.get_pcm_command(file_path, sample_rate, nsr)
+        if nsr is not None: duration = int(duration / sample_rate * nsr)
         sample_rate = nsr is not None and nsr or sample_rate
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
