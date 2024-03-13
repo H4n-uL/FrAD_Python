@@ -9,7 +9,6 @@ class variables:
     temp =      os.path.join(tmpdir, f'temp.{  base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
     temp2 =     os.path.join(tmpdir, f'temp.2.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.swv')
     temp_pcm =  os.path.join(tmpdir, f'temp.{  base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.pcm')
-    temp2_pcm = os.path.join(tmpdir, f'temp.2.{base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.pcm')
     temp_dsd =  os.path.join(tmpdir, f'temp.{  base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.bitstream')
     temp_flac = os.path.join(tmpdir, f'temp.{  base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.flac')
     meta =      os.path.join(tmpdir, f'{       base64.b64encode(secrets.token_bytes(64)).decode().replace("/", "_")}.meta')
@@ -41,23 +40,6 @@ class methods:
     def cantreencode(sign):
         if sign == b'fRad':
             raise Exception('This is an already encoded Fourier Analogue file.')
-
-    def resample_pcm(channels, sample_rate, new_sample_rate):
-        if new_sample_rate is not None and new_sample_rate != sample_rate:
-            command = [
-                variables.ffmpeg,
-                '-v', 'quiet',
-                '-f', 'f64le',
-                '-ar', str(sample_rate),
-                '-ac', str(channels),
-                '-i', variables.temp_pcm,
-                '-ar', str(new_sample_rate),
-                '-f', 'f64le',
-                variables.temp2_pcm]
-            subprocess.run(command)
-            shutil.move(variables.temp2_pcm, variables.temp_pcm)
-            return new_sample_rate
-        return sample_rate
 
     def get_gain(glist):
         if glist[0] is None: return 1
