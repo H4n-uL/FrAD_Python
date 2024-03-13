@@ -47,12 +47,12 @@ class methods:
             command = [
                 variables.ffmpeg,
                 '-v', 'quiet',
-                '-f', 's32le',
+                '-f', 'f64le',
                 '-ar', str(sample_rate),
                 '-ac', str(channels),
                 '-i', variables.temp_pcm,
                 '-ar', str(new_sample_rate),
-                '-f', 's32le',
+                '-f', 'f64le',
                 variables.temp2_pcm]
             subprocess.run(command)
             shutil.move(variables.temp2_pcm, variables.temp_pcm)
