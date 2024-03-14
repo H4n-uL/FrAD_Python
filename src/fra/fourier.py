@@ -21,7 +21,7 @@ class fourier:
                 fft_data[c] = np.around(fft_data[c] / (frame_size / 16384)) * (frame_size / 16384)
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,frame_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts) * np.log2(level+1)/2
-                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2)[:-1] * np.linspace(0.25-(level/10), sample_rate / 48000 + (level/5), len(fft_data[c]))
+                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2)[:-1] * np.linspace(0.25-(level/10), 0.25+((sample_rate/48000)*(level/10)), len(fft_data[c]))
                 fft_data[c][np.abs(fft_data[c]) < thres] = 0
         # ENDMARK
 
