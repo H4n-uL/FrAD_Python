@@ -208,7 +208,7 @@ class decode:
             '-i', variables.temp_pcm
         ]
 
-        if nsr is not None or nsr != sample_rate: command.extend(['-ar', str(nsr)])
+        if nsr is not None and nsr != sample_rate: command.extend(['-ar', str(nsr)])
 
         command.append('-c:a')
         if codec in ['wav', 'riff']:
@@ -296,7 +296,7 @@ class decode:
                 '--adts',
                 '-c', str(quality),
             ]
-            if nsr is not None or nsr != sample_rate: command.extend(['--rate', str(nsr)])
+            if nsr is not None and nsr != sample_rate: command.extend(['--rate', str(nsr)])
             command.extend([
                 '-o', f'{out}.aac',
                 '-s'
