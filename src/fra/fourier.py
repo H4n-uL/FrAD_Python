@@ -12,7 +12,6 @@ class fourier:
 
         # MARK: Temporary Psychoacoustic Filtering
         if lossy:
-            v = len(fft_data) // 16
             frame_size, alpha = len(data), (800 - (1.2**level))*0.001
             W = psycho.mapping2barkmat(sample_rate,nfilts,frame_size*2)
             W_inv = psycho.mappingfrombarkmat(W,frame_size*2)
@@ -22,8 +21,8 @@ class fourier:
                 fft_data[c] = np.around(fft_data[c] / (frame_size / 16384)) * (frame_size / 16384)
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,frame_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts) * np.log2(level+1)/2
-                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2) / 4
-                fft_data[c][v:][np.abs(fft_data[c][v:]) < thres[v:-1]] = 0
+                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2)[:-1] * np.linspace(0.25-(level/10), sample_rate / 48000 + (level/5), len(fft_data[c]))
+                fft_data[c][np.abs(fft_data[c]) < thres] = 0
         # ENDMARK
 
         while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
