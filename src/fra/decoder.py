@@ -109,12 +109,12 @@ class decode:
                     if lossy:
                         prev_len = prev is not None and len(prev) or 0
                         fade_in = np.linspace(0, 1, prev_len)
-                        fade_out = np.linspace(1, 0, len(segment)//16)
+                        fade_out = np.linspace(1, 0, prev_len)
                         for c in range(channels_frame):
                             segment[:prev_len, c] *= fade_in
                             if prev is not None:
                                 segment[:prev_len, c] += prev[:, c] * fade_out
-                        prev = segment[-len(fade_out):]
+                        prev = segment[-len(segment)//16:]
                         segment = segment[:-len(prev)]
 
                     if play:
