@@ -138,15 +138,15 @@ class decode:
 
                         i += len(segment) / (sample_rate*speed)
                         frameNo += 1
-                        print('\x1b[1A\x1b[2K', end='')
                         if verbose:
-                            print('\x1b[1A\x1b[2K', end='')
+                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             float_exp = [5, 5, 8, 8, 11, 11, 15][float_bits]
                             float_mant = [6, 10, 15, 23, 36, 52, 112][float_bits]
                             depth = [12, 16, 24, 32, 48, 64, 128][float_bits]
                             print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames), {len(segment)} samples/frame')
                             print(f'{lossy and "Lossy" or "Lossless"}, {not endian and "Big" or "Little"} endian {depth} bits s1e{float_exp}m{float_mant}, ECC: {is_ecc_on and f"{ecc_dsize}/{ecc_codesize}" or "disabled"}, Frame size: {framelength} Bytes')
                         else:
+                            print('\x1b[1A\x1b[2K', end='')
                             print(f'{(i):.3f} s / {(duration):.3f} s')
 
                         stream.write(segment.astype(np.float32))
