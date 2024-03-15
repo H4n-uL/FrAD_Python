@@ -23,7 +23,7 @@ def main(action, args):
         if args.bits is None: raise ValueError('--bits option is required for encoding.')
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
-                file_path, int(args.bits), endian=args.big_endian,
+                file_path, int(args.bits), endian=args.little_endian,
                 out=args.output, lossy=args.lossy, loss_level=int(args.losslevel),
                 samples_per_frame=int(args.sample_size), gain=[args.gain, args.dbfs],
                 apply_ecc=args.ecc,
@@ -63,7 +63,7 @@ def main(action, args):
         recorder.record_audio(args.file_path, sample_rate=48000, channels=1,
             bit_depth=bits,
             apply_ecc=args.ecc, ecc_sizes=args.data_ecc_size,
-            lossy=args.lossy, loss_level=int(args.losslevel), big_endian=args.big_endian)
+            lossy=args.lossy, loss_level=int(args.losslevel), little_endian=args.little_endian)
     else:
         raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('-k',   '--keys', '--key',                          required=False,                                 help='Play keys')
     parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',       help='Metadata in "key" "value" format')
     parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                 help='Metadata in json, This will override --meta option.')
-    parser.add_argument('-be',  '--big_endian',                                                      action='store_true',   help='Big Endian Toggle')
+    parser.add_argument('-le',  '--little_endian',                                                   action='store_true',   help='Little Endian Toggle')
     parser.add_argument('-l',   '--lossy',                                                           action='store_true',   help='Lossy compression Toggle, THIS OPTION IS HIGHLY RECOMMENDED NOT TO ENABLE.')
     parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='2',           help='Lossy compression level')
     parser.add_argument('-v',   '--verbose',                                                         action='store_true',   help='Verbose CLI Toggle')

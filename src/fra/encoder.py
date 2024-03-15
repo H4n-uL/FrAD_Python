@@ -79,7 +79,7 @@ class encode:
         image, _ = process.communicate()
         return image
 
-    def enc(file_path: str, bits: int, endian: bool = False,
+    def enc(file_path: str, bits: int, little_endian: bool = False,
                 out: str = None, lossy: bool = False, loss_level: int = 0,
                 samples_per_frame: int = 2048, gain: list = None,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
@@ -151,7 +151,7 @@ class encode:
                     frame = np.frombuffer(data, dtype='<d').reshape(-1, channels) * gain
 
                     # MDCT
-                    segment, bt = fourier.analogue(frame, bits, channels, endian, lossy=lossy, sample_rate=sample_rate, level=loss_level)
+                    segment, bt = fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level)
                     if lossy: segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
@@ -165,10 +165,10 @@ class encode:
                             # Segment length(Processed)
                             struct.pack('>I', len(segment)) +
 
-                            headb.encode_efb(lossy, apply_ecc, endian, bt) +      # EFB
-                            struct.pack('>B', channels - 1) +                     # Channels
-                            struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
-                            struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
+                            headb.encode_efb(lossy, apply_ecc, little_endian, bt) + # EFB
+                            struct.pack('>B', channels - 1) +                       # Channels
+                            struct.pack('>B', ecc_dsize if apply_ecc else 0) +      # ECC DSize
+                            struct.pack('>B', ecc_codesize if apply_ecc else 0) +   # ECC code size
 
                             struct.pack('>I', sample_rate) +                      # Sample Rate
 

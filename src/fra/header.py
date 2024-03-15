@@ -4,14 +4,14 @@ import numpy as np
 from .tools.headb import headb
 
 class header:
-    # def signal(data: bytes, fb: int, channels: int, big_endian: bool):
-    #     endian = big_endian and '>' or '<'
+    # def signal(data: bytes, fb: int, channels: int, little_endian: bool):
+    #     endian = not little_endian and '>' or '<'
     #     dt = {0b101:'d',0b100:'d',0b011:'f',0b010:'f',0b001:'e',0b000:'e'}[fb]
     #     if fb in [0b101,0b011,0b001]:
     #         pass
     #     elif fb in [0b100,0b010]:
-    #         if fb == 0b100: data = b''.join([big_endian and data[i:i+6]+b'\x00\x00' or b'\x00\x00'+data[i:i+6] for i in range(0, len(data), 6)])
-    #         elif fb == 0b010: data = b''.join([big_endian and data[i:i+3]+b'\x00' or b'\x00'+data[i:i+3] for i in range(0, len(data), 3)])
+    #         if fb == 0b100: data = b''.join([not little_endian and data[i:i+6]+b'\x00\x00' or b'\x00\x00'+data[i:i+6] for i in range(0, len(data), 6)])
+    #         elif fb == 0b010: data = b''.join([not little_endian and data[i:i+3]+b'\x00' or b'\x00'+data[i:i+3] for i in range(0, len(data), 3)])
     #     elif fb == 0b000:
     #         data = data.hex()
     #         if endian == '<': data = ''.join([data[i:i+3][0] + '0' + data[i:i+3][1:] for i in range(0, len(data), 3)])

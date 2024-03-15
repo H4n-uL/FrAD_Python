@@ -12,19 +12,19 @@ bits_to_b3 = {
 }
 
 class headb:
-    def encode_efb(lossy, isecc, big_endian, bits):
+    def encode_efb(lossy, isecc, little_endian, bits):
         lossy = (lossy and 0b1 or 0b0) << 5
         ecc = (isecc and 0b1 or 0b0) << 4
-        endian = (big_endian and 0b1 or 0b0) << 3
+        endian = (little_endian and 0b1 or 0b0) << 3
         b3 = bits_to_b3.get(bits, 0b000)
         return struct.pack('<B', lossy | ecc | endian | b3)
 
     def decode_efb(efb):
-        lossy = efb>>5&0b1==0b1 and True or False      # 0x08@0b100:    ECC Toggle(Enabled if 1)
-        ecc = efb>>4&0b1==0b1 and True or False        # 0x08@0b100:    ECC Toggle(Enabled if 1)
-        big_endian = efb>>3&0b1==0b1 and True or False # 0x08@0b011:    Endian
-        float_bits = efb & 0b111                       # 0x08@0b010-3b: Stream bit depth
-        return lossy, ecc, big_endian, float_bits
+        lossy = efb>>5&0b1==0b1 and True or False         # 0x08@0b100:    ECC Toggle(Enabled if 1)
+        ecc = efb>>4&0b1==0b1 and True or False           # 0x08@0b100:    ECC Toggle(Enabled if 1)
+        little_endian = efb>>3&0b1==0b1 and True or False # 0x08@0b011:    Endian
+        float_bits = efb & 0b111                          # 0x08@0b010-3b: Stream bit depth
+        return lossy, ecc, little_endian, float_bits
 
     def uilder(meta = None, img: bytes = None):
 

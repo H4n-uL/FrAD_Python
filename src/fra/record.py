@@ -9,7 +9,7 @@ class recorder:
             bit_depth = 24,
             samples_per_frame: int = 2048,
             apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
-            lossy = False, loss_level: int = 0, big_endian = False,
+            lossy = False, loss_level: int = 0, little_endian = False,
             meta = None, img: bytes = None):
 
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)*2
@@ -35,7 +35,7 @@ class recorder:
             while True:
                 try:
                     data = record.read(samples_per_frame)[0]
-                    data, bits = fourier.analogue(data, bit_depth, channels, big_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level)
+                    data, bits = fourier.analogue(data, bit_depth, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level)
                     if lossy: data = zlib.compress(data, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
@@ -49,7 +49,7 @@ class recorder:
                             # Segment length(Processed)
                             struct.pack('>I', len(data)) +
 
-                            headb.encode_efb(lossy, apply_ecc, big_endian, bits) + # EFB
+                            headb.encode_efb(lossy, apply_ecc, little_endian, bits) + # EFB
                             struct.pack('>B', channels - 1) +                      # Channels
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +     # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) +  # ECC code size
