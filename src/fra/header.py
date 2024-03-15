@@ -82,7 +82,9 @@ class header:
     #                     open(output+'.audio.json', 'a', encoding='utf-8').write(json.dumps(audio, ensure_ascii=False))
     #                     open(output+'.audio.json', 'a', encoding='utf-8').write(', ')
     #     finally:
-    #         with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.write(b']')
+    #         try:
+    #             with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.write(b']')
+    #         except: open(output+'.meta.json', 'a').write(']')
     #         with open(output+'.audio.json', 'rb+') as m: m.seek(-2, 2); m.write(b']')
 
     def parse(file_path, output):
@@ -109,7 +111,9 @@ class header:
                         open(output+'.meta.image', 'wb').write(f.read(block_length-10))
                     elif block_type == b'\xff\xd0': break
         finally:
-            with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.write(b']')
+            try:
+                with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.write(b']')
+            except: open(output+'.meta.json', 'a').write(']')
 
     def modify(file_path, meta = None, img: bytes = None):
         try:
