@@ -5,7 +5,8 @@ nfilts=64
 
 class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool, sample_rate: int, level: int):
-        endian = not little_endian and '>' or '<'
+        be = not little_endian
+        endian = be and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}[bits]
         data = np.pad(data, ((0, -len(data[:, 0])%2), (0, 0)), mode='constant')
         fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
@@ -34,22 +35,23 @@ class fourier:
         if bits in [64, 32, 16]:
             pass
         elif bits in [48, 24]:
-            data = b''.join([not little_endian and data[i:i+(bits//8)] or data[i+(bits//24):i+(bits//6)] for i in range(0, len(data), bits//6)])
+            data = b''.join([be and data[i:i+(bits//8)] or data[i+(bits//24):i+(bits//6)] for i in range(0, len(data), bits//6)])
         elif bits == 12:
             data = data.hex()
-            data = bytes.fromhex(''.join([not little_endian and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)]))
+            data = bytes.fromhex(''.join([be and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)]))
         else: raise Exception('Illegal bits value.')
 
         return data, bits
 
     def digital(data: bytes, fb: int, channels: int, little_endian: bool):
-        endian = not little_endian and '>' or '<'
+        be = not little_endian
+        endian = be and '>' or '<'
         dt = {0b101:'d',0b100:'d',0b011:'f',0b010:'f',0b001:'e',0b000:'e'}[fb]
         if fb in [0b101,0b011,0b001]:
             pass
         elif fb in [0b100,0b010]:
-            if fb == 0b100: data = b''.join([not little_endian and data[i:i+6]+b'\x00\x00' or b'\x00\x00'+data[i:i+6] for i in range(0, len(data), 6)])
-            elif fb == 0b010: data = b''.join([not little_endian and data[i:i+3]+b'\x00' or b'\x00'+data[i:i+3] for i in range(0, len(data), 3)])
+            if fb == 0b100: data = b''.join([be and data[i:i+6]+b'\x00\x00' or b'\x00\x00'+data[i:i+6] for i in range(0, len(data), 6)])
+            elif fb == 0b010: data = b''.join([be and data[i:i+3]+b'\x00' or b'\x00'+data[i:i+3] for i in range(0, len(data), 3)])
         elif fb == 0b000:
             data = data.hex()
             if endian == '<': data = ''.join([data[i:i+3][0] + '0' + data[i:i+3][1:] for i in range(0, len(data), 3)])
