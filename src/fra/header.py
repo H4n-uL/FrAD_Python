@@ -66,6 +66,7 @@ class header:
 
     #                     audio = {
     #                         'block_header': {
+    #                             'sync': '1111 1111 1101 0000 1101 0010 1001 0111',
     #                             'frm_length': framelength,
     #                             'efb': {
     #                                 'lossy_compression': lossy,
