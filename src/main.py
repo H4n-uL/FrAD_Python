@@ -1,4 +1,4 @@
-import argparse, base64, json, os, sys, traceback
+import argparse, base64, json, sys, traceback
 
 def main(action, args):
     file_path = args.file_path
@@ -43,27 +43,7 @@ def main(action, args):
     elif action == 'parse':
         from fra import header
         output = args.output if args.output is not None else 'metadata'
-        head, img = header.parse(file_path)
-        result_list = []
-        for item in head:
-            key, value = item
-            item_dict = {"key": key}
-            if isinstance(value, bytes):
-                try:
-                    value = value.decode('utf-8')
-                    item_dict["type"] = "string"
-                    item_dict["value"] = value
-                except UnicodeDecodeError:
-                    item_dict["type"] = "base64"
-                    item_dict["value"] = base64.b64encode(value).decode('utf-8')
-            result_list.append(item_dict)
-        try:
-            with open(output+'.meta.json', 'w', encoding='utf-8') as m: m.write(json.dumps(result_list, ensure_ascii=False))
-            with open(output+'.meta.image', 'wb') as m: m.write(img)
-        except KeyboardInterrupt:
-            os.remove(output+'.meta.json')
-            os.remove(output+'.meta.image')
-            sys.exit(0)
+        header.parse(file_path, output)
     elif action == 'modify' or action == 'meta-modify':
         from fra import header
         header.modify(file_path, meta=meta, img=img)
