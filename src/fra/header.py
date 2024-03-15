@@ -1,4 +1,4 @@
-import base64, json, os, shutil, struct, sys
+import base64, json, os, shutil, struct, sys, zlib
 from .common import variables, methods
 import numpy as np
 from .tools.headb import headb
@@ -62,6 +62,7 @@ class header:
     #                     srate_frame = struct.unpack('>I', fheadinfo[0x8:0xc])[0]        # 0x0c-4B: Sample rate
     #                     crc32 = fheadinfo[0x18:0x1c]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
     #                     frame = f.read(framelength)
+    #                     if lossy: frame = zlib.decompress(frame)
 
     #                     audio = {
     #                         'block_header': {
