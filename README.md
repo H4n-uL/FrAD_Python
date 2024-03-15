@@ -39,7 +39,7 @@ fourier encode "path/to/audio.flac" \
 --samples_per_block 2048 \                         # Samples per block
 --enable_ecc \                                     # ECC enabled or not
 --data_ecc_size 128 20 \                           # Sizes of data block and ECC block when ECC enabled
---big_endian \                                     # Endianness
+--little_endian \                                  # Endianness
 --gain -6 \                                        # Gain
 --dbfs \                                           # Gain units flag
 --metadata "Metadata Title" "Metadata contents" \  # Metadata
@@ -111,7 +111,7 @@ fourier record "path/to/fourierAnalogue.frad" \
 --samples_per_block 2048 \                         # Samples per block
 --enable_ecc \                                     # ECC enabled or not
 --data_ecc_size 128 20 \                           # Sizes of data block and ECC block when ECC enabled
---big_endian \                                     # Endianness
+--little_endian \                                  # Endianness
 --metadata "Metadata Title" "Metadata contents" \  # Metadata
 --jsonmeta "path/to/metadata.json" \               # Metadata json, will override --metadata.
 --image "path/to/image/file" \                     # Image file

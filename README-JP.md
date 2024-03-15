@@ -39,7 +39,7 @@ fourier encode "path/to/audio.flac" \
 --samples_per_block 2048 \                         # ブロックあたりのサンプル数
 --enable_ecc \                                     # ECC使用可否
 --data_ecc_size 128 20 \                           # データブロックとECCブロックのサイズ
---big_endian \                                     # エンディアン
+--little_endian \                                  # エンディアン
 --gain -6 \                                        # ゲイン
 --dbfs \                                           # ゲイン単位フラグ
 --metadata "Metadata Title" "Metadata contents" \  # メタデータ
@@ -111,7 +111,7 @@ fourier encode "path/to/fourierAnalogue.frad" \
 --samples_per_block 2048 \                         # ブロックあたりのサンプル数
 --enable_ecc \                                     # ECC使用可否
 --data_ecc_size 128 20 \                           # データブロックとECCブロックのサイズ
---big_endian \                                     # エンディアン
+--little_endian \                                  # エンディアン
 --metadata "Metadata Title" "Metadata contents" \  # メタデータ
 --jsonmeta "path/to/metadata.json" \               # メタデータ json, --metadata より優先されます。
 --image "path/to/image/file" \                     # 画像ファイル
