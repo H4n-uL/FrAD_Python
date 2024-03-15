@@ -23,7 +23,7 @@ def main(action, args):
         if args.bits is None: raise ValueError('--bits option is required for encoding.')
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
-                file_path, int(args.bits), endian=args.little_endian,
+                file_path, int(args.bits), little_endian=args.little_endian,
                 out=args.output, lossy=args.lossy, loss_level=int(args.losslevel),
                 samples_per_frame=int(args.sample_size), gain=[args.gain, args.dbfs],
                 apply_ecc=args.ecc,
