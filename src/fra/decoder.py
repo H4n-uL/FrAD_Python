@@ -69,7 +69,9 @@ class decode:
 
             try:
                 # Starting stream
-                if play: print()
+                if play:
+                    print()
+                    if verbose: print()
                 else:
                     stream = open(variables.temp_pcm, 'ab')
                     dlen = os.path.getsize(file_path) - header_length
@@ -121,7 +123,6 @@ class decode:
                             stream = sd.OutputStream(samplerate=int(srate_frame*speed), channels=channels_frame)
                             stream.start()
                             channels, sample_rate = channels_frame, srate_frame
-                        stream.write(segment.astype(np.float32))
 
                         # for i in range(channels_frame):
                         #     plt.subplot(channels_frame, 1, i+1)
@@ -138,10 +139,17 @@ class decode:
                         i += len(segment) / (sample_rate*speed)
                         frameNo += 1
                         print('\x1b[1A\x1b[2K', end='')
-                        if verbose: 
-                            print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames)')
+                        if verbose:
+                            print('\x1b[1A\x1b[2K', end='')
+                            float_exp = [5, 5, 8, 8, 11, 11, 15][float_bits]
+                            float_mant = [6, 10, 15, 23, 36, 52, 112][float_bits]
+                            depth = [12, 16, 24, 32, 48, 64, 128][float_bits]
+                            print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames), {len(segment)} samples/frame')
+                            print(f'{lossy and "Lossy" or "Lossless"}, {endian and "Big" or "Little"} endian {depth} bits s1e{float_exp}m{float_mant}, ECC: {is_ecc_on and f"{ecc_dsize}/{ecc_codesize}" or "disabled"}, Frame size: {framelength} Bytes')
                         else:
-                            print(f'{(i):.3f} s')
+                            print(f'{(i):.3f} s / {(duration):.3f} s')
+
+                        stream.write(segment.astype(np.float32))
                     else:
                         if channels != channels_frame or sample_rate != srate_frame:
                             if channels != None or sample_rate != None:
@@ -166,6 +174,7 @@ class decode:
                 stream.close()
                 if play or verbose:
                     print('\x1b[1A\x1b[2K', end='')
+                    if play and verbose: print('\x1b[1A\x1b[2K', end='')
                 return sample_rate, channels
             except KeyboardInterrupt:
                 if play:
