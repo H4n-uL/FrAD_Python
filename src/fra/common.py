@@ -1,4 +1,4 @@
-import base64, os, platform, re, secrets, shutil, subprocess
+import base64, os, platform, secrets
 
 class variables:
     hash_block_size = 2**20
