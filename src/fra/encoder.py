@@ -138,6 +138,7 @@ class encode:
                 while True:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
                     # samples_per_frame = random.choice([i for i in range(1024, 4097, 2)]) # Random spf test
+                    # lossy = random.choice([True, False]) # Random lossy test
                     rlen = samples_per_frame * 8 * channels
                     if lossy and len(last) != 0:
                         rlen -= len(last)
