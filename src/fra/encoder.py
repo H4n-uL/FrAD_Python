@@ -210,6 +210,6 @@ class encode:
         except KeyboardInterrupt:
             print('Aborting...')
         except Exception as e:
-            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+            if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
             sys.exit(traceback.format_exc())
         sys.exit(0)
