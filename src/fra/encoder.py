@@ -99,8 +99,9 @@ class encode:
         channels, sample_rate, codec, duration = encode.get_info(file_path)
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)*2
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if samples_per_frame < 2: raise ValueError(f'Sample size must be at least 2.')
-        if samples_per_frame % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
+        mlt = lossy and 32 or 2
+        if samples_per_frame < mlt: raise ValueError(f'Sample size must be at least {mlt}.')
+        if samples_per_frame % mlt != 0: raise ValueError(f'Sample size must be multiple of {mlt}.')
 
         # Getting command and new sample rate
         cmd = encode.get_pcm_command(file_path, sample_rate, nsr)
@@ -136,9 +137,9 @@ class encode:
             with open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
-                    # samples_per_frame = random.choice([i for i in range(1024, 4097, 2)]) # Random spf test
-                    # lossy = random.choice([True, False]) # Random lossy test
+                    bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
+                    samples_per_frame = random.choice([i for i in range(1024, 4097, 32)]) # Random spf test
+                    lossy = random.choice([True, False]) # Random lossy test
                     rlen = samples_per_frame * 8 * channels
                     if lossy and len(last) != 0:
                         rlen -= len(last)
@@ -160,7 +161,7 @@ class encode:
                     if lossy: segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
-                    # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
+                    ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
 
                     data = bytes(
