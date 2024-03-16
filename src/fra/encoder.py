@@ -123,7 +123,7 @@ class encode:
         # Fourier Transform
         try:
             start_time = time.time()
-            total_bytes = 0
+            total_bytes, total_samples = 0, 0
             cli_width = 40
             sample_size = bits // 4 * channels
 
@@ -137,9 +137,9 @@ class encode:
             with open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
-                    # samples_per_frame = random.choice([i for i in range(1024, 4097, 32)]) # Random spf test
-                    # lossy = random.choice([True, False]) # Random lossy test
+                    bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
+                    samples_per_frame = random.choice([i for i in range(1024, 4097, 32)]) # Random spf test
+                    lossy = random.choice([True, False]) # Random lossy test
                     rlen = samples_per_frame * 8 * channels
                     if lossy and len(last) != 0:
                         rlen -= len(last)
@@ -161,7 +161,7 @@ class encode:
                     if lossy: segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
-                    # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
+                    ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
 
                     data = bytes(
@@ -194,11 +194,14 @@ class encode:
 
                     if verbose:
                         total_bytes += len(frame) * sample_size
-                        if lossy: total_bytes -= len(frame)//16 * sample_size
+                        total_samples += len(frame)
+                        if lossy:
+                            total_bytes -= len(frame)//16 * sample_size
+                            total_samples -= len(frame)//16
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / sample_rate / sample_size
-                        percent = total_bytes / duration / bits * 200
+                        percent = total_samples / duration * 100
                         prgbar = int(percent / 100 * cli_width)
                         eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
                         print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
