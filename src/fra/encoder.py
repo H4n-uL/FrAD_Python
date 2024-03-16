@@ -137,9 +137,9 @@ class encode:
             with open(out, 'ab') as file:
                 if verbose: print('\n\n')
                 while True:
-                    bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
-                    samples_per_frame = random.choice([i for i in range(1024, 4097, 32)]) # Random spf test
-                    lossy = random.choice([True, False]) # Random lossy test
+                    # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
+                    # samples_per_frame = random.choice([i for i in range(1024, 4097, 32)]) # Random spf test
+                    # lossy = random.choice([True, False]) # Random lossy test
                     rlen = samples_per_frame * 8 * channels
                     if lossy and len(last) != 0:
                         rlen -= len(last)
@@ -161,7 +161,7 @@ class encode:
                     if lossy: segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
-                    ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
+                    # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
                     if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
 
                     data = bytes(
