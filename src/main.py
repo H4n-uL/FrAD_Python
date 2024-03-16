@@ -54,7 +54,7 @@ def main(action, args):
         from fra import player
         player.play(
                 file_path, gain=[args.gain, args.dbfs],
-                keys=int(args.keys) if args.keys is not None else None,
+                keys=float(args.keys) if args.keys is not None else None,
                 speed_in_times=float(args.speed) if args.speed is not None else None,
                 e=args.ecc, verbose=args.verbose)
     elif action == 'record':
