@@ -96,7 +96,6 @@ class header:
                 head = f.read(64)
 
                 methods.signature(head[0x0:0x4])
-                image = b''
                 while True:
                     block_type = f.read(2)
                     if not block_type: break
@@ -116,6 +115,28 @@ class header:
             try:
                 with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.truncate(); m.write(b']')
             except: open(output+'.meta.json', 'a').write(']')
+
+    def parse_to_ffmeta(file_path, output):
+        open(output, 'w', encoding='utf-8').write(';FFMETADATA1\n')
+        with open(file_path, 'rb') as f:
+            head = f.read(64)
+
+            methods.signature(head[0x0:0x4])
+            while True:
+                block_type = f.read(2)
+                if not block_type: break
+                if block_type == b'\xfa\xaa':
+                    block_length = int.from_bytes(f.read(6), 'big')
+                    title_length = int(struct.unpack('>I', f.read(4))[0])
+                    title = f.read(title_length).decode('utf-8')
+                    data = f.read(block_length-title_length-12)
+                    try: d = f'{title}={data.decode('utf-8').replace('\n', '\\\n')}\n'
+                    except UnicodeDecodeError: d = f'{title}={base64.b64encode(data).decode('utf-8')}\n'
+                    open(output, 'a', encoding='utf-8').write(d)
+                elif block_type[0] == 0xf5:
+                    block_length = int(struct.unpack('>Q', f.read(8))[0])
+                    open(f'{output}.image', 'wb').write(f.read(block_length-10))
+                elif block_type == b'\xff\xd0': break
 
     def modify(file_path, meta = None, img: bytes = None):
         try:

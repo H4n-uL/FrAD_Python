@@ -1,9 +1,10 @@
 from .common import variables, methods
 from .fourier import fourier
+from .header import header
 # import matplotlib.pyplot as plt
 # from mdctn import mdct
 import numpy as np
-import math, os, platform, shutil, struct, subprocess, sys, time, zlib
+import math, os, platform, shutil, struct, subprocess, sys, time, traceback, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -213,7 +214,9 @@ class decode:
             '-f', 'f64le',
             '-ar', str(sample_rate),
             '-ac', str(channels),
-            '-i', variables.temp_pcm
+            '-i', variables.temp_pcm,
+            '-i', variables.meta,
+            '-map_metadata', '1'
         ]
 
         if nsr is not None and nsr != sample_rate: command.extend(['-ar', str(nsr)])
@@ -319,6 +322,7 @@ class decode:
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: list = None, nsr: int = None, verbose: bool = False):
         # Decoding
         sample_rate, channels = decode.internal(file_path, e=e, gain=methods.get_gain(gain), verbose=verbose)
+        header.parse_to_ffmeta(file_path, variables.meta)
         # sample_rate = methods.resample_pcm(channels, sample_rate, nsr)
 
         try:
@@ -374,4 +378,12 @@ class decode:
         except KeyboardInterrupt:
             print('Aborting...')
             os.remove(variables.temp_pcm)
+        except Exception as e:
+            os.remove(variables.meta)
+            os.remove(f'{variables.meta}.image')
+            os.remove(variables.temp_pcm)
+            sys.exit(traceback.format_exc())
+        finally:
+            os.remove(variables.meta)
+            os.remove(f'{variables.meta}.image')
             sys.exit(0)

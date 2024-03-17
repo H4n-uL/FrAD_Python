@@ -39,3 +39,4 @@ music/*
 # Metadata #
 *.json
 *.image
+*.meta
