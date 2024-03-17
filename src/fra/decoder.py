@@ -3,7 +3,7 @@ from .fourier import fourier
 # import matplotlib.pyplot as plt
 # from mdctn import mdct
 import numpy as np
-import os, platform, shutil, struct, subprocess, sys, time, zlib
+import math, os, platform, shutil, struct, subprocess, sys, time, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -139,11 +139,11 @@ class decode:
                         frameNo += 1
                         if verbose:
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            float_exp = [5, 5, 8, 8, 11, 11, 15][float_bits]
-                            float_mant = [6, 10, 15, 23, 36, 52, 112][float_bits]
                             depth = [12, 16, 24, 32, 48, 64, 128][float_bits]
-                            print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames); {channels_frame} channels, {srate_frame} Hz')
-                            print(f'{lossy and "Lossy" or "Lossless"}, {not endian and "Big" or "Little"} endian {depth} bits s1e{float_exp}m{float_mant}, ECC: {is_ecc_on and f"{ecc_dsize}/{ecc_codesize}" or "disabled"}, {len(segment)} samples/frame, Frame size: {framelength} Bytes')
+                            lg = int(math.log(srate_frame, 1000))
+                            kmgt = ['','k','M','G','T'][lg]
+                            print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lg*3)} {kmgt}Hz {not endian and "B" or "L"}E {channels_frame} channels')
+                            print(f'{lossy and "Lossy" or "Lossless"}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} samples & {framelength} Bytes per frame')
                         else:
                             print('\x1b[1A\x1b[2K', end='')
                             print(f'{(i):.3f} s / {(duration):.3f} s')
