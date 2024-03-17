@@ -125,7 +125,6 @@ class encode:
             start_time = time.time()
             total_bytes, total_samples = 0, 0
             cli_width = 40
-            sample_size = bits // 4 * channels
 
             # Open FFmpeg
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -193,6 +192,7 @@ class encode:
                     file.write(data)
 
                     if verbose:
+                        sample_size = bt // 8 * channels
                         total_bytes += len(frame) * sample_size
                         total_samples += len(frame)
                         if lossy:
