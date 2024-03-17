@@ -114,7 +114,7 @@ class header:
                     elif block_type == b'\xff\xd0': break
         finally:
             try:
-                with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.write(b']')
+                with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.truncate(); m.write(b']')
             except: open(output+'.meta.json', 'a').write(']')
 
     def modify(file_path, meta = None, img: bytes = None):
