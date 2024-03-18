@@ -88,7 +88,7 @@ if __name__ == '__main__':
     parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                 help='Metadata in json, This will override --meta option.')
     parser.add_argument('-le',  '--little_endian',                                                   action='store_true',   help='Little Endian Toggle')
     parser.add_argument('-l',   '--lossy',                                                           action='store_true',   help='Lossy compression Toggle, THIS OPTION IS HIGHLY RECOMMENDED NOT TO ENABLE.')
-    parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='2',           help='Lossy compression level')
+    parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='0',           help='Lossy compression level')
     parser.add_argument('-v',   '--verbose',                                                         action='store_true',   help='Verbose CLI Toggle')
 
     args = parser.parse_args()
