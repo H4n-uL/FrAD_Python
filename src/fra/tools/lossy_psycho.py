@@ -8,12 +8,11 @@ class psycho:
         sprfuncBarkdB[nfilts:2*nfilts] = np.linspace(0,-maxbark*12.0,nfilts)-23.5
         return sprfuncBarkdB
 
-    def sprfuncmat(sprfuncBarkdB,alpha,nfilts):
-        sprfuncBVolt=10.0**(sprfuncBarkdB/20.0*alpha)
-        sprfuncmatrix=np.zeros((nfilts,nfilts))
-        for k in range(nfilts):
-            sprfuncmatrix[k,:]=sprfuncBVolt[(nfilts-k):(2*nfilts-k)]
-        return sprfuncmatrix
+    def sprfuncmat(sprfuncBarkdB, alpha, nfilts):
+        sprfuncBVolt = 10.0**(sprfuncBarkdB/20.0 * alpha)
+        indices = np.arange(nfilts)[:, None] + np.arange(nfilts)[::-1]
+        indices = indices % nfilts
+        return sprfuncBVolt[indices.ravel()].reshape(nfilts, nfilts)
 
     def maskingThresholdBark(mXbark,sprfuncmatrix,alpha,fs,nfilts): 
         mTbark=np.dot(mXbark**alpha, sprfuncmatrix**alpha)

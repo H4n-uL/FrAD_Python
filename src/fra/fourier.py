@@ -1,7 +1,6 @@
 from mdctn import mdct, imdct
 import numpy as np
 from .tools.lossy_psycho import psycho
-nfilts=64
 
 class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool, sample_rate: int, level: int):
@@ -13,6 +12,7 @@ class fourier:
 
         # MARK: Temporary Psychoacoustic Filtering
         if lossy:
+            nfilts = len(data) // 8
             frame_size, alpha = len(data), (800 - (1.2**level))*0.001
             W = psycho.mapping2barkmat(sample_rate,nfilts,frame_size*2)
             W_inv = psycho.mappingfrombarkmat(W,frame_size*2)
@@ -22,8 +22,8 @@ class fourier:
                 fft_data[c] = np.around(fft_data[c] / (frame_size / 16384)) * (frame_size / 16384)
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,frame_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts) * np.log2(level+1)/2
-                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2)[:-1] * np.linspace(0.25-(level/10), 0.25+((sample_rate/48000)*(level/5)), len(fft_data[c]))
-                fft_data[c][np.abs(fft_data[c]) < thres] = 0
+                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2)[:-1]# * np.linspace(0.25, (sample_rate/48000), len(fft_data[c]))
+                fft_data[c][nfilts:][np.abs(fft_data[c][nfilts:]) < thres[nfilts:]] = 0
         # ENDMARK
 
         while any(np.max(np.abs(c)) > np.finfo(dt).max for c in fft_data):
