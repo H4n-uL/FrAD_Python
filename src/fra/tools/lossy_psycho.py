@@ -27,13 +27,9 @@ class psycho:
         mTbark=np.max((mTbark, 10.0**((LTQ-60)/20)),0)
         return mTbark
 
-    def hz2bark(f):
-        Brk = 6. * np.arcsinh(f/600.)                                                 
-        return Brk
+    def hz2bark(f): return 6. * np.arcsinh(f/600.)
 
-    def bark2hz(Brk):
-        Fhz = 600. * np.sinh(Brk/6.)
-        return Fhz
+    def bark2hz(Brk): return 600. * np.sinh(Brk/6.)
 
     def mapping2barkmat(fs, nfilts, nfft):
         maxbark = psycho.hz2bark(fs/2)
