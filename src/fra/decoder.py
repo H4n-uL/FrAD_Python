@@ -86,7 +86,9 @@ class decode:
                     # Reading Frame Header
                     fhead = f.read(32)
                     if not fhead:
-                        if prev is not None: stream.write(play==True and prev.astype(np.float32) or prev.astype(np.float64).tobytes())
+                        if prev is not None:
+                            if play == True: stream.write(prev.astype(np.float32))
+                            else: stream.write(prev.astype(np.float64).tobytes())
                         break
                     framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                     efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
