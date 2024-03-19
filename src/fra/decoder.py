@@ -64,6 +64,7 @@ class decode:
 
                 dlen += len(frame)
                 framescount += 1
+            if lossy: duration += len(frame)//16 / (srate_frame * speed * ssize_dict[float_bits])
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
 
             f.seek(header_length)
