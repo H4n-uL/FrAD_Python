@@ -75,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('-b',   '--bits', '--bit',                          required=False,                                 help='Output file bit depth')
     parser.add_argument('-img', '--image',                                  required=False,                                 help='Image file path')
     parser.add_argument('-n',   '-nsr', '--new_sample_rate', '--resample',  required=False,                                 help='Resample as new sample rate')
-    parser.add_argument('-smp', '--sample_size', '--samples_per_frame',     required=False,          default='2048',        help='Samples per frame')
+    parser.add_argument('-fr', '--frame_size', '--samples_per_frame',       required=False,          default='2048',        help='Samples per frame')
     parser.add_argument('-c',   '--codec',                                  required=False,                                 help='Codec type')
     parser.add_argument('-g',   '--gain',                                   required=False,                                 help='Gain in X.X for relative amplitude')
     parser.add_argument('-db', '-dB', '--dbfs', '--dBFS',                                            action='store_true',   help='Converting gain as relative dB FS')

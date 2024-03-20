@@ -36,7 +36,7 @@ fourier encode "path/to/audio.flac" \
 --bits 32 \                                        # 비트 심도
 \  # 선택 사항
 --output "path/to/fourierAnalogue.frad" \          # 출력 파일
---samples_per_block 2048 \                         # 블록당 샘플 수
+--frame_size 2048 \                         # 블록당 샘플 수
 --enable_ecc \                                     # ECC 활성화 여부
 --data_ecc_size 128 20 \                           # 데이터 블록과 ECC 블록의 크기
 --little_endian \                                  # 엔디언
@@ -108,7 +108,7 @@ fourier ecc "path/to/fourierAnalogue.frad" \
 fourier record "path/to/fourierAnalogue.frad" \
 \  # 선택 사항
 --bits 32 \                                        # 비트 심도
---samples_per_block 2048 \                         # 블록당 샘플 수
+--frame_size 2048 \                         # 블록당 샘플 수
 --enable_ecc \                                     # ECC 활성화 여부
 --data_ecc_size 128 20 \                           # 데이터 블록과 ECC 블록의 크기
 --little_endian \                                  # 엔디언
