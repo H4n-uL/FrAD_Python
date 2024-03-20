@@ -43,7 +43,7 @@ class fourier:
             data = bytes.fromhex(''.join([be and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)]))
         else: raise Exception('Illegal bits value.')
 
-        if lossy: segment = zlib.compress(segment, level=9)
+        if lossy: data = zlib.compress(data, level=9)
 
         return data, bits
 
