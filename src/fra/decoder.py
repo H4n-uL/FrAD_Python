@@ -384,10 +384,10 @@ class decode:
             os.remove(variables.temp_pcm)
         except Exception as e:
             os.remove(variables.meta)
-            os.remove(f'{variables.meta}.image')
+            if os.path.exists(f'{variables.meta}.image'): os.remove(f'{variables.meta}.image')
             os.remove(variables.temp_pcm)
             sys.exit(traceback.format_exc())
         finally:
             os.remove(variables.meta)
-            os.remove(f'{variables.meta}.image')
+            if os.path.exists(f'{variables.meta}.image'): os.remove(f'{variables.meta}.image')
             sys.exit(0)
