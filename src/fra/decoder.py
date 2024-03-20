@@ -174,6 +174,7 @@ class decode:
                             print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
                             print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                time.sleep(1)
                 stream.close()
                 if play or verbose:
                     print('\x1b[1A\x1b[2K', end='')
