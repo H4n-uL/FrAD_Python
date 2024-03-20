@@ -146,7 +146,7 @@ class decode:
                             depth = [12, 16, 24, 32, 48, 64, 128][float_bits]
                             lg = int(math.log(srate_frame, 1000))
                             kmgt = ['','k','M','G','T'][lg]
-                            print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lg*3)} {kmgt}Hz {not endian and "B" or "L"}E {channels_frame} channels')
+                            print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lg*3)} {kmgt}Hz {not endian and "B" or "L"}E {channels_frame} channel{channels_frame>1 and "s" or ""}')
                             print(f'{lossy and "Lossy" or "Lossless"}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} samples & {framelength} Bytes per frame')
                         else:
                             print('\x1b[1A\x1b[2K', end='')
