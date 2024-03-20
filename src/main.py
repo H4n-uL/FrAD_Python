@@ -25,7 +25,7 @@ def main(action, args):
         encode.enc(
                 file_path, int(args.bits), little_endian=args.little_endian,
                 out=args.output, lossy=args.lossy, loss_level=int(args.losslevel),
-                samples_per_frame=int(args.sample_size), gain=[args.gain, args.dbfs],
+                samples_per_frame=int(args.frame_size), gain=[args.gain, args.dbfs],
                 apply_ecc=args.ecc,
                 ecc_sizes=args.data_ecc_size,
                 nsr=nsr, meta=meta, img=img,
