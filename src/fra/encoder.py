@@ -157,7 +157,6 @@ class encode:
 
                     # MDCT
                     segment, bt = fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level)
-                    if lossy: segment = zlib.compress(segment, level=9)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test

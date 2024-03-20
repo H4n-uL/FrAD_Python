@@ -108,9 +108,7 @@ class decode:
                             frame = ecc.decode(frame, ecc_dsize, ecc_codesize)
                         else: frame = ecc.unecc(frame, ecc_dsize, ecc_codesize)
 
-                    if lossy: frame = zlib.decompress(frame)
-
-                    segment = fourier.digital(frame, float_bits, channels_frame, endian) * gain # Inversing
+                    segment = fourier.digital(frame, float_bits, channels_frame, endian, lossy=lossy) * gain # Inversing
 
                     if prev is not None:
                         fade_in = np.linspace(0, 1, len(prev))

@@ -1,6 +1,7 @@
 from mdctn import mdct, imdct
 import numpy as np
 from .tools.lossy_psycho import psycho
+import zlib
 
 class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool, sample_rate: int, level: int):
@@ -18,11 +19,12 @@ class fourier:
             W_inv = psycho.mappingfrombarkmat(W,frame_size*2)
             sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2,nfilts)
             sprfuncmat = psycho.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
+            # crucial_band = slice(1000 // sample_rate * frame_size, 5000 // sample_rate * frame_size)
             for c in range(channels):
                 fft_data[c] = np.around(fft_data[c] / (frame_size / 16384)) * (frame_size / 16384)
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,frame_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts) * np.log2(level+1)/2
-                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2)[:-1]# * np.linspace(0.25, (sample_rate/48000), len(fft_data[c]))
+                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2)[:-1]
                 fft_data[c][nfilts:][np.abs(fft_data[c][nfilts:]) < thres[nfilts:]] = 0
         # ENDMARK
 
@@ -41,9 +43,12 @@ class fourier:
             data = bytes.fromhex(''.join([be and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)]))
         else: raise Exception('Illegal bits value.')
 
+        if lossy: segment = zlib.compress(segment, level=9)
+
         return data, bits
 
-    def digital(data: bytes, fb: int, channels: int, little_endian: bool):
+    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, lossy: bool):
+        if lossy: data = zlib.decompress(data)
         be = not little_endian
         endian = be and '>' or '<'
         dt = {0b101:'d',0b100:'d',0b011:'f',0b010:'f',0b001:'e',0b000:'e'}[fb]
