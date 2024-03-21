@@ -6,7 +6,7 @@ desired_bitrate = 320000
 
 uc = frame_size*bits*channels
 tbr = int(desired_bitrate - (sample_rate / frame_size * 256))
-cmp = int(tbr / sample_rate * frame_size // 8 * 8)
+cmp = int(tbr / sample_rate * frame_size // 8 // channels * 8 * channels)
 
 print(f'Bits per frame uncmp:  {uc} bits')
 print(f'Bits per frame cmp:    {cmp} bits')
