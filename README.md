@@ -36,7 +36,7 @@ fourier encode "path/to/audio.flac" \
 --bits 32 \                                        # Bit depth
 \  # Optional
 --output "path/to/fourierAnalogue.frad" \          # Output file
---frame_size 2048 \                         # Samples per block
+--frame_size 2048 \                                # Samples per block
 --enable_ecc \                                     # ECC enabled or not
 --data_ecc_size 128 20 \                           # Sizes of data block and ECC block when ECC enabled
 --little_endian \                                  # Endianness
@@ -108,7 +108,7 @@ Software Recording
 fourier record "path/to/fourierAnalogue.frad" \
 \  # Optional
 --bits 32 \                                        # Bit depth
---frame_size 2048 \                         # Samples per block
+--frame_size 2048 \                                # Samples per block
 --enable_ecc \                                     # ECC enabled or not
 --data_ecc_size 128 20 \                           # Sizes of data block and ECC block when ECC enabled
 --little_endian \                                  # Endianness

@@ -36,7 +36,7 @@ fourier encode "path/to/audio.flac" \
 --bits 32 \                                        # ビット深度
 \  # オプション
 --output "path/to/fourierAnalogue.frad" \          # 出力ファイル
---frame_size 2048 \                         # ブロックあたりのサンプル数
+--frame_size 2048 \                                # ブロックあたりのサンプル数
 --enable_ecc \                                     # ECC使用可否
 --data_ecc_size 128 20 \                           # データブロックとECCブロックのサイズ
 --little_endian \                                  # エンディアン
@@ -108,7 +108,7 @@ fourier ecc "path/to/fourierAnalogue.frad" \
 fourier encode "path/to/fourierAnalogue.frad" \
 \  # オプション
 --bits 32 \                                        # ビット深度
---frame_size 2048 \                         # ブロックあたりのサンプル数
+--frame_size 2048 \                                # ブロックあたりのサンプル数
 --enable_ecc \                                     # ECC使用可否
 --data_ecc_size 128 20 \                           # データブロックとECCブロックのサイズ
 --little_endian \                                  # エンディアン
