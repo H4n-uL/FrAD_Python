@@ -1,10 +1,10 @@
 from mdctn import mdct, imdct
 import numpy as np
-from .tools.lossy_psycho import psycho
+from .tools.lossy_psycho import psycho, PsychoacousticModel
 import zlib
 
 class fourier:
-    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool, sample_rate: int, level: int):
+    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool = None, sample_rate: int = None, level: int = None, model: PsychoacousticModel = None):
         be = not little_endian
         endian = be and '>' or '<'
         dt = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}[bits]
@@ -15,16 +15,13 @@ class fourier:
         if lossy:
             nfilts = len(data) // 8
             frame_size, alpha = len(data), (800 - (1.2**level))*0.001
-            W = psycho.mapping2barkmat(sample_rate,nfilts,frame_size*2)
-            W_inv = psycho.mappingfrombarkmat(W,frame_size*2)
-            sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2,nfilts)
-            sprfuncmat = psycho.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
+            M = model.get_model(nfilts, frame_size, alpha, sample_rate)
             # crucial_band = slice(1000 // sample_rate * frame_size, 5000 // sample_rate * frame_size)
             for c in range(channels):
                 fft_data[c] = np.around(fft_data[c] / (frame_size / 16384)) * (frame_size / 16384)
-                mXbark = psycho.mapping2bark(np.abs(fft_data[c]),W,frame_size*2)
-                mTbark = psycho.maskingThresholdBark(mXbark,sprfuncmat,alpha,sample_rate,nfilts) * np.log2(level+1)/2
-                thres =  psycho.mappingfrombark(mTbark,W_inv,frame_size*2)[:-1]
+                mXbark = psycho.mapping2bark(np.abs(fft_data[c]),M['W'],frame_size*2)
+                mTbark = psycho.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,sample_rate,nfilts) * np.log2(level+1)/2
+                thres =  psycho.mappingfrombark(mTbark,M['W_inv'],frame_size*2)[:-1]
                 fft_data[c][nfilts:][np.abs(fft_data[c][nfilts:]) < thres[nfilts:]] = 0
         # ENDMARK
 

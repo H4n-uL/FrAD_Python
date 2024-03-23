@@ -54,3 +54,17 @@ class psycho:
         nfreqs=int(nfft/2)
         mT = np.dot(mTbark, W_inv[:, :nfreqs].T)
         return mT
+
+class PsychoacousticModel:
+    def __init__(self):
+        self.models = {}
+
+    def get_model(self, nfilts, frame_size, alpha, sample_rate):
+        key = (nfilts, frame_size, alpha, sample_rate)
+        if key not in self.models:
+            W = psycho.mapping2barkmat(sample_rate, nfilts, frame_size*2)
+            W_inv = psycho.mappingfrombarkmat(W, frame_size*2)
+            sprfuncBarkdB = psycho.f_SP_dB(sample_rate/2, nfilts)
+            sprfuncmat = psycho.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
+            self.models[key] = {'W': W, 'W_inv': W_inv, 'sprfuncmat': sprfuncmat}
+        return self.models[key]
