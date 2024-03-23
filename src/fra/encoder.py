@@ -4,6 +4,7 @@ import json, os, random, struct, subprocess, sys, time, traceback, zlib
 import numpy as np
 from .tools.ecc import ecc
 from .tools.headb import headb
+from .tools.lossy_psycho import PsychoacousticModel
 
 class encode:
     def get_info(file_path):
@@ -130,6 +131,7 @@ class encode:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
             last = b''
+            psychomodel = PsychoacousticModel()
 
             # Write file
             open(out, 'wb').write(headb.uilder(meta, img))
@@ -156,7 +158,7 @@ class encode:
                     frame = np.frombuffer(data, dtype='<d').reshape(-1, channels) * gain
 
                     # MDCT
-                    segment, bt = fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level)
+                    segment, bt = fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level, model=psychomodel)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
