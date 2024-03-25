@@ -17,8 +17,9 @@ class fourier:
             nfilts = len(data) // 8
             frame_size, alpha = len(data), (800 - (1.2**level))*0.001
             M = model.get_model(nfilts, frame_size, alpha, sample_rate)
+            rounder = 2**np.round(np.log2(frame_size/16384))
             for c in range(channels):
-                # fft_data[c] = np.around(fft_data[c] / 0.125) * 0.125
+                fft_data[c] = np.around(fft_data[c] / rounder) * rounder
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),M['W'],frame_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,sample_rate,nfilts) * np.log2(level+1)/2
                 thres =  psycho.mappingfrombark(mTbark,M['W_inv'],frame_size*2)[:-1]
