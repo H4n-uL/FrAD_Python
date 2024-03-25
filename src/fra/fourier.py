@@ -23,7 +23,7 @@ class fourier:
                 mXbark = psycho.mapping2bark(np.abs(fft_data[c]),M['W'],frame_size*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,sample_rate,nfilts) * np.log2(level+1)/2
                 thres =  psycho.mappingfrombark(mTbark,M['W_inv'],frame_size*2)[:-1]
-                fft_data[c][nfilts:][np.abs(fft_data[c][nfilts:]) < thres[nfilts:]] = 0
+                fft_data[c][np.abs(fft_data[c]) < thres] = 0
 
         while any(np.max(np.abs(c)) > np.finfo(fourier.dtypes[bits]).max for c in fft_data):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
