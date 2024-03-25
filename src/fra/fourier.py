@@ -27,7 +27,7 @@ class fourier:
 
         while any(np.max(np.abs(c)) > np.finfo(fourier.dtypes[bits]).max for c in fft_data):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
-            bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128) 
+            bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
         data: bytes = np.column_stack([d.astype(fourier.dtypes[bits]).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
         if bits in [128, 64, 32, 16]:
