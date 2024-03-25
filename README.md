@@ -4,7 +4,7 @@
 
 It was developed as part of [Project Archivist](https://mikhael-openworkspace.notion.site/Project-Archivist-e512fa7a21474ef6bdbd615a424293cf) with the goal of keeping analogue signals in digital. More information can be found in the [Notion](https://mikhael-openworkspace.notion.site/Fourier-Analogue-in-Digital-d170c1760cbf4bb4aaea9b1f09b7fead?pvs=4).
 
-Note: The purpose of an archive is always to make it easy for you to access important data. Please be sure to back up any important audio files.
+**Warning: Fourier Analogue-in-Digital Compact is unstable because the format is constantly changing. Please do not use the lossy compression option when encoding Fourier Analogue-in-Digital just yet.**
 
 ## How to install
 
