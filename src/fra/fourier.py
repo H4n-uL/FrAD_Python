@@ -22,7 +22,7 @@ class fourier:
             rfs = [1, 2, 3, 4, 2, 1, -1, -3, -4]
             fs_list = {n:fourier.get_range(fsize, sample_rate, n) for n in fl}
             for i in range(len(fl[:-1])):
-                rounder[fs_list[fl[i]]:fs_list[fl[i+1]]] = fourier.getroundfactor(fsize, rfs[i])
+                rounder[fs_list[fl[i]]:fs_list[fl[i+1]]] = 2**np.round(np.log2(fsize) - 11 - rfs[i])
             for c in range(channels):
                 mXbark = psycho.mapping2bark(np.abs(freqs[c]),M['W'],fsize*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,sample_rate,nfilts) * np.log2(level+1)/2
@@ -71,8 +71,5 @@ class fourier:
         if lossy: freqs = np.sign(freqs) * np.abs(freqs)**(4/3)
 
         return np.column_stack([imdct(d, N=len(d)*2) for d in freqs])
-
-    def getroundfactor(fsize, n):
-        return 2**np.round(np.log2(fsize) - 11 - n)
 
     get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
