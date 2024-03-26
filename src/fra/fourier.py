@@ -10,26 +10,31 @@ class fourier:
         be = not little_endian
         endian = be and '>' or '<'
         data = np.pad(data, ((0, -len(data[:, 0])%2), (0, 0)), mode='constant')
-        fft_data = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
+        freqs = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
 
         if lossy:
-            fft_data = np.sign(fft_data) * np.abs(fft_data)**(3/4)
+            freqs = np.sign(freqs) * np.abs(freqs)**(3/4)
             nfilts = len(data) // 8
-            frame_size, alpha = len(data), (800 - (1.2**level))*0.001
-            M = model.get_model(nfilts, frame_size, alpha, sample_rate)
-            rounder = 2**np.round(np.log2(frame_size/16384))
+            fsize, alpha = len(data), (800 - (1.2**level))*0.001
+            M = model.get_model(nfilts, fsize, alpha, sample_rate)
+            rounder = np.zeros(fsize)
+            fl = [20, 100, 500, 2000, 5000, 10000, 20000, 100000, 500000, np.inf]
+            rfs = [1, 2, 3, 4, 2, 1, -1, -3, -4]
+            fs_list = {n:fourier.get_range(fsize, sample_rate, n) for n in fl}
+            for i in range(len(fl[:-1])):
+                rounder[fs_list[fl[i]]:fs_list[fl[i+1]]] = fourier.getroundfactor(fsize, rfs[i])
             for c in range(channels):
-                fft_data[c] = np.around(fft_data[c] / rounder) * rounder
-                mXbark = psycho.mapping2bark(np.abs(fft_data[c]),M['W'],frame_size*2)
+                mXbark = psycho.mapping2bark(np.abs(freqs[c]),M['W'],fsize*2)
                 mTbark = psycho.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,sample_rate,nfilts) * np.log2(level+1)/2
-                thres =  psycho.mappingfrombark(mTbark,M['W_inv'],frame_size*2)[:-1]
-                fft_data[c][np.abs(fft_data[c]) < thres] = 0
+                thres =  psycho.mappingfrombark(mTbark,M['W_inv'],fsize*2)[:-1] * (level/20+1)
+                freqs[c][np.abs(freqs[c]) < thres] = 0
+                freqs[c][fs_list[20]:] = np.around(freqs[c][fs_list[20]:] / rounder[fs_list[20]:]) * rounder[fs_list[20]:]
 
-        while any(np.max(np.abs(c)) > np.finfo(fourier.dtypes[bits]).max for c in fft_data):
+        while any(np.max(np.abs(c)) > np.finfo(fourier.dtypes[bits]).max for c in freqs):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
-        data: bytes = np.column_stack([d.astype(fourier.dtypes[bits]).newbyteorder(endian) for d in fft_data]).ravel(order='C').tobytes()
+        data: bytes = np.column_stack([d.astype(fourier.dtypes[bits]).newbyteorder(endian) for d in freqs]).ravel(order='C').tobytes()
         if bits in [128, 64, 32, 16]:
             pass
         elif bits in [48, 24]:
@@ -61,8 +66,13 @@ class fourier:
             raise Exception('Illegal bits value.')
         data_numpy = np.frombuffer(data, dtype=endian+fourier.dtypes[bits]).astype(float)
 
-        freq = [data_numpy[i::channels] for i in range(channels)]
-        freq = np.where(np.isnan(freq) | np.isinf(freq), 0, freq)
-        if lossy: freq = np.sign(freq) * np.abs(freq)**(4/3)
+        freqs = [data_numpy[i::channels] for i in range(channels)]
+        freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
+        if lossy: freqs = np.sign(freqs) * np.abs(freqs)**(4/3)
 
-        return np.column_stack([imdct(d, N=len(d)*2) for d in freq])
+        return np.column_stack([imdct(d, N=len(d)*2) for d in freqs])
+
+    def getroundfactor(fsize, n):
+        return 2**np.round(np.log2(fsize) - 11 - n)
+
+    get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
