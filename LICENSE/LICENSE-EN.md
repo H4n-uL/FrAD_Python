@@ -1,4 +1,4 @@
-# Archivist licence
+# Archivist Licence
 
 Archivist Licence - Fourier Analogue-in-Digital
 

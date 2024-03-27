@@ -1,4 +1,4 @@
-# Archivist licence
+# Archivist Licence
 
 [ENGLISH](./LICENSE/LICENSE-EN.md)
 
