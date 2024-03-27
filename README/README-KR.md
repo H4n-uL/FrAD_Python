@@ -121,44 +121,20 @@ fourier record "path/to/fourierAnalogue.frad" \
 
 ```json
 [
-    {"key": "KEY",                              "type": "string", "value": "VALUE"},
-    {"key": "AUTHOR",                           "type": "string", "value": "H4n_uL"},
-    {"key": "Key & String value encoding type", "type": "string", "value": "UTF-8"},
-    {"key": "Base64 type Value",                "type": "base64", "value": "QmFzZTY0IEV4YW1wbGU="},
-    {"key": "File is also available",           "type": "base64", "value": "U3VwcG9ydHMgdXAgdG8gMjU2IFRpQg=="},
-    {"key": "No unsupported characters",        "type": "string", "value": "All utf-8/base64 metadata is allowed!"},
-    {"key": "Supports duplicate keys",          "type": "string", "value": "See what happens!"},
-    {"key": "Supports duplicate keys",          "type": "string", "value": "Voilà!"}
+    {"key": "키",                  "type": "string", "value": "값"},
+    {"key": "원작자",               "type": "string", "value": "한울"},
+    {"key": "키와 String타입 인코딩", "type": "string", "value": "UTF-8"},
+    {"key": "Base64 지원",         "type": "base64", "value": "QmFzZTY0IOyYiOyLnA=="},
+    {"key": "파일 지원",            "type": "base64", "value": "7LWc64yAIDI1NlRpQuq5jOyngCDsp4Dsm5A="},
+    {"key": "미지원 글자 없음",       "type": "string", "value": "유니코드에 있는 어떤 글자라도 호환됩니다!"},
+    {"key": "중복 키 지원",          "type": "string", "value": "중복 키를 넣으면?"},
+    {"key": "중복 키 지원",          "type": "string", "value": "짠!"}
 ]
 ```
 
 ## 기여 방법
 
-레포지토리에서 새 브랜치를 만들고, 수정하고, 저에게 Merge 요청으로 심사를 받으시면 됩니다. 사실 웬만하면 다 통과됩니다.
-
-## 라이선스
-
-### 적용 대상
-
-본 라이선스는 Fourier Analogue-in-Digital의 저작인격권, 지식재산권, Git 레포지토리, 소스 코드 등 전체에 적용됩니다.
-
-### 허가되는 것들
-
-모든 사람은 소스 코드의 사용과 재가공, 재배포, 개선 및 기여, 프로젝트 구현 방식의 변경(단, 이 레포지토리의 소스 코드와 호환되어야 합니다.), 상업적 프로그램의 일부로 활용을 할 수 있습니다.
-
-### 제한되는 것들
-
-이 레포지토리를 단독으로 상업적으로 사용하는 것은 금지됩니다.
-
-프로젝트의 원저작자는 명시하지 않아도 됩니다. 단, 기여를 하지 않은 제3자가 자신이 이 프로젝트의 저작권을 주장하는 것은 금지됩니다. 기여를 한 경우, 원저작자와 기여자의 이름을 병기할 수 있습니다.
-
-이 프로젝트의 핵심 개념으로 특허권이나 상표권을 주장할 수 없습니다. 단, 부가기능을 개발하여 적용한 경우 해당 부가기능에 한하여 독립적인 특허권 또는 상표권을 주장할 수 있습니다.
-
-DRM의 적용은 엄격히 금지됩니다. 모두에게 열려 있는 포맷인 Fourier Analogue-in-Digital에 DRM을 적용하는 것은 용납할 수 없습니다.
-
-### 면책 사항
-
-이 소스 코드를 사용함으로써 발생하는 어떠한 결과에 대해서도 원저작자와 기여자들은 책임을 지지 않습니다. 사실 책임을 지고 싶어도 질 수 없습니다.
+레포지토리에서 새 브랜치를 만들고, 수정하고, 저에게 Merge 요청으로 심사를 받으시면 됩니다. 사실 FrAD 포맷 표준과 호환되기만 하면 웬만하면 다 통과됩니다.
 
 ## 개발자 정보
 

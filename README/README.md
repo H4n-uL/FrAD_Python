@@ -134,31 +134,7 @@ Metadata JSON
 
 ## How to contribute
 
-Simply create a new branch in the repository, make your changes, and submit a merge request to me for approval. Pretty much anything will pass.
-
-## Licence
-
-### Coverage
-
-This licence applies to the entirety of the Moral rights, Intellectual property rights, Git repository, source code, etc. of Fourier Analogue-in-Digital.
-
-### Permissions
-
-Everyone is permitted to use, reproduce, redistribute, improve and contribute to the source code, modify the project implementation (which must be compatible with this source code), and utilise it as part of a commercial program.
-
-### Restrictions
-
-Solo commercial use of this repository is prohibited.
-
-The original authors of the project do not need to be acknowledged. However, third parties who have not contributed are prohibited from claiming copyright in this project. If a contribution is made, the contributor's name can be included next to the original author's name.
-
-The core concepts of this project may not be patented or trademarked. However, if additional features are developed and applied, independent patent or trademark rights may be claimed for those features only.
-
-DRM is strictly prohibited. Applying DRM to Fourier Analogue-in-Digital, a format that is open to all, is absolutely forbidden.
-
-### Disclaimer
-
-The original authors and contributors are not responsible for any consequences arising from the use of this source code; in fact, they cannot be held liable even if they wanted to be.
+Simply create a new branch in the repository, make your changes, and submit a merge request to me for approval. Pretty much anything will pass if it conforms to the FrAD format standard.
 
 ## Developer information
 

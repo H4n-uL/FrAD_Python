@@ -121,44 +121,20 @@ fourier encode "path/to/fourierAnalogue.frad" \
 
 ```json
 [
-    {"key": "KEY",                              "type": "string", "value": "VALUE"},
-    {"key": "AUTHOR",                           "type": "string", "value": "H4n_uL"},
-    {"key": "Key & String value encoding type", "type": "string", "value": "UTF-8"},
-    {"key": "Base64 type Value",                "type": "base64", "value": "QmFzZTY0IEV4YW1wbGU="},
-    {"key": "File is also available",           "type": "base64", "value": "U3VwcG9ydHMgdXAgdG8gMjU2IFRpQg=="},
-    {"key": "No unsupported characters",        "type": "string", "value": "All utf-8/base64 metadata is allowed!"},
-    {"key": "Supports duplicate keys",          "type": "string", "value": "See what happens!"},
-    {"key": "Supports duplicate keys",          "type": "string", "value": "Voilà!"}
+    {"key": "KEY",                          "type": "string", "value": "VALUE"},
+    {"key": "AUTHOR",                       "type": "string", "value": "H4n_uL"},
+    {"key": "キーとStringタイプのエンコーディング", "type": "string", "value": "UTF-8"},
+    {"key": "Base64 サポート",                "type": "base64", "value": "QmFzZTY044Gu5L6L"},
+    {"key": "ファイルサポート",                 "type": "base64", "value": "5pyA5aSnMjU2IFRpQuOBvuOBp+OCteODneODvOODiA=="},
+    {"key": "未対応文字なし",                  "type": "string", "value": "Unicodeにあるどの文字でも互換性があります！"},
+    {"key": "重複キーサポート",                 "type": "string", "value": "キーが重複するようにすると？"},
+    {"key": "重複キーサポート",                 "type": "string", "value": "ほら！"}
 ]
 ```
 
 ## 寄付方法
 
 リポジトリで新しいブランチを作成し、修正して、私にMergeリクエストで審査を受けてください。実はこいつはザコなので、大抵は全部通ります。
-
-## ライセンス
-
-### 適用対象
-
-このライセンスは、Fourier Analogue-in-Digitalの著作者人格権、知的財産権、Gitリポジトリ、ソースコードなど全体に適用されます。
-
-### 許可
-
-すべての人は、ソースコードの使用と再加工、再配布、改善及び貢献、プロジェクトの実装方法の変更(ただし、このソースコードと互換性がなければなりません。)、商業的なプログラムの一部として活用することができます。
-
-### 制限
-
-このリポジトリを単独で商業的に使用することは禁止されています。
-
-プロジェクトの原著作者は明示する必要はありません。ただし、貢献をしていない第三者が自分がこのプロジェクトの著作権を主張することは禁止されています。貢献をした場合、原著者と貢献者の名前を併記することができます。
-
-このプロジェクトの核心概念で特許権や商標権を主張することはできません。 ただし、付加機能を開発して適用した場合、その付加機能に限り、独立した特許権や商標権を主張することができます。
-
-DRMの適用は固く禁じられています。万人に開かれたフォーマットであるFourier Analogue-in-DigitalにDRMを適用することは容認できません。
-
-### 免責事項
-
-このソースコードを使用することによって発生するいかなる結果についても、原著作者と貢献者は責任を負いません。 実際、責任を負いたくても負えません。
 
 ## 開発者情報
 
