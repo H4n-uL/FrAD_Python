@@ -1,8 +1,8 @@
-# Archivist Licence
+# Archivist License
 
-Archivist Licence - Fourier Analogue-in-Digital
+Archivist License - Fourier Analogue-in-Digital
 
-V1.0 - 27 March 2024, Original Repository
+V1.1 - 2024. 3. 28., Original Repository
 
 ## Definition of Terms
 
@@ -12,7 +12,9 @@ V1.0 - 27 March 2024, Original Repository
 
 "Contributor" means any person or entity who has contributed to the Work in any form, including by raising issues or modifying the source code.
 
-"Redistribution" means distribution through a channel other than this repository without modification of the source code.
+"End-Consumer Product" means an audio file encoded in Fourier Analogue-in-Digital format that reaches an end-consumer.
+
+"Source Distribution" means distribution through distribution channels other than the repositories specified in the Official Documentation without modification of the source code.
 
 "Reimplementation" means re-creating this Work in a different language to perform the same behaviour.
 
@@ -33,15 +35,17 @@ When redistributing or reimplementing FrAD, the following must be observed.
 ### Common provisions
 
 - There is no obligation to release the source code.
-- If you distribute/reimplement as open source, you must apply this licence as is.
+- If you reimplement it as open source, you must use this licence as is, but you can add attribution to the author.
 
 ### Distribution
 
-- You may create programs containing other features in addition to the FrAD implementation and use them for commercial purposes.
+- There are no restrictions on the distribution of End-consumer products, except to limit the application of technologies that interfere with consumer rights, such as copyright protection devices.
+- You cannot charge end consumers any royalties for distributing this repository, its source code, or official documentation.
 
 ### Reimplementation
 
-- For compatibility with the FrAD format standard, the original author may request the source code. In this case, the source code must be provided without delay.
+- Contributors or third-party developers are welcome to create software compatible with FrAD and use it for any purpose, non-commercial or commercial. The original author does not require any royalties for this.
+- The original author reserves the right to certificate compliance with the FrAD format. To certify compatibility with the FrAD format standard, the original author may request the source code.
 - After the source code has been reviewed, the original author must destroy any source code stored on the original author's device without delay.
 
 ## About Contributions
@@ -59,7 +63,8 @@ You will be listed on FrAD blacklist after 1 month of any of the following condi
 1. Standalone commercial use of this repository without any enhancements is prohibited. Honestly, even the craziest of crazies wouldn't buy some grotesque source that might have malware instead of the official public repository, but it's prohibited anyway. It's a death penalty.
 2. You are not required to credit the original author of the project. However, it is prohibited for third parties who have not contributed to the project to claim that they are the copyright holder of the project. If you have contributed, you may list the original author and the names of the contributors.
 3. You may not claim any patent or trademark rights on the core technology of this project, the modified discrete cosine transform.
-4. The application of copyright protection to end-consumer products is strictly prohibited. It is unacceptable to apply technologies that infringe on the legitimate rights of consumers in the name of copyright protection to FrAD, a format that is open to all.
+4. Commercial use of FrAD's official documents is strictly prohibited. All official documents must be distributed free of charge and made accessible to all consumers.
+5. The application of copyright protection to end-consumer products is strictly prohibited. It is unacceptable to apply technologies that infringe on the legitimate rights of consumers in the name of copyright protection to FrAD, a format that is open to all.
 
 If a user is blacklisted, they lose all access to FrAD. This includes access to all FrAD-encoded files, encoders, decoders, etc. The process of being blacklisted is as follows
 
@@ -76,6 +81,10 @@ If you have lost access due to the above provision and you satisfy one of the fo
 ## Disclaimer
 
 The original author and contributors are not liable for any direct, indirect, incidental, punitive, or consequential damages resulting from the use of this work. In fact, they cannot be liable even if they wanted to be.
+
+## Priority between licence languages
+
+The licence in the language spoken by the end consumer takes priority. However, if there is a conflict between licences, the Korean licence will take precedence.
 
 ## Developer information
 
