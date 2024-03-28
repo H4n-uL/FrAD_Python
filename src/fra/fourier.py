@@ -9,7 +9,6 @@ class fourier:
     def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool = None, sample_rate: int = None, level: int = None, model: PsychoacousticModel = None):
         be = not little_endian
         endian = be and '>' or '<'
-        data = np.pad(data, ((0, -len(data[:, 0])%2), (0, 0)), mode='constant')
         freqs = [dct(data[:, i]) for i in range(channels)]
 
         if lossy:
