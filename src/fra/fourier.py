@@ -1,4 +1,4 @@
-from mdctn import mdct, imdct
+from scipy.fft import dct, idct
 import numpy as np
 from .tools.lossy_psycho import psycho, PsychoacousticModel
 import zlib
@@ -10,7 +10,7 @@ class fourier:
         be = not little_endian
         endian = be and '>' or '<'
         data = np.pad(data, ((0, -len(data[:, 0])%2), (0, 0)), mode='constant')
-        freqs = [mdct(data[:, i], N=len(data)*2) for i in range(channels)]
+        freqs = [dct(data[:, i]) for i in range(channels)]
 
         if lossy:
             freqs = np.sign(freqs) * np.abs(freqs)**(3/4)
@@ -34,7 +34,7 @@ class fourier:
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
-        data: bytes = np.column_stack([d.astype(fourier.dtypes[bits]).newbyteorder(endian) for d in freqs]).ravel(order='C').tobytes()
+        data: bytes = np.column_stack([chnl.astype(fourier.dtypes[bits]).newbyteorder(endian) for chnl in freqs]).ravel(order='C').tobytes()
         if bits in [128, 64, 32, 16]:
             pass
         elif bits in [48, 24]:
@@ -70,6 +70,6 @@ class fourier:
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
         if lossy: freqs = np.sign(freqs) * np.abs(freqs)**(4/3)
 
-        return np.column_stack([imdct(d, N=len(d)*2) for d in freqs])
+        return np.column_stack([idct(chnl) for chnl in freqs])
 
     get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32

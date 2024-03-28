@@ -2,7 +2,7 @@ from .common import variables, methods
 from .fourier import fourier
 from .header import header
 # import matplotlib.pyplot as plt
-# from mdctn import mdct
+# from scipy.fft import dct
 import numpy as np
 import math, os, platform, shutil, struct, subprocess, sys, time, traceback, zlib
 import sounddevice as sd
@@ -130,7 +130,7 @@ class decode:
                         # for i in range(channels_frame):
                         #     plt.subplot(channels_frame, 1, i+1)
                         #     # plt.plot(segment[:, i], alpha=0.5)
-                        #     y = (np.abs(mdct(segment[:, i], N=len(segment)*2)) / len(segment))
+                        #     y = (np.abs(dct(segment[:, i])) / len(segment))
                         #     plt.fill_between(range(1, len(y)+1), y, 0, color='orange', edgecolor='none')
                         #     y = (np.abs(np.fft.fft(segment[:, i], len(segment)*2)) / len(segment))[:len(segment)]
                         #     plt.fill_between(range(1, len(y)+1), 0, -y, color='violet', edgecolor='none')
