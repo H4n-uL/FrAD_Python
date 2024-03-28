@@ -21,11 +21,10 @@
 
 ### pip 패키지
 
-1. mdctn
-2. numpy
+1. numpy
+2. scipy
 3. reedsolo
-4. scipy
-5. sounddevice
+4. sounddevice
 
 ## 사용 방법
 

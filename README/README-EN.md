@@ -21,11 +21,10 @@ Installation is still only supported on Unix-like OS.
 
 ### pip Packages
 
-1. mdctn
-2. numpy
+1. numpy
+2. scipy
 3. reedsolo
-4. scipy
-5. sounddevice
+4. sounddevice
 
 ## How to use
 

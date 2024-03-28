@@ -157,7 +157,7 @@ class encode:
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data, dtype='<d').reshape(-1, channels) * gain
 
-                    # MDCT
+                    # DCT
                     segment, bt = fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level, model=psychomodel)
 
                     # Applying ECC (This will make encoding hundreds of times slower)

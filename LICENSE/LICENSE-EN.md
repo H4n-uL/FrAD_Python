@@ -62,7 +62,7 @@ You will be listed on FrAD blacklist after 1 month of any of the following condi
 
 1. Standalone commercial use of this repository without any enhancements is prohibited. Honestly, even the craziest of crazies wouldn't buy some grotesque source that might have malware instead of the official public repository, but it's prohibited anyway. It's a death penalty.
 2. You are not required to credit the original author of the project. However, it is prohibited for third parties who have not contributed to the project to claim that they are the copyright holder of the project. If you have contributed, you may list the original author and the names of the contributors.
-3. You may not claim any patent or trademark rights on the core technology of this project, the modified discrete cosine transform.
+3. You may not claim any patent or trademark rights on the core technology of this project, the discrete cosine transform.
 4. Commercial use of FrAD's official documents is strictly prohibited. All official documents must be distributed free of charge and made accessible to all consumers.
 5. The application of copyright protection to end-consumer products is strictly prohibited. It is unacceptable to apply technologies that infringe on the legitimate rights of consumers in the name of copyright protection to FrAD, a format that is open to all.
 
