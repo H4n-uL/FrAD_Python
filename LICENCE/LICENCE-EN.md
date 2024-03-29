@@ -2,7 +2,7 @@
 
 Archivist Licence - Fourier Analogue-in-Digital
 
-V1.1 - 2024. 3. 28., Original Repository
+V1.2 - 2024. 3. 28., Original Repository
 
 ## Definition of Terms
 
@@ -58,7 +58,7 @@ FrAD is without intellectual property rights. However, if you develop and implem
 
 ## Licence Violations
 
-You will be listed on FrAD blacklist after 1 month of any of the following conditions.
+After confirming that one of the conditions below has been met, the original author will notify the user of the violation and will request it to be resolved. The grace period is three periods of one month each, totalling three months.
 
 1. Standalone commercial use of this repository without any enhancements is prohibited. Honestly, even the craziest of crazies wouldn't buy some grotesque source that might have malware instead of the official public repository, but it's prohibited anyway. It's a death penalty.
 2. You are not required to credit the original author of the project. However, it is prohibited for third parties who have not contributed to the project to claim that they are the copyright holder of the project. If you have contributed, you may list the original author and the names of the contributors.
@@ -66,17 +66,15 @@ You will be listed on FrAD blacklist after 1 month of any of the following condi
 4. Commercial use of FrAD's official documents is strictly prohibited. All official documents must be distributed free of charge and made accessible to all consumers.
 5. The application of copyright protection to end-consumer products is strictly prohibited. It is unacceptable to apply technologies that infringe on the legitimate rights of consumers in the name of copyright protection to FrAD, a format that is open to all.
 
-If a user is blacklisted, they lose all access to FrAD. This includes access to all FrAD-encoded files, encoders, decoders, etc. The process of being blacklisted is as follows
+If the violation is not resolved and the grace period has elapsed, the user will be immediately listed on FrAD's blacklist and the original author will notify them of the blacklisting.
 
-1. After identifying a licence violation, the original author notifies the user of the violation and requests that it be resolved.
-2. If the user does not resolve the violation within one month of receiving the request, the user will be immediately listed on FrAD blacklist. If the user continues to use FrAD without resolving the violation, it will be considered a massive infringement of moral rights and corresponding legal action may be taken.
+Once blacklisted, the user will lose all access to FrAD. This includes, but is not limited to, viewing, distributing, or selling end-consumer products that are in violation of the licence, encoders, decoders, etc.
+
+Continued use of FrAD without resolving the violation will be considered a massive infringement of moral rights and may result in immediate legal action.
 
 ### Unblacklisting
 
-If you have lost access due to the above provision and you satisfy one of the following conditions, you will be immediately removed from the FrAD blacklist.
-
-1. the moment you correct the licence violation and pass the licence inspection
-2. 5 years have passed without using FrAD.
+Once you fix the licence violation and pass the unblacklisting review, you will be immediately removed from the FrAD blacklist.
 
 ## Disclaimer
 
@@ -84,7 +82,7 @@ The original author and contributors are not liable for any direct, indirect, in
 
 ## Priority between licence languages
 
-The licence in the language spoken by the end consumer takes priority. However, if there is a conflict between licences, the Korean licence will take precedence.
+In case of a dispute between the original author and the consumer, or any violation of the licence by the consumer, the licence in the consumer's native language or a representative equivalent of it shall take priority. However, in the event of a dispute between consumers, and if there is a conflict between the licences or their interpretation, the Korean licence shall take priority.
 
 ## Developer information
 
