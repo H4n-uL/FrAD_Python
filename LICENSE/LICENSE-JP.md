@@ -1,6 +1,6 @@
 # Archivist ライセンス
 
-Archivist License - Fourier Analogue-in-Digital
+Archivist ライセンス - Fourier Analogue-in-Digital
 
 V1.1 - 2024年3月28日、原本リポジトリ
 

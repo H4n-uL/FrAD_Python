@@ -1,6 +1,6 @@
-# Archivist License
+# Archivist Licence
 
-Archivist License - Fourier Analogue-in-Digital
+Archivist Licence - Fourier Analogue-in-Digital
 
 V1.1 - 2024. 3. 28., Original Repository
 
