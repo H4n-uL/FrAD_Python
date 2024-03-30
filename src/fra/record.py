@@ -13,7 +13,7 @@ class recorder:
             lossy = False, loss_level: int = 0, little_endian = False,
             meta = None, img: bytes = None):
 
-        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)*2
+        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if samples_per_frame < 2: raise ValueError(f'Sample size must be at least 2.')
         if samples_per_frame % 2 != 0: raise ValueError('Sample size must be multiple of 2.')

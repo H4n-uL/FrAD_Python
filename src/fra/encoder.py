@@ -1,6 +1,6 @@
 from .common import variables, methods
 from .fourier import fourier
-import json, os, random, struct, subprocess, sys, time, traceback, zlib
+import json, os, math, random, struct, subprocess, sys, time, traceback, zlib
 import numpy as np
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -98,7 +98,7 @@ class encode:
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec, duration = encode.get_info(file_path)
-        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)*2
+        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if bits == 12 and samples_per_frame % 2 != 0: raise ValueError(f'Samples per frame should be even for 12-bit encoing.')
 
