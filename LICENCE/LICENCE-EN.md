@@ -12,7 +12,7 @@ V1.2 - 2024. 3. 28., Original Repository
 
 "Contributor" means any person or entity who has contributed to the Work in any form, including by raising issues or modifying the source code.
 
-"End-Consumer Product" means an audio file encoded in Fourier Analogue-in-Digital format that reaches an end-consumer.
+"End-Consumer Product" means an end product, such as physical or electronic goods or services, that reaches the end consumer via Fourier Analogue-in-Digital.
 
 "Source Distribution" means distribution through distribution channels other than the repositories specified in the Official Documentation without modification of the source code.
 
