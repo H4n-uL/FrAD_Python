@@ -60,7 +60,7 @@ class recorder:
                             struct.pack('>I', sample_rate) +                       # Sample Rate
 
                         #-- 0x10 ~ 0x1f --#
-                            b'\x00'*12 +
+                            b'\x00'*8 +
 
                             # Samples in a frame per channel
                             struct.pack('>I', flen) +
