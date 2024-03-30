@@ -37,6 +37,7 @@ class recorder:
             while True:
                 try:
                     data = record.read(samples_per_frame)[0]
+                    flen = len(data)
                     data, bits = fourier.analogue(data, bit_depth, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level, model=psycho)
                     if lossy: data = zlib.compress(data, level=9)
 
@@ -60,6 +61,9 @@ class recorder:
 
                         #-- 0x10 ~ 0x1f --#
                             b'\x00'*12 +
+
+                            # Samples in a frame per channel
+                            struct.pack('>I', flen) +
 
                             # ISO 3309 CRC32
                             struct.pack('>I', zlib.crc32(data)) +
