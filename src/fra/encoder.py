@@ -154,49 +154,56 @@ class encode:
 
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data, dtype='<d').reshape(-1, channels) * gain
+                    flen = len(frame)
 
                     # DCT
-                    segment, bt = fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level, model=psychomodel)
+                    frame, bit_depth_frame = fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level, model=psychomodel)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
-                    if apply_ecc: segment = ecc.encode(segment, ecc_dsize, ecc_codesize)
+                    if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
+
+                    efb = headb.encode_efb(lossy, apply_ecc, little_endian, bit_depth_frame)
 
                     data = bytes(
                         #-- 0x00 ~ 0x0f --#
                             # Frame Signature
                             b'\xff\xd0\xd2\x97' +
 
-                            # Segment length(Processed)
-                            struct.pack('>I', len(segment)) +
+                            # Frame length(Processed)
+                            struct.pack('>I', len(frame)) +
 
-                            headb.encode_efb(lossy, apply_ecc, little_endian, bt) + # EFB
-                            struct.pack('>B', channels - 1) +                       # Channels
-                            struct.pack('>B', ecc_dsize if apply_ecc else 0) +      # ECC DSize
-                            struct.pack('>B', ecc_codesize if apply_ecc else 0) +   # ECC code size
+                            efb + # ECC-Float Byte
+                            struct.pack('>B', channels - 1) +                    # Channels
+                            struct.pack('>B', apply_ecc and ecc_dsize or 0) +    # ECC DSize
+                            struct.pack('>B', apply_ecc and ecc_codesize or 0) + # ECC Code Size
 
-                            struct.pack('>I', sample_rate) +                      # Sample Rate
+                            # Sample Rate
+                            struct.pack('>I', sample_rate) +
 
                         #-- 0x10 ~ 0x1f --#
-                            b'\x00'*12 +
+                            b'\x00'*8 +
+
+                            # Samples in a frame per channel
+                            struct.pack('>I', flen) +
 
                             # ISO 3309 CRC32
-                            struct.pack('>I', zlib.crc32(segment)) +
+                            struct.pack('>I', zlib.crc32(frame)) +
 
                         #-- Data --#
-                        segment
+                        frame
                     )
 
                     # WRITE
                     file.write(data)
 
                     if verbose:
-                        sample_size = bt // 8 * channels
-                        total_bytes += len(frame) * sample_size
-                        total_samples += len(frame)
+                        sample_size = bit_depth_frame // 8 * channels
+                        total_bytes += flen * sample_size
+                        total_samples += flen
                         if lossy:
-                            total_bytes -= len(frame)//16 * sample_size
-                            total_samples -= len(frame)//16
+                            total_bytes -= flen//16 * sample_size
+                            total_samples -= flen//16
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / sample_rate / sample_size

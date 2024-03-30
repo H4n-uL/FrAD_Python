@@ -40,12 +40,9 @@ class decode:
                 fhead = f.read(32)
                 if not fhead: break
                 framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
-                efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
-                lossy, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
-                channels_frame = struct.unpack('>B', fhead[0x9:0xa])[0] + 1 # 0x09:    Channels
-                ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]          # 0x0a:    ECC Data block size
-                ecc_codesize = struct.unpack('>B', fhead[0xb:0xc])[0]       # 0x0b:    ECC Code size
+                lossy = struct.unpack('>B', fhead[0x8:0x9])[0]>>5&0b1==0b1 and True or False
                 srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
+                samples_p_chnl = struct.unpack('>I', fhead[0x18:0x1c])[0]   # 0x18-4B: Samples in a frame per channel
                 crc32 = fhead[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
                 frame = f.read(framelength)
                 if e and zlib.crc32(frame) != struct.unpack('>I', crc32)[0]:
@@ -54,17 +51,12 @@ class decode:
                         warned = True
                         print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
 
-                if is_ecc_on: frame = ecc.unecc(frame, ecc_dsize, ecc_codesize)
-                ssize_dict = {0b110: 16*channels_frame, 0b101: 8*channels_frame, 0b100: 6*channels_frame, 0b011: 4*channels_frame, 0b010: 3*channels_frame, 0b001: 2*channels_frame, 0b000: 1.5*channels_frame}
-                if lossy:
-                    frame = zlib.decompress(frame)
-                    duration += ((len(frame) - len(frame)//16) // ssize_dict[float_bits]) / (srate_frame * speed)
-                else:
-                    duration += (len(frame) // ssize_dict[float_bits]) / (srate_frame * speed)
+                duration += samples_p_chnl / srate_frame
+                if lossy: duration -= samples_p_chnl//16 / srate_frame
 
                 dlen += len(frame)
                 framescount += 1
-            if lossy: duration += len(frame)//16 / (srate_frame * speed * ssize_dict[float_bits])
+            if lossy: duration += samples_p_chnl // 16 / srate_frame
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
 
             f.seek(header_length)

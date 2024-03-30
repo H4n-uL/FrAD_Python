@@ -25,14 +25,15 @@ class repack:
                         # Reading Frame Header
                         fhead = f.read(32)
                         if not fhead: break
-                        framelength = struct.unpack('>I', fhead[0x4:0x8])[0]  # 0x04-4B: Audio Stream Frame length
-                        efb = struct.unpack('>B', fhead[0x8:0x9])[0]          # 0x08:    Cosine-Float Bit
+                        framelength = struct.unpack('>I', fhead[0x4:0x8])[0]      # 0x04-4B: Audio Stream Frame length
+                        efb = struct.unpack('>B', fhead[0x8:0x9])[0]              # 0x08:    Cosine-Float Bit
                         lossy, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
-                        channels = struct.unpack('>B', fhead[0x9:0xa])[0] + 1 # 0x09:    Channels
-                        ed = struct.unpack('>B', fhead[0xa:0xb])[0]           # 0x0a:    ECC Data block size
-                        ec = struct.unpack('>B', fhead[0xb:0xc])[0]           # 0x0b:    ECC Code size
-                        srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0] # 0x0c-4B: Sample rate
-                        crc32 = fhead[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+                        channels = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
+                        ed = struct.unpack('>B', fhead[0xa:0xb])[0]               # 0x0a:    ECC Data block size
+                        ec = struct.unpack('>B', fhead[0xb:0xc])[0]               # 0x0b:    ECC Code size
+                        srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]     # 0x0c-4B: Sample rate
+                        samples_p_chnl = struct.unpack('>I', fhead[0x18:0x1c])[0] # 0x18-4B: Samples in a frame per channel
+                        crc32 = fhead[0x1c:0x20]                                  # 0x1c-4B: ISO 3309 CRC32 of Audio Data
                         ssize_dict = {0b110: 128, 0b101: 64, 0b100: 48, 0b011: 32, 0b010: 24, 0b001: 16}
 
                         # Reading Frame
@@ -48,23 +49,30 @@ class repack:
                             ecc_codesize = 20
                         frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
                         if lossy: frame = zlib.compress(frame, level=9)
+
+                        efb = headb.encode_efb(lossy, True, endian, ssize_dict[float_bits])
+
                         data = bytes(
                             #-- 0x00 ~ 0x0f --#
                                 # Frame Signature
                                 b'\xff\xd0\xd2\x97' +
 
-                                # Segment length(Processed)
+                                # Frame length(Processed)
                                 struct.pack('>I', len(frame)) +
 
-                                headb.encode_efb(lossy, True, endian, ssize_dict[float_bits]) + # EFB
-                                struct.pack('>B', channels - 1) +                               # Channels
-                                struct.pack('>B', ecc_dsize) +                                  # ECC DSize
-                                struct.pack('>B', ecc_codesize) +                               # ECC code size
+                                efb + # ECC-Float Byte
+                                struct.pack('>B', channels - 1) + # Channels
+                                struct.pack('>B', ecc_dsize) +    # ECC DSize
+                                struct.pack('>B', ecc_codesize) + # ECC Code Size
 
-                                struct.pack('>I', srate_frame) +                                # Sample Rate
+                                # Sample Rate
+                                struct.pack('>I', srate_frame) +
 
                             #-- 0x10 ~ 0x1f --#
-                                b'\x00'*12 +
+                                b'\x00'*8 +
+
+                                # Samples in a frame per channel
+                                struct.pack('>I', samples_p_chnl) +
 
                                 # ISO 3309 CRC32
                                 struct.pack('>I', zlib.crc32(frame)) +
