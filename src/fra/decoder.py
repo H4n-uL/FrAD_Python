@@ -221,8 +221,14 @@ class decode:
             '-ac', str(channels),
             '-i', variables.temp_pcm,
             '-i', variables.meta,
-            '-map_metadata', '1'
         ]
+        if os.path.exists(f'{variables.meta}.image'):
+            command.extend(['-i', f'{variables.meta}.image', '-c:v', 'copy'])
+
+        command.extend(['-map_metadata', '1', '-map', '0:a'])
+
+        if os.path.exists(f'{variables.meta}.image'):
+            command.extend(['-map', '2:v'])
 
         if nsr is not None and nsr != sample_rate: command.extend(['-ar', str(nsr)])
 
@@ -328,7 +334,6 @@ class decode:
         # Decoding
         sample_rate, channels = decode.internal(file_path, e=e, gain=methods.get_gain(gain), verbose=verbose)
         header.parse_to_ffmeta(file_path, variables.meta)
-        # sample_rate = methods.resample_pcm(channels, sample_rate, nsr)
 
         try:
             quality, strategy = decode.split_q(quality)
@@ -384,7 +389,7 @@ class decode:
             print('Aborting...')
             os.remove(variables.temp_pcm)
         except Exception as e:
-            os.remove(variables.meta)
+            if os.path.exists(variables.meta): os.remove(variables.meta)
             if os.path.exists(f'{variables.meta}.image'): os.remove(f'{variables.meta}.image')
             os.remove(variables.temp_pcm)
             sys.exit(traceback.format_exc())
