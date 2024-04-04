@@ -77,7 +77,7 @@ class loss:
         rounder = np.zeros(dlen)
         fl = [20, 100, 500, 2000, 5000, 10000, 20000, 100000, 500000, np.inf]
         rfs = [1, 2, 3, 4, 2, 1, -1, -3, -4]
-        fs_list = {n:filter_tools.get_range(dlen, kwargs['sample_rate'], n) for n in fl}
+        fs_list = {n:loss.get_range(dlen, kwargs['sample_rate'], n) for n in fl}
         for i in range(len(fl[:-1])):
             rounder[fs_list[fl[i]]:fs_list[fl[i+1]]] = 2**np.round(np.log2(dlen) - 11 - rfs[i])
         for c in range(channels):
