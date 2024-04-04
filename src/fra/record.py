@@ -3,7 +3,7 @@ import os, struct, sys, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
-from .tools.lossy_psycho import PsychoacousticModel
+from .tools.psycho import PsychoacousticModel
 
 class recorder:
     def record_audio(file_path, sample_rate = 48000, channels = 1,

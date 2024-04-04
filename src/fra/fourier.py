@@ -1,33 +1,20 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .tools.lossy_psycho import psycho, PsychoacousticModel
+from .tools.psycho import loss
 import zlib
 
 class fourier:
     dtypes = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
 
-    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool = None, sample_rate: int = None, level: int = None, model: PsychoacousticModel = None):
+    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool = None, **kwargs):
         be = not little_endian
         endian = be and '>' or '<'
         freqs = [dct(data[:, i]) for i in range(channels)]
+        dlen = len(data)
 
         if lossy:
             freqs = np.sign(freqs) * np.abs(freqs)**(3/4)
-            nfilts = len(data) // 8
-            fsize, alpha = len(data), (800 - (1.2**level))*0.001
-            M = model.get_model(nfilts, fsize, alpha, sample_rate)
-            rounder = np.zeros(fsize)
-            fl = [20, 100, 500, 2000, 5000, 10000, 20000, 100000, 500000, np.inf]
-            rfs = [1, 2, 3, 4, 2, 1, -1, -3, -4]
-            fs_list = {n:fourier.get_range(fsize, sample_rate, n) for n in fl}
-            for i in range(len(fl[:-1])):
-                rounder[fs_list[fl[i]]:fs_list[fl[i+1]]] = 2**np.round(np.log2(fsize) - 11 - rfs[i])
-            for c in range(channels):
-                mXbark = psycho.mapping2bark(np.abs(freqs[c]),M['W'],fsize*2)
-                mTbark = psycho.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,sample_rate,nfilts) * np.log2(level+1)/2
-                thres =  psycho.mappingfrombark(mTbark,M['W_inv'],fsize*2)[:-1] * (level/20+1)
-                freqs[c][np.abs(freqs[c]) < thres] = 0
-                freqs[c][fs_list[20]:] = np.around(freqs[c][fs_list[20]:] / rounder[fs_list[20]:]) * rounder[fs_list[20]:]
+            freqs = loss.filter(freqs, channels, dlen, kwargs)
 
         while any(np.max(np.abs(c)) > np.finfo(fourier.dtypes[bits]).max for c in freqs):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')

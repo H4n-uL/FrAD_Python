@@ -4,7 +4,7 @@ import json, os, math, random, struct, subprocess, sys, time, traceback, zlib
 import numpy as np
 from .tools.ecc import ecc
 from .tools.headb import headb
-from .tools.lossy_psycho import PsychoacousticModel
+from .tools.psycho import PsychoacousticModel
 
 class encode:
     def get_info(file_path):
