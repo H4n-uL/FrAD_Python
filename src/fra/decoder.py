@@ -121,11 +121,9 @@ class decode:
 
                         # for i in range(channels_frame):
                         #     plt.subplot(channels_frame, 1, i+1)
-                        #     # plt.plot(segment[:, i], alpha=0.5)
-                        #     y = (np.abs(dct(segment[:, i])) / len(segment))
-                        #     plt.fill_between(range(1, len(y)+1), y, 0, color='orange', edgecolor='none')
-                        #     y = (np.abs(np.fft.fft(segment[:, i], len(segment)*2)) / len(segment))[:len(segment)]
-                        #     plt.fill_between(range(1, len(y)+1), 0, -y, color='violet', edgecolor='none')
+                        #     plt.plot(segment[:, i], alpha=0.5)
+                        #     y = np.abs(dct(segment[:, i]) / len(segment))
+                        #     plt.fill_between(range(1, len(y)+1), y, -y, edgecolor='none')
                         #     # plt.xscale('log', base=2)
                         #     plt.ylim(-1, 1)
                         # plt.draw()
