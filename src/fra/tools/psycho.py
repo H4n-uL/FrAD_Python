@@ -61,32 +61,45 @@ class PsychoacousticModel:
 
     def get_model(self, nfilts, frame_size, alpha, sample_rate):
         key = (nfilts, frame_size, alpha, sample_rate)
+
+        # if not in cache
         if key not in self.models:
+            # Creating new model table
             W = filter_tools.mapping2barkmat(sample_rate, nfilts, frame_size*2)
             W_inv = filter_tools.mappingfrombarkmat(W, frame_size*2)
             sprfuncBarkdB = filter_tools.f_SP_dB(sample_rate/2, nfilts)
             sprfuncmat = filter_tools.sprfuncmat(sprfuncBarkdB, alpha, nfilts)
             self.models[key] = {'W': W, 'W_inv': W_inv, 'sprfuncmat': sprfuncmat}
+
+        # return
         return self.models[key]
 
 class loss:
     def filter(freqs, channels, dlen, kwargs):
         nfilts = dlen // 32
         alpha = (800 - (1.2**kwargs['level']))*0.001
+        kwargs['level'] *= 4
+
+        # Getting psychoacoustic model
         M = kwargs['model'].get_model(nfilts, dlen, alpha, kwargs['sample_rate'])
+
+        # Rounding off
         rounder = np.zeros(dlen)
         fl = [20, 100, 500, 2000, 5000, 10000, 20000, 100000, 500000, np.inf]
-        rfs = [1, 2, 3, 4, 2, 1, -1, -3, -4]
+        rfs = [0, 1, 3, 4, 1, 0, -2, -3, -4]
         fs_list = {n:loss.get_range(dlen, kwargs['sample_rate'], n) for n in fl}
         for i in range(len(fl[:-1])):
             rounder[fs_list[fl[i]]:fs_list[fl[i+1]]] = 2**np.round(np.log2(dlen) - 11 - rfs[i])
+
+        # Masking threshold
         for c in range(channels):
+            # idk i just copied from open source model someone please replace it with a better one w. ERB scale
             mXbark = filter_tools.mapping2bark(np.abs(freqs[c]),M['W'],dlen*2)
             mTbark = filter_tools.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,kwargs['sample_rate'],nfilts) * np.log2(kwargs['level']+1)/2
             thres =  filter_tools.mappingfrombark(mTbark,M['W_inv'],dlen*2)[:-1] * (kwargs['level']/20+1)
             freqs[c][np.abs(freqs[c]) < thres] = 0
             freqs[c][fs_list[20]:] = np.around(freqs[c][fs_list[20]:] / rounder[fs_list[20]:]) * rounder[fs_list[20]:]
-        
+
         return freqs
 
     get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
