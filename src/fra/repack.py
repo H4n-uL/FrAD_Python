@@ -39,7 +39,6 @@ class repack:
                         # Reading Frame
                         frame = f.read(framelength)
 
-                        if lossy: frame = zlib.decompress(frame)
                         if is_ecc_on:
                             frame = ecc.decode(frame, ed, ec)
                             ecc_dsize = int(ecc_sizes[0])
@@ -48,7 +47,6 @@ class repack:
                             ecc_dsize = 128
                             ecc_codesize = 20
                         frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
-                        if lossy: frame = zlib.compress(frame, level=9)
 
                         efb = headb.encode_efb(lossy, True, endian, ssize_dict[float_bits])
 
