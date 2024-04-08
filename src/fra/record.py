@@ -27,7 +27,7 @@ class recorder:
         if not (file_path.lower().endswith('.frad') or file_path.lower().endswith('.dsin') or file_path.lower().endswith('.fra') or file_path.lower().endswith('.dsn')):
             if len(file_path) <= 8 and all(ord(c) < 128 for c in file_path): file_path += '.fra'
             else: file_path += '.frad'
-        
+
         if os.path.exists(file_path) and 'y' not in input(f'{file_path} Already exists. Proceed? ').lower(): sys.exit('Aborted.')
         ecc_dsize, ecc_codesize = int(ecc_sizes[0]), int(ecc_sizes[1])
         print("Recording...")
@@ -43,7 +43,7 @@ class recorder:
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: data = ecc.encode(data, ecc_dsize, ecc_codesize)
-                    
+
                     data = bytes(
                         #-- 0x00 ~ 0x0f --#
                             # Frame Signature

@@ -116,7 +116,7 @@ class encode:
         if not (out.lower().endswith('.frad') or out.lower().endswith('.dsin') or out.lower().endswith('.fra') or out.lower().endswith('.dsn')):
             if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.fra'
             else: out += '.frad'
-        
+
         if os.path.exists(out) and 'y' not in input(f'{out} Already exists. Proceed? ').lower(): sys.exit('Aborted.')
 
         # Fourier Transform
