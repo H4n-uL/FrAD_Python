@@ -19,7 +19,7 @@ def main(action, args):
             img = i.read()
 
     if action == 'encode':
-        from fra import encode
+        from FrAD import encode
         if args.bits is None: raise ValueError('--bits option is required for encoding.')
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
@@ -31,7 +31,7 @@ def main(action, args):
                 nsr=nsr, meta=meta, img=img,
                 verbose=args.verbose)
     elif action == 'decode':
-        from fra import decode
+        from FrAD import decode
         bits = 32 if args.bits == None else int(args.bits)
         codec = args.codec if args.codec is not None else None
         decode.dec(
@@ -41,24 +41,24 @@ def main(action, args):
                 e=args.ecc, gain=[args.gain, args.dbfs], nsr=args.new_sample_rate,
                 verbose=args.verbose)
     elif action == 'parse':
-        from fra import header
+        from FrAD import header
         output = args.output if args.output is not None else 'metadata'
         header.parse(file_path, output)
     elif action == 'modify' or action == 'meta-modify':
-        from fra import header
+        from FrAD import header
         header.modify(file_path, meta=meta, img=img)
     elif action == 'ecc':
-        from fra import repack
+        from FrAD import repack
         repack.ecc(file_path, args.data_ecc_size, args.verbose)
     elif action == 'play':
-        from fra import player
+        from FrAD import player
         player.play(
                 file_path, gain=[args.gain, args.dbfs],
                 keys=float(args.keys) if args.keys is not None else None,
                 speed_in_times=float(args.speed) if args.speed is not None else None,
                 e=args.ecc, verbose=args.verbose)
     elif action == 'record':
-        from fra import recorder
+        from FrAD import recorder
         bits = 24 if args.bits == None else int(args.bits)
         recorder.record_audio(args.file_path, sample_rate=48000, channels=1,
             bit_depth=bits,
