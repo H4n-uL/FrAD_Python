@@ -6,7 +6,7 @@ import zlib
 class fourier:
     dtypes = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
 
-    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool = None, **kwargs):
+    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool = None, **kwargs) -> bytes:
         be = not little_endian
         endian = be and '>' or '<'
 
@@ -20,13 +20,19 @@ class fourier:
             # Inter-channel prediction
             freqs[1:] -= freqs[0]
 
+        # Ravelling and packing
+        data: np.ndarray = np.column_stack(freqs).ravel(order='C')
+        # if lossy:
+        #     data_prefix = data[::4]
+        #     for i in range(1, 4): data_prefix = np.concatenate([data_prefix, data[i::4] - data[::4]])
+        #     data = data_prefix.astype(fourier.dtypes[bits]).newbyteorder(endian)
+
         # Overflow check & Increasing bit depth
-        while any(np.max(np.abs(c)) > np.finfo(fourier.dtypes[bits]).max for c in freqs):
+        while any(np.max(np.abs(data)) > np.finfo(fourier.dtypes[bits]).max):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
-
-        # Ravelling and packing
-        data: bytes = np.column_stack([chnl.astype(fourier.dtypes[bits]).newbyteorder(endian) for chnl in freqs]).ravel(order='C').tobytes()
+        
+        data: bytes = data.astype(fourier.dtypes[bits]).newbyteorder(endian).tobytes()
 
         # Cutting off bits
         if bits in [128, 64, 32, 16]:
@@ -43,7 +49,7 @@ class fourier:
 
         return data, bits
 
-    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, lossy: bool = None):
+    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, lossy: bool = None) -> np.ndarray:
         be = not little_endian
         endian = be and '>' or '<'
         bits = {0b110:128,0b101:64,0b100:48,0b011:32,0b010:24,0b001:16,0b000:12}[fb]
@@ -64,8 +70,13 @@ class fourier:
             raise Exception('Illegal bits value.')
 
         # Unpacking and unravelling
-        data_numpy = np.frombuffer(data, dtype=endian+fourier.dtypes[bits]).astype(float)
-        freqs = [data_numpy[i::channels] for i in range(channels)]
+        data = np.frombuffer(data, dtype=endian+fourier.dtypes[bits]).astype(float)
+        # if lossy:
+        #     recov = np.zeros_like(data)
+        #     recov[::4] = data[:len(data)//4]
+        #     for i in range(1, 4): recov[i::4] = data[len(data)//4*i:len(data)//4*(i+1)] + recov[::4]
+        #     data = recov
+        freqs = [data[i::channels] for i in range(channels)]
 
         # Removing potential Infinities and Non-numbers
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
