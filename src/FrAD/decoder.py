@@ -137,7 +137,7 @@ class decode:
                             depth = [12, 16, 24, 32, 48, 64, 128][float_bits]
                             lg = int(math.log(srate_frame, 1000))
                             kmgt = ['','k','M','G','T'][lg]
-                            print(f'{(i):.3f} s / {(duration):.3f} s (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lg*3)} {kmgt}Hz {not endian and "B" or "L"}E {channels_frame} channel{channels_frame>1 and "s" or ""}')
+                            print(f'{methods.tformat(i)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lg*3)} {kmgt}Hz {not endian and "B" or "L"}E {channels_frame} channel{channels_frame>1 and "s" or ""}')
                             print(f'{lossy and "Lossy" or "Lossless"}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} samples & {framelength} Bytes per frame')
                         else:
                             print('\x1b[1A\x1b[2K', end='')
@@ -163,7 +163,7 @@ class decode:
                             eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
-                            print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
+                            print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 time.sleep(1)
                 stream.close()

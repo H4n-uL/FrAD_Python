@@ -212,7 +212,7 @@ class encode:
                         eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
                         print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
-                        print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
+                        print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
                         print(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
 
                 if verbose: print('\x1b[1A\x1b[2K', end='')

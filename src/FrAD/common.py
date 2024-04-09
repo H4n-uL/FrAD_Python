@@ -1,5 +1,8 @@
 import base64, os, platform, secrets
 
+yd = 365.25
+ys = yd * 86400
+
 class variables:
     hash_block_size = 2**20
 
@@ -45,3 +48,16 @@ class methods:
         if glist[0] is None: return 1
         if glist[1] is True: return 10 ** (float(glist[0]) / 20)
         else: return float(glist[0])
+
+
+    def tformat(n: float) -> str:
+        if n < 0: return f'-{methods.tformat(-n)}'
+        if n == 0: return '---'
+        if n < 0.000001: return f'{n*10**9:.3f} ns'
+        if n < 0.001: return f'{n*10**6:.3f} µs'
+        if n < 1: return f'{n*1000:.3f} ms'
+        if n < 60: return f'{n:.3f} s'
+        if n < 3600: return f'{int(n//60)%60}:{n%60:06.3f}'
+        if n < 86400: return f'{int(n//3600)%24}:{int(n//60)%60:02d}:{n%60:06.3f}'
+        if n < ys: return f'{int(n//86400)%yd}:{int(n//3600)%24:02d}:{int(n//60)%60:02d}:{n%60:06.3f}'
+        return f'J{int(n//ys)}.{int((n%ys//86400)%yd):03d}:{int(n%ys//3600)%24:02d}:{int(n%ys//60)%60:02d}:{n%ys%60:06.3f}'

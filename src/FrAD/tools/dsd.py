@@ -1,5 +1,5 @@
 import base64, os, struct, subprocess, time
-from ..common import variables
+from ..common import variables, methods
 import numpy as np
 
 class DeltaSigma:
@@ -143,12 +143,12 @@ class dsd:
                         elapsed_time = time.time() - start_time
                         bps = i / elapsed_time
                         mult = (dlen * 8 / dsd_srate / channels) / elapsed_time
-                        percent = dlen*100 / pred_size
+                        percent = (dlen / pred_size)*100
                         b = int(percent / 100 * cli_width)
                         eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
                         print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                         print(f'DSD Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
-                        print(f'elapsed: {elapsed_time:.3f} s, ETA {eta:.3f} s')
+                        print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
                         print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 with open(f'{out}.{ext}', 'wb') as f, open(variables.temp_dsd, 'rb') as temp:
                     f.write(h + temp.read())
