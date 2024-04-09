@@ -69,7 +69,7 @@ class dsd:
     def build_dsf_header(datalen: int, chtype: int, sample_rate: int, dsfblock: int):
         channels = chtype - 1 if chtype > 4 else chtype
         FMT = bytearray(
-            b'fmt ' + struct.pack('<Q', 52) + 
+            b'fmt ' + struct.pack('<Q', 52) +
             struct.pack('<I', 1) +                        # Version
             struct.pack('<I', 0) +                        # Format ID
             struct.pack('<I', chtype) +                   # Channel Type
@@ -89,8 +89,8 @@ class dsd:
         )
 
         HEAD = bytearray(
-            b'DSD ' + 
-            struct.pack('<Q', 28) + 
+            b'DSD ' +
+            struct.pack('<Q', 28) +
             struct.pack('<Q', 0) + # Data length padding
             struct.pack('<Q', 0) + # Metadata location
             FMT + DATA

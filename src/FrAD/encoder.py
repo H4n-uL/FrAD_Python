@@ -72,8 +72,8 @@ class encode:
 
     def get_image(file_path: str):
         command = [
-            variables.ffmpeg, '-v', 'quiet', '-i', file_path, 
-            '-an', '-vcodec', 'copy', 
+            variables.ffmpeg, '-v', 'quiet', '-i', file_path,
+            '-an', '-vcodec', 'copy',
             '-f', 'image2pipe', '-'
         ]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

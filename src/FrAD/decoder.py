@@ -183,7 +183,7 @@ class decode:
                 sys.exit(0)
 
     def split_q(s):
-        if s == None: 
+        if s == None:
             return None, 'c'
         if not s[0].isdigit():
             raise ValueError('Quality format should be [{Positive integer}{c/v/a}]')

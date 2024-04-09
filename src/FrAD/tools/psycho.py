@@ -14,7 +14,7 @@ class filter_tools:
         indices = indices % nfilts
         return sprfuncBVolt[indices.ravel()].reshape(nfilts, nfilts)
 
-    def maskingThresholdBark(mXbark,sprfuncmatrix,alpha,fs,nfilts): 
+    def maskingThresholdBark(mXbark,sprfuncmatrix,alpha,fs,nfilts):
         mTbark=np.dot(mXbark**alpha, sprfuncmatrix**alpha)
         mTbark=mTbark**(1.0/alpha)
         maxfreq=fs/2.0
