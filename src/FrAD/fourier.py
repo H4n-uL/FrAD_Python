@@ -31,7 +31,7 @@ class fourier:
         while any(np.max(np.abs(data)) > np.finfo(fourier.dtypes[bits]).max):
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
-        
+
         data: bytes = data.astype(fourier.dtypes[bits]).newbyteorder(endian).tobytes()
 
         # Cutting off bits
