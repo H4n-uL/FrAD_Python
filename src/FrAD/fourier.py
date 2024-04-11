@@ -22,13 +22,9 @@ class fourier:
 
         # Ravelling and packing
         data: np.ndarray = np.column_stack(freqs).ravel(order='C')
-        # if lossy:
-        #     data_prefix = data[::4]
-        #     for i in range(1, 4): data_prefix = np.concatenate([data_prefix, data[i::4] - data[::4]])
-        #     data = data_prefix.astype(fourier.dtypes[bits]).newbyteorder(endian)
 
         # Overflow check & Increasing bit depth
-        while any(np.max(np.abs(data)) > np.finfo(fourier.dtypes[bits]).max):
+        while np.max(np.abs(data)) > np.finfo(fourier.dtypes[bits]).max:
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
@@ -47,7 +43,7 @@ class fourier:
         # Deflating
         if lossy: data = zlib.compress(data, level=9)
 
-        return data, bits
+        return data, bits, channels
 
     def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, lossy: bool = None) -> np.ndarray:
         be = not little_endian
@@ -71,11 +67,6 @@ class fourier:
 
         # Unpacking and unravelling
         data = np.frombuffer(data, dtype=endian+fourier.dtypes[bits]).astype(float)
-        # if lossy:
-        #     recov = np.zeros_like(data)
-        #     recov[::4] = data[:len(data)//4]
-        #     for i in range(1, 4): recov[i::4] = data[len(data)//4*i:len(data)//4*(i+1)] + recov[::4]
-        #     data = recov
         freqs = [data[i::channels] for i in range(channels)]
 
         # Removing potential Infinities and Non-numbers

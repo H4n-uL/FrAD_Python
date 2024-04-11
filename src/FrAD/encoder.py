@@ -157,7 +157,8 @@ class encode:
                     flen = len(frame)
 
                     # DCT
-                    frame, bit_depth_frame = fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level, model=psychomodel)
+                    frame, bit_depth_frame, channels_frame = \
+                        fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level, model=psychomodel)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
@@ -174,7 +175,7 @@ class encode:
                             struct.pack('>I', len(frame)) +
 
                             efb + # ECC-Float Byte
-                            struct.pack('>B', channels - 1) +                    # Channels
+                            struct.pack('>B', channels_frame - 1) +              # Channels
                             struct.pack('>B', apply_ecc and ecc_dsize or 0) +    # ECC DSize
                             struct.pack('>B', apply_ecc and ecc_codesize or 0) + # ECC Code Size
 
