@@ -20,15 +20,13 @@ class fourier:
             # Inter-channel prediction
             freqs[1:] -= freqs[0]
 
-        # Ravelling and packing
-        data: np.ndarray = np.column_stack(freqs).ravel(order='C')
-
         # Overflow check & Increasing bit depth
         while np.max(np.abs(data)) > np.finfo(fourier.dtypes[bits]).max:
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
             bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
-        data: bytes = data.astype(fourier.dtypes[bits]).newbyteorder(endian).tobytes()
+        # Ravelling and packing
+        data: np.ndarray = np.column_stack(np.array(freqs).astype(fourier.dtypes[bits]).newbyteorder(endian)).ravel(order='C').tobytes()
 
         # Cutting off bits
         if bits in [128, 64, 32, 16]:
