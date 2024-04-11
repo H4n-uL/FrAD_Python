@@ -52,7 +52,7 @@ class methods:
 
     def tformat(n: float) -> str:
         if n < 0: return f'-{methods.tformat(-n)}'
-        if n == 0: return '---'
+        if n == 0: return '0'
         if n < 0.000001: return f'{n*10**9:.3f} ns'
         if n < 0.001: return f'{n*10**6:.3f} µs'
         if n < 1: return f'{n*1000:.3f} ms'
