@@ -55,12 +55,14 @@ class filter_tools:
         mT = np.dot(mTbark, W_inv[:, :nfreqs].T)
         return mT
 
+nfilts = 64
+
 class PsychoacousticModel:
     def __init__(self):
         self.models = {}
 
-    def get_model(self, nfilts, frame_size, alpha, sample_rate):
-        key = (nfilts, frame_size, alpha, sample_rate)
+    def get_model(self, frame_size, alpha, sample_rate):
+        key = (frame_size, alpha, sample_rate)
 
         # if not in cache
         if key not in self.models:
@@ -76,12 +78,10 @@ class PsychoacousticModel:
 
 class loss:
     def filter(freqs, channels, dlen, kwargs):
-        nfilts = dlen // 32
         alpha = (800 - (1.2**kwargs['level']))*0.001
-        kwargs['level'] *= 4
 
         # Getting psychoacoustic model
-        M = kwargs['model'].get_model(nfilts, dlen, alpha, kwargs['sample_rate'])
+        M = kwargs['model'].get_model(dlen, alpha, kwargs['sample_rate'])
 
         # Rounding off
         rounder = np.zeros(dlen)
@@ -95,8 +95,8 @@ class loss:
         for c in range(channels):
             # idk i just copied from open source model someone please replace it with a better one w. ERB scale
             mXbark = filter_tools.mapping2bark(np.abs(freqs[c]),M['W'],dlen*2)
-            mTbark = filter_tools.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,kwargs['sample_rate'],nfilts) * np.log2(kwargs['level']+1)/2
-            thres =  filter_tools.mappingfrombark(mTbark,M['W_inv'],dlen*2)[:-1] * (kwargs['level']/20+1)
+            mTbark = filter_tools.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,kwargs['sample_rate'],nfilts) * np.log2(kwargs['level']*4+1)/2
+            thres =  filter_tools.mappingfrombark(mTbark,M['W_inv'],dlen*2)[:-1] * (kwargs['level']*4/20+1)
             freqs[c][np.abs(freqs[c]) < thres] = 0
             freqs[c][fs_list[20]:] = np.around(freqs[c][fs_list[20]:] / rounder[fs_list[20]:]) * rounder[fs_list[20]:]
 
