@@ -139,6 +139,7 @@ class encode:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
                     # samples_per_frame = random.choice([i for i in range(1024, 4097, 32)]) # Random spf test
                     # lossy = random.choice([True, False]) # Random lossy test
+                    # loss_level = random.choice([i for i in range(21)]) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
                     # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
 
