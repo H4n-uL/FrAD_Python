@@ -18,13 +18,18 @@ def main(action, args):
         with open(args.image, 'rb') as i:
             img = i.read()
 
+    try: layer = int(args.layer)
+    except: layer = 0
+
+    if layer > 7 or layer < 0: layer = 0 
+
     if action == 'encode':
         from FrAD import encode
         if args.bits is None: raise ValueError('--bits option is required for encoding.')
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
                 file_path, int(args.bits), little_endian=args.little_endian,
-                out=args.output, lossy=args.lossy, loss_level=int(args.losslevel),
+                out=args.output, layer=layer, loss_level=int(args.losslevel),
                 samples_per_frame=int(args.frame_size), gain=[args.gain, args.dbfs],
                 apply_ecc=args.ecc,
                 ecc_sizes=args.data_ecc_size,
@@ -63,7 +68,7 @@ def main(action, args):
         recorder.record_audio(args.file_path, sample_rate=48000, channels=1,
             bit_depth=bits,
             apply_ecc=args.ecc, ecc_sizes=args.data_ecc_size,
-            lossy=args.lossy, loss_level=int(args.losslevel), little_endian=args.little_endian)
+            layer=layer, loss_level=int(args.losslevel), little_endian=args.little_endian)
     else:
         raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 
@@ -87,8 +92,8 @@ if __name__ == '__main__':
     parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',       help='Metadata in "key" "value" format')
     parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                 help='Metadata in json, This will override --meta option.')
     parser.add_argument('-le',  '--little_endian',                                                   action='store_true',   help='Little Endian Toggle')
-    parser.add_argument('-l',   '--lossy',                                                           action='store_true',   help='Lossy compression Toggle, THIS OPTION IS HIGHLY RECOMMENDED NOT TO ENABLE.')
-    parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='0',           help='Lossy compression level')
+    parser.add_argument('-l',   '--layer',                                  required=False,                                 help='FrAD Layer, THIS IS HIGHLY RECOMMENDED NOT TO BE USED OR SET TO 0')
+    parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='0',           help='Compression level, this will not work for Layer 0')
     parser.add_argument('-v',   '--verbose',                                                         action='store_true',   help='Verbose CLI Toggle')
 
     args = parser.parse_args()

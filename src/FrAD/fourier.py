@@ -1,24 +1,18 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .tools.psycho import loss
-import zlib
+from .layers import layer1
 
 class fourier:
     dtypes = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
 
-    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, lossy: bool = None, **kwargs) -> bytes:
+    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, layer: int = 0, **kwargs) -> bytes:
+        if layer == 1: return layer1.analogue(data, bits, channels, little_endian, kwargs)
+
         be = not little_endian
         endian = be and '>' or '<'
 
         # DCT
         freqs = [dct(data[:, i]) for i in range(channels)]
-        dlen = len(data)
-
-        if lossy:
-            freqs = np.sign(freqs) * np.abs(freqs)**(3/4)
-            freqs = loss.filter(freqs, channels, dlen, kwargs)
-            # Inter-channel prediction
-            freqs[1:] -= freqs[0]
 
         # Overflow check & Increasing bit depth
         while np.max(np.abs(data)) > np.finfo(fourier.dtypes[bits]).max:
@@ -38,18 +32,14 @@ class fourier:
             data = bytes.fromhex(''.join([be and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)]))
         else: raise Exception('Illegal bits value.')
 
-        # Deflating
-        if lossy: data = zlib.compress(data, level=9)
-
         return data, bits, channels
 
-    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, lossy: bool = None) -> np.ndarray:
+    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, layer: int = 0) -> np.ndarray:
+        if layer == 1: return layer1.digital(data, fb, channels, little_endian)
+
         be = not little_endian
         endian = be and '>' or '<'
         bits = {0b110:128,0b101:64,0b100:48,0b011:32,0b010:24,0b001:16,0b000:12}[fb]
-
-        # Inflating
-        if lossy: data = zlib.decompress(data)
 
         # Padding bits
         if bits % 3 != 0: pass
@@ -69,10 +59,6 @@ class fourier:
 
         # Removing potential Infinities and Non-numbers
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
-        if lossy:
-            # Inter-channel reconstruction
-            freqs[1:] += freqs[0]
-            freqs = np.sign(freqs) * np.abs(freqs)**(4/3)
 
         # Inverse DCT and stacking
         return np.column_stack([idct(chnl) for chnl in freqs])
