@@ -98,7 +98,7 @@ class encode:
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec, duration = encode.get_info(file_path)
-        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)
+        segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if bits == 12 and samples_per_frame % 2 != 0: raise ValueError(f'Samples per frame should be even for 12-bit encoing.')
 
@@ -137,13 +137,17 @@ class encode:
                 if verbose: print('\n\n')
                 while True:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
-                    # samples_per_frame = random.choice([i for i in range(1024, 4097, 32)]) # Random spf test
-                    # lossy = random.choice([True, False]) # Random lossy test
-                    # loss_level = random.choice([i for i in range(21)]) # Random lossy level test
+                    # samples_per_frame = random.choice(list(range(32, 8193))) # Random spf test
+                    # layer = random.choice(list(range(2))) # Random layer test
+                    # loss_level = random.choice(list(range(21))) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
-                    # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
+                    # ecc_dsize, ecc_codesize = random.choice(list(range(64, 129))), random.choice(list(range(16, 64))) # Random ECC test
 
                     rlen = samples_per_frame * 8 * channels
+                    spf = samples_per_frame
+                    while rlen < len(last):
+                        spf += 128
+                        rlen = spf * 8 * channels
                     if layer == 1 and len(last) != 0:
                         rlen -= len(last)
 
