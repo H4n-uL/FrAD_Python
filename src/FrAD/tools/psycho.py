@@ -83,14 +83,6 @@ class loss:
         # Getting psychoacoustic model
         M = kwargs['model'].get_model(dlen, alpha, kwargs['sample_rate'])
 
-        # Rounding off
-        rounder = np.zeros(dlen)
-        fl = [20, 100, 500, 2000, 5000, 10000, 20000, 100000, 500000, np.inf]
-        rfs = [0, 1, 3, 4, 1, 0, -2, -3, -4]
-        fs_list = {n:loss.get_range(dlen, kwargs['sample_rate'], n) for n in fl}
-        for i in range(len(fl[:-1])):
-            rounder[fs_list[fl[i]]:fs_list[fl[i+1]]] = 2**np.round(np.log2(dlen) - 11 - rfs[i])
-
         # Masking threshold
         for c in range(channels):
             # idk i just copied from open source model someone please replace it with a better one w. ERB scale
@@ -98,7 +90,6 @@ class loss:
             mTbark = filter_tools.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,kwargs['sample_rate'],nfilts) * np.log2(kwargs['level']*4+1)/2
             thres =  filter_tools.mappingfrombark(mTbark,M['W_inv'],dlen*2)[:-1] * (kwargs['level']*4/20+1)
             freqs[c][np.abs(freqs[c]) < thres] = 0
-            freqs[c][fs_list[20]:] = np.around(freqs[c][fs_list[20]:] / rounder[fs_list[20]:]) * rounder[fs_list[20]:]
 
         return freqs
 

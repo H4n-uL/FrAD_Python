@@ -5,14 +5,38 @@ import zlib
 
 dtypes = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
 
+fl = [0, 100, 500, 2000, 5000, 10000, 20000, 100000, 500000, np.inf]
+rfs = [4, 5, 7, 8, 6, 4, 3, 1, 0]
+
+def rounding(freqs, kwargs):
+    dlen = len(freqs[0])
+    fs_list = {n:loss.get_range(dlen, kwargs['sample_rate'], n) for n in fl}
+
+    for c in range(len(freqs)):
+        for i, j in zip(fl[:-1], fl[1:]):
+            af = 2**(-rfs[fl.index(i)])
+            freqs[c][fs_list[i]:fs_list[j]] = np.around(freqs[c][fs_list[i]:fs_list[j]] / af) * af
+    return freqs
+
+# def unrounding(freqs, kwargs):
+#     dlen = len(freqs[0])
+#     fs_list = {n:loss.get_range(dlen, kwargs['sample_rate'], n) for n in fl}
+
+#     for c in range(len(freqs)):
+#         for i, j in zip(fl[:-1], fl[1:]):
+#             af = 2**(-rfs[fl.index(i)])
+#             freqs[c][fs_list[i]:fs_list[j]] *= af
+#     return freqs
+
 def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> bytes:
     be = not little_endian
     endian = be and '>' or '<' # DCT
-    freqs = [dct(data[:, i]) for i in range(channels)]
+    freqs = np.array([dct(data[:, i], norm='ortho') for i in range(channels)])
     dlen = len(data)
 
     freqs = np.sign(freqs) * np.abs(freqs)**(3/4)
-    freqs = loss.filter(freqs, channels, dlen, kwargs)
+    freqs = loss.filter(freqs*65536, channels, dlen, kwargs)/65536
+    freqs = rounding(freqs, kwargs)
     # Inter-channel prediction
     freqs[1:] -= freqs[0]
 
@@ -39,7 +63,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
 
     return data, bits, channels
 
-def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, layer: int = 0) -> np.ndarray:
+def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs) -> np.ndarray:
     be = not little_endian
     endian = be and '>' or '<'
     bits = {0b110:128,0b101:64,0b100:48,0b011:32,0b010:24,0b001:16,0b000:12}[fb]
@@ -70,4 +94,4 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, layer: 
     freqs = np.sign(freqs) * np.abs(freqs)**(4/3)
 
     # Inverse DCT and stacking
-    return np.column_stack([idct(chnl) for chnl in freqs])
+    return np.column_stack([idct(chnl, norm='ortho') for chnl in freqs])
