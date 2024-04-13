@@ -6,7 +6,7 @@ import zlib
 dtypes = {128:'i16',64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2'}
 
 fl = [0, 100, 500, 2000, 5000, 10000, 20000, 100000, 500000, np.inf]
-rfs = [4, 5, 7, 8, 6, 4, 3, 1, 0]
+rfs = [4, 5, 7, 8, 6, 5, 4, 2, 0]
 
 def signext_24x(byte, bits, be):
     padding = int(byte.hex(), base=16) & (1<<be and (bits-1) or 7) and b'\xff' or b'\x00'
