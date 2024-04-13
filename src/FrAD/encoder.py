@@ -139,6 +139,9 @@ class encode:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
                     # samples_per_frame = random.choice([i for i in range(1024, 4097, 32)]) # Random spf test
                     # lossy = random.choice([True, False]) # Random lossy test
+                    # apply_ecc = random.choice([True, False]) # Random ECC test
+                    # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
+
                     rlen = samples_per_frame * 8 * channels
                     if lossy and len(last) != 0:
                         rlen -= len(last)
@@ -160,8 +163,6 @@ class encode:
                     frame, bit_depth_frame, channels_frame = \
                         fourier.analogue(frame, bits, channels, little_endian, lossy=lossy, sample_rate=sample_rate, level=loss_level, model=psychomodel)
 
-                    # Applying ECC (This will make encoding hundreds of times slower)
-                    # ecc_dsize, ecc_codesize = random.choice([i for i in range(64, 129)]), random.choice([i for i in range(16, 64)]) # Random ECC test
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
                     efb = headb.encode_efb(lossy, apply_ecc, little_endian, bit_depth_frame)
