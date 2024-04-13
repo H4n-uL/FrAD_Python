@@ -100,7 +100,7 @@ class decode:
                             frame = ecc.decode(frame, ecc_dsize, ecc_codesize)
                         else: frame = ecc.unecc(frame, ecc_dsize, ecc_codesize)
 
-                    segment = fourier.digital(frame, float_bits, channels_frame, endian, layer=layer) * gain # Inversing
+                    segment = fourier.digital(frame, float_bits, channels_frame, endian, layer=layer, sample_rate=srate_frame) * gain # Inversing
 
                     if prev is not None:
                         fade_in = np.linspace(0, 1, len(prev))

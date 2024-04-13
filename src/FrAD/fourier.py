@@ -12,15 +12,15 @@ class fourier:
         endian = be and '>' or '<'
 
         # DCT
-        freqs = [dct(data[:, i]) for i in range(channels)]
+        freqs = np.array([dct(data[:, i]) for i in range(channels)])
 
         # Overflow check & Increasing bit depth
-        while np.max(np.abs(data)) > np.finfo(fourier.dtypes[bits]).max:
+        while np.max(np.abs(freqs)) > np.finfo(fourier.dtypes[bits]).max:
             if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
-            bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
+            bits = {12:16, 16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
         # Ravelling and packing
-        data: np.ndarray = np.column_stack(np.array(freqs).astype(fourier.dtypes[bits]).newbyteorder(endian)).ravel(order='C').tobytes()
+        data: np.ndarray = np.column_stack(freqs.astype(fourier.dtypes[bits]).newbyteorder(endian)).ravel(order='C').tobytes()
 
         # Cutting off bits
         if bits in [128, 64, 32, 16]:
@@ -34,8 +34,8 @@ class fourier:
 
         return data, bits, channels
 
-    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, layer: int = 0) -> np.ndarray:
-        if layer == 1: return layer1.digital(data, fb, channels, little_endian)
+    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, layer: int = 0, **kwargs) -> np.ndarray:
+        if layer == 1: return layer1.digital(data, fb, channels, little_endian, kwargs=kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'
