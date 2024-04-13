@@ -14,10 +14,10 @@ def signext_24x(byte, bits, be):
     else: return byte + padding * (bits//24)
 
 def signext_12(hex_str, be):
-    sign_bit = int(hex_str[be and 0 or 2], base=16) > 7
-    padding = 'f' if sign_bit else '0'
+    prefix = be and hex_str[0] or hex_str[2]
+    padding = int(prefix, base=16) > 7 and 'f' or '0'
     if be: return padding + hex_str
-    else: return hex_str[:2] + padding + hex_str[2:]
+    else: return hex_str[:2] + padding + hex_str[2]
 
 def rounding(freqs, kwargs):
     dlen = len(freqs[0])
