@@ -21,7 +21,7 @@ def main(action, args):
     try: layer = int(args.layer)
     except: layer = 0
 
-    if layer > 7 or layer < 0: layer = 0 
+    if layer > 7 or layer < 0: layer = 0
 
     if action == 'encode':
         from FrAD import encode
