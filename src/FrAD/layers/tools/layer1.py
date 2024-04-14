@@ -76,21 +76,19 @@ class PsychoacousticModel:
         # return
         return self.models[key]
 
-class loss:
-    def filter(freqs, channels, dlen, kwargs):
-        alpha = (800 - (1.2**kwargs['level']))*0.001
+def get_thres(freqs, channels, dlen, kwargs):
+    alpha = (800 - (1.2**kwargs['level']))*0.001
 
-        # Getting psychoacoustic model
-        M = kwargs['model'].get_model(dlen, alpha, kwargs['sample_rate'])
+    # Getting psychoacoustic model
+    M = kwargs['model'].get_model(dlen, alpha, kwargs['sample_rate'])
 
-        # Masking threshold
-        for c in range(channels):
-            # idk i just copied from open source model someone please replace it with a better one w. ERB scale
-            mXbark = filter_tools.mapping2bark(np.abs(freqs[c]),M['W'],dlen*2)
-            mTbark = filter_tools.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,kwargs['sample_rate'],nfilts) * np.log2(kwargs['level']*4+1)/2
-            thres =  filter_tools.mappingfrombark(mTbark,M['W_inv'],dlen*2)[:-1] * (kwargs['level']*4/20+1)
-            freqs[c][np.abs(freqs[c]) < thres] = 0
+    # Masking threshold
+    thresholds = []
+    for c in range(channels):
+        # idk i just copied from open source model someone please replace it with a better one w. ERB scale
+        mXbark = filter_tools.mapping2bark(np.abs(freqs[c]),M['W'],dlen*2)
+        mTbark = filter_tools.maskingThresholdBark(mXbark,M['sprfuncmat'],alpha,kwargs['sample_rate'],nfilts)
+        thres =  filter_tools.mappingfrombark(mTbark,M['W_inv'],dlen*2)[:-1]
+        thresholds.append(thres)
 
-        return freqs
-
-    get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
+    return np.array(thresholds)

@@ -3,7 +3,6 @@ import os, struct, sys, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
-from .tools.psycho import PsychoacousticModel
 
 class recorder:
     def record_audio(file_path, sample_rate = 48000, channels = 1,
@@ -33,7 +32,11 @@ class recorder:
         print("Recording...")
         open(file_path, 'wb').write(headb.uilder(meta, img))
         with sd.InputStream(samplerate=sample_rate, channels=channels, device=hw) as record, open(file_path, 'ab') as f:
-            psycho = PsychoacousticModel()
+
+            if layer == 1:
+                from .layers.tools.layer1 import PsychoacousticModel
+                psycho = PsychoacousticModel()
+
             while True:
                 try:
                     data = record.read(samples_per_frame)[0]

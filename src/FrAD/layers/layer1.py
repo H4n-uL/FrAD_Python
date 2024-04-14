@@ -1,12 +1,13 @@
 from scipy.fft import dct, idct
 import numpy as np
-from ..tools.psycho import loss
+from .tools import layer1 as l1tools
 import zlib
+import matplotlib.pyplot as plt
 
 dtypes = {128:'i16',64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2'}
-
-fl = [0, 100, 500, 2000, 5000, 10000, 20000, 100000, 500000, np.inf]
-rfs = [4, 5, 7, 8, 6, 5, 4, 2, 0]
+get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
+subband =  [0, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, np.inf]
+qfactors = [  5,  4,  3,   4,   5,   6,    7,    8,    6,     5,     4,     3,      2,      2,      0,      -1      ]
 
 def signext_24x(byte, bits, be):
     padding = int(byte.hex(), base=16) & (1<<be and (bits-1) or 7) and b'\xff' or b'\x00'
@@ -19,35 +20,45 @@ def signext_12(hex_str, be):
     if be: return padding + hex_str
     else: return hex_str[:2] + padding + hex_str[2]
 
-def rounding(freqs, kwargs):
+def quant(freqs, thresholds, kwargs):
     dlen = len(freqs[0])
-    fs_list = {n:loss.get_range(dlen, kwargs['sample_rate'], n) for n in fl}
+    fs_list = {n: get_range(dlen, kwargs['sample_rate'], n) for n in subband}
+
+    const_factor = np.log2(kwargs['level']+1)/2
 
     for c in range(len(freqs)):
-        for i, j in zip(fl[:-1], fl[1:]):
-            af = 2**(-rfs[fl.index(i)])
-            freqs[c][fs_list[i]:fs_list[j]] /= af
+        for i, j in zip(subband[:-1], subband[1:]):
+            af = 2**(-qfactors[subband.index(i)])
+            band_freqs = freqs[c][fs_list[i]:fs_list[j]]
+            band_thresholds = thresholds[c][fs_list[i]:fs_list[j]]
+
+            mask = np.abs(band_freqs) < band_thresholds * const_factor
+            band_freqs[mask] = 0
+
+            freqs[c][fs_list[i]:fs_list[j]] = band_freqs / af
+
     return freqs
 
-def unrounding(freqs, kwargs):
+def dequant(freqs, kwargs):
     dlen = len(freqs[0])
-    fs_list = {n:loss.get_range(dlen, kwargs['sample_rate'], n) for n in fl}
+    fs_list = {n:get_range(dlen, kwargs['sample_rate'], n) for n in subband}
 
     for c in range(len(freqs)):
-        for i, j in zip(fl[:-1], fl[1:]):
-            af = 2**(-rfs[fl.index(i)])
+        for i, j in zip(subband[:-1], subband[1:]):
+            af = 2**(-qfactors[subband.index(i)])
             freqs[c][fs_list[i]:fs_list[j]] *= af
     return freqs
 
 def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> bytes:
     be = not little_endian
-    endian = be and '>' or '<' # DCT
+    endian = be and '>' or '<'
+
+    # DCT
     freqs = np.array([dct(data[:, i], norm='ortho') for i in range(channels)])
     dlen = len(data)
 
-    freqs = np.sign(freqs) * np.abs(freqs)**(3/4)
-    freqs = loss.filter(freqs*65536, channels, dlen, kwargs)/65536
-    freqs = rounding(freqs, kwargs)
+    thresholds = l1tools.get_thres(freqs*65536, channels, dlen, kwargs)/8192
+    freqs = quant(freqs, thresholds, kwargs)
     # Inter-channel prediction
     freqs[1:] -= freqs[0]
 
@@ -99,10 +110,9 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
 
     # Removing potential Infinities and Non-numbers
     freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
-    freqs = unrounding(freqs, kwargs)
+    freqs = dequant(freqs, kwargs)
     # Inter-channel reconstruction
     freqs[1:] += freqs[0]
-    freqs = np.sign(freqs) * np.abs(freqs)**(4/3)
 
     # Inverse DCT and stacking
     return np.column_stack([idct(chnl, norm='ortho') for chnl in freqs])

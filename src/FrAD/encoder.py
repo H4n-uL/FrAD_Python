@@ -4,7 +4,6 @@ import json, os, math, random, struct, subprocess, sys, time, traceback, zlib
 import numpy as np
 from .tools.ecc import ecc
 from .tools.headb import headb
-from .tools.psycho import PsychoacousticModel
 
 class encode:
     def get_info(file_path):
@@ -129,7 +128,10 @@ class encode:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
             last = b''
-            psychomodel = PsychoacousticModel()
+
+            if layer == 1:
+                from .layers.tools.layer1 import PsychoacousticModel
+                psychomodel = PsychoacousticModel()
 
             # Write file
             open(out, 'wb').write(headb.uilder(meta, img))
