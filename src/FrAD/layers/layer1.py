@@ -24,7 +24,7 @@ def quant(freqs, thresholds, kwargs):
     dlen = len(freqs[0])
     fs_list = {n: get_range(dlen, kwargs['sample_rate'], n) for n in subband}
 
-    const_factor = np.log2(kwargs['level']+1)/2
+    const_factor = np.log2(kwargs['level']+1)*4
 
     for c in range(len(freqs)):
         for i, j in zip(subband[:-1], subband[1:]):
@@ -57,7 +57,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
     freqs = np.array([dct(data[:, i], norm='ortho') for i in range(channels)])
     dlen = len(data)
 
-    thresholds = l1tools.get_thres(freqs*65536, channels, dlen, kwargs)/8192
+    thresholds = l1tools.get_thres(freqs*65536, channels, dlen, kwargs)/65536
     freqs = quant(freqs, thresholds, kwargs)
     # Inter-channel prediction
     freqs[1:] -= freqs[0]
