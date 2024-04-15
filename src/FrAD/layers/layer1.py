@@ -2,7 +2,6 @@ from scipy.fft import dct, idct
 import numpy as np
 from .tools import layer1 as l1tools
 import zlib
-import matplotlib.pyplot as plt
 
 dtypes = {128:'i16',64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2'}
 get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
@@ -22,7 +21,6 @@ qfactors = [4.03,   4.15,   4.39,   4.51,   4.75,   4.87,   4.99,   5.11,
             2.63,   2.47,   2.35,   2.21,   2.09,   1.98,   1.87,   1.78,
             1.69,   1.63,   1.57,   1.51,   1.47,   1.44,   1.40,   1.38,
             1.33,   1.30,   1.26,   1.22,   1.15,   1.06,   0.95,   0.83]
-
 
 def signext_24x(byte, bits, be):
     padding = int(byte.hex(), base=16) & (1<<be and (bits-1) or 7) and b'\xff' or b'\x00'
@@ -125,9 +123,9 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
 
     # Removing potential Infinities and Non-numbers
     freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
-    freqs = dequant(freqs, kwargs)
     # Inter-channel reconstruction
     freqs[1:] += freqs[0]
+    freqs = dequant(freqs, kwargs)
 
     # Inverse DCT and stacking
     return np.column_stack([idct(chnl, norm='ortho') for chnl in freqs])
