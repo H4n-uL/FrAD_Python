@@ -80,7 +80,7 @@ class encode:
         return image
 
     def enc(file_path: str, bits: int, little_endian: bool = False,
-                out: str = None, layer: int = 0, loss_level: int = 0,
+                out: str = None, profile: int = 0, loss_level: int = 0,
                 samples_per_frame: int = 2048, gain: list = None,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
                 nsr: int = None,
@@ -93,7 +93,7 @@ class encode:
         gain = methods.get_gain(gain)
 
         if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
-        if layer in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
+        if profile in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, sample_rate, codec, duration = encode.get_info(file_path)
@@ -129,8 +129,8 @@ class encode:
 
             last = b''
 
-            if layer == 1:
-                from .layers.tools.layer1 import PsychoacousticModel
+            if profile == 1:
+                from .profiles.tools.profile1 import PsychoacousticModel
                 psychomodel = PsychoacousticModel()
 
             # Write file
@@ -140,7 +140,7 @@ class encode:
                 while True:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
                     # samples_per_frame = random.choice(list(range(32, 8193))) # Random spf test
-                    # layer = random.choice(list(range(2))) # Random layer test
+                    # profile = random.choice(list(range(2))) # Random profile test
                     # loss_level = random.choice(list(range(21))) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
                     # ecc_dsize, ecc_codesize = random.choice(list(range(64, 129))), random.choice(list(range(16, 64))) # Random ECC test
@@ -150,7 +150,7 @@ class encode:
                     while rlen < len(last):
                         spf += 128
                         rlen = spf * 8 * channels
-                    if layer == 1 and len(last) != 0:
+                    if profile == 1 and len(last) != 0:
                         rlen -= len(last)
 
                     data = process.stdout.read(rlen) # Reading PCM
@@ -158,7 +158,7 @@ class encode:
 
                     if len(last) != 0:
                         data = last + data
-                    if layer == 1:
+                    if profile == 1:
                         last = data[-samples_per_frame//16*8*channels:]
                     else: last = b''
 
@@ -168,11 +168,11 @@ class encode:
 
                     # DCT
                     frame, bit_depth_frame, channels_frame = \
-                        fourier.analogue(frame, bits, channels, little_endian, layer=layer, sample_rate=sample_rate, level=loss_level, model=psychomodel)
+                        fourier.analogue(frame, bits, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level, model=psychomodel)
 
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
-                    efb = headb.encode_efb(layer, apply_ecc, little_endian, bit_depth_frame)
+                    efb = headb.encode_efb(profile, apply_ecc, little_endian, bit_depth_frame)
 
                     data = bytes(
                         #-- 0x00 ~ 0x0f --#
@@ -210,7 +210,7 @@ class encode:
                         sample_size = bit_depth_frame // 8 * channels
                         total_bytes += flen * sample_size
                         total_samples += flen
-                        if layer == 1:
+                        if profile == 1:
                             total_bytes -= flen//16 * sample_size
                             total_samples -= flen//16
                         elapsed_time = time.time() - start_time

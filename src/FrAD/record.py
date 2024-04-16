@@ -9,7 +9,7 @@ class recorder:
             bit_depth = 24,
             samples_per_frame: int = 2048,
             apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
-            layer = 0, loss_level: int = 0, little_endian = False,
+            profile = 0, loss_level: int = 0, little_endian = False,
             meta = None, img: bytes = None):
 
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)
@@ -20,7 +20,7 @@ class recorder:
         if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
 
         hw = int(input(f'Please enter your recording device ID from below.\n{sd.query_devices()}\n> '))
-        if layer in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
+        if profile in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
 
         # Setting file extension
         if not (file_path.lower().endswith('.frad') or file_path.lower().endswith('.dsin') or file_path.lower().endswith('.fra') or file_path.lower().endswith('.dsn')):
@@ -33,15 +33,15 @@ class recorder:
         open(file_path, 'wb').write(headb.uilder(meta, img))
         with sd.InputStream(samplerate=sample_rate, channels=channels, device=hw) as record, open(file_path, 'ab') as f:
 
-            if layer == 1:
-                from .layers.tools.layer1 import PsychoacousticModel
+            if profile == 1:
+                from .profiles.tools.profile1 import PsychoacousticModel
                 psycho = PsychoacousticModel()
 
             while True:
                 try:
                     data = record.read(samples_per_frame)[0]
                     flen = len(data)
-                    data, bits = fourier.analogue(data, bit_depth, channels, little_endian, layer=layer, sample_rate=sample_rate, level=loss_level, model=psycho)
+                    data, bits = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level, model=psycho)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: data = ecc.encode(data, ecc_dsize, ecc_codesize)
@@ -54,7 +54,7 @@ class recorder:
                             # Segment length(Processed)
                             struct.pack('>I', len(data)) +
 
-                            headb.encode_efb(layer, apply_ecc, little_endian, bits) + # EFB
+                            headb.encode_efb(profile, apply_ecc, little_endian, bits) + # EFB
                             struct.pack('>B', channels - 1) +                      # Channels
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +     # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) +  # ECC code size

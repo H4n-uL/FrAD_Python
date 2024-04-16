@@ -40,7 +40,7 @@ class decode:
                 fhead = f.read(32)
                 if not fhead: break
                 framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
-                layer = struct.unpack('>B', fhead[0x8:0x9])[0]>>5&0b1==0b1 and True or False
+                profile = struct.unpack('>B', fhead[0x8:0x9])[0]>>5&0b1==0b1 and True or False
                 srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
                 samples_p_chnl = struct.unpack('>I', fhead[0x18:0x1c])[0]   # 0x18-4B: Samples in a frame per channel
                 crc32 = fhead[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
@@ -52,11 +52,11 @@ class decode:
                         print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
 
                 duration += samples_p_chnl / srate_frame
-                if layer == 1: duration -= samples_p_chnl//16 / srate_frame
+                if profile == 1: duration -= samples_p_chnl//16 / srate_frame
 
                 dlen += len(frame)
                 framescount += 1
-            if layer == 1: duration += samples_p_chnl // 16 / srate_frame
+            if profile == 1: duration += samples_p_chnl // 16 / srate_frame
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
 
             f.seek(header_length)
@@ -84,7 +84,7 @@ class decode:
                         break
                     framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                     efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
-                    layer, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
+                    profile, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
                     channels_frame = struct.unpack('>B', fhead[0x9:0xa])[0] + 1 # 0x09:    Channels
                     ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]          # 0x0a:    ECC Data block size
                     ecc_codesize = struct.unpack('>B', fhead[0xb:0xc])[0]       # 0x0b:    ECC Code size
@@ -100,14 +100,14 @@ class decode:
                             frame = ecc.decode(frame, ecc_dsize, ecc_codesize)
                         else: frame = ecc.unecc(frame, ecc_dsize, ecc_codesize)
 
-                    segment = fourier.digital(frame, float_bits, channels_frame, endian, layer=layer, sample_rate=srate_frame) * gain # Inversing
+                    segment = fourier.digital(frame, float_bits, channels_frame, endian, profile=profile, sample_rate=srate_frame) * gain # Inversing
 
                     if prev is not None:
                         fade_in = np.linspace(0, 1, len(prev))
                         fade_out = np.linspace(1, 0, len(prev))
                         for c in range(channels_frame):
                             segment[:len(prev), c] = (segment[:len(prev), c] * fade_in) + (prev[:, c] * fade_out)
-                    if layer == 1:
+                    if profile == 1:
                         prev = segment[-len(segment)//16:]
                         segment = segment[:-len(prev)]
                     else:
@@ -138,7 +138,7 @@ class decode:
                             lg = int(math.log(srate_frame, 1000))
                             kmgt = ['','k','M','G','T'][lg]
                             print(f'{methods.tformat(i)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lg*3)} {kmgt}Hz {not endian and "B" or "L"}E {channels_frame} channel{channels_frame>1 and "s" or ""}')
-                            print(f'Layer {layer}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} samples & {framelength} Bytes per frame')
+                            print(f'Profile {profile}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} samples & {framelength} Bytes per frame')
                         else:
                             print('\x1b[1A\x1b[2K', end='')
                             print(f'{(i):.3f} s / {(duration):.3f} s')

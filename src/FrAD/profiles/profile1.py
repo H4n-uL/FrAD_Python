@@ -1,6 +1,6 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .tools import layer1 as l1tools
+from .tools import profile1 as p1tools
 import zlib
 
 dtypes = {128:'i16',64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2'}
@@ -75,7 +75,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
             res = int(dlen / kwargs['sample_rate'] * 2 * (24000 - (kwargs['level']-10)*2000))
             freqs[chnl][res:] = 0
 
-    thresholds = l1tools.get_thres(freqs*65536, channels, dlen, kwargs)/65536
+    thresholds = p1tools.get_thres(freqs*65536, channels, dlen, kwargs)/65536
     freqs = quant(freqs, thresholds, kwargs)
     # Inter-channel prediction
     freqs[1:] -= freqs[0]

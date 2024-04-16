@@ -1,12 +1,12 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .layers import layer1
+from .profiles import profile1
 
 class fourier:
     dtypes = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
 
-    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, layer: int = 0, **kwargs) -> bytes:
-        if layer == 1: return layer1.analogue(data, bits, channels, little_endian, kwargs)
+    def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> bytes:
+        if profile == 1: return profile1.analogue(data, bits, channels, little_endian, kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'
@@ -34,8 +34,8 @@ class fourier:
 
         return data, bits, channels
 
-    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, layer: int = 0, **kwargs) -> np.ndarray:
-        if layer == 1: return layer1.digital(data, fb, channels, little_endian, kwargs=kwargs)
+    def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> np.ndarray:
+        if profile == 1: return profile1.digital(data, fb, channels, little_endian, kwargs=kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'

@@ -18,10 +18,10 @@ def main(action, args):
         with open(args.image, 'rb') as i:
             img = i.read()
 
-    try: layer = int(args.layer)
-    except: layer = 0
+    try: profile = int(args.profile)
+    except: profile = 0
 
-    if layer > 7 or layer < 0: layer = 0
+    if profile > 7 or profile < 0: profile = 0
 
     if action == 'encode':
         from FrAD import encode
@@ -29,7 +29,7 @@ def main(action, args):
         nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
         encode.enc(
                 file_path, int(args.bits), little_endian=args.little_endian,
-                out=args.output, layer=layer, loss_level=int(args.losslevel),
+                out=args.output, profile=profile, loss_level=int(args.losslevel),
                 samples_per_frame=int(args.frame_size), gain=[args.gain, args.dbfs],
                 apply_ecc=args.ecc,
                 ecc_sizes=args.data_ecc_size,
@@ -56,8 +56,8 @@ def main(action, args):
         from FrAD import repack
         repack.ecc(file_path, args.data_ecc_size, args.verbose)
     elif action == 'play':
-        from FrAD import player
-        player.play(
+        from FrAD import pprofile
+        pprofile.play(
                 file_path, gain=[args.gain, args.dbfs],
                 keys=float(args.keys) if args.keys is not None else None,
                 speed_in_times=float(args.speed) if args.speed is not None else None,
@@ -68,7 +68,7 @@ def main(action, args):
         recorder.record_audio(args.file_path, sample_rate=48000, channels=1,
             bit_depth=bits,
             apply_ecc=args.ecc, ecc_sizes=args.data_ecc_size,
-            layer=layer, loss_level=int(args.losslevel), little_endian=args.little_endian)
+            profile=profile, loss_level=int(args.losslevel), little_endian=args.little_endian)
     else:
         raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
 
@@ -92,8 +92,8 @@ if __name__ == '__main__':
     parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',       help='Metadata in "key" "value" format')
     parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                 help='Metadata in json, This will override --meta option.')
     parser.add_argument('-le',  '--little_endian',                                                   action='store_true',   help='Little Endian Toggle')
-    parser.add_argument('-l',   '--layer',                                  required=False,                                 help='FrAD Layer, THIS IS HIGHLY RECOMMENDED NOT TO BE USED OR SET TO 0')
-    parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='0',           help='Compression level, this will not work for Layer 0')
+    parser.add_argument('-p',   '--profile',                                required=False,                                 help='FrAD Profile, THIS IS HIGHLY RECOMMENDED NOT TO BE USED OR SET TO 0')
+    parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='0',           help='Compression level, this will not work for Profile 0')
     parser.add_argument('-v',   '--verbose',                                                         action='store_true',   help='Verbose CLI Toggle')
 
     args = parser.parse_args()
