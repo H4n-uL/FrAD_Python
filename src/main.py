@@ -56,8 +56,8 @@ def main(action, args):
         from FrAD import repack
         repack.ecc(file_path, args.data_ecc_size, args.verbose)
     elif action == 'play':
-        from FrAD import pprofile
-        pprofile.play(
+        from FrAD import player
+        player.play(
                 file_path, gain=[args.gain, args.dbfs],
                 keys=float(args.keys) if args.keys is not None else None,
                 speed_in_times=float(args.speed) if args.speed is not None else None,
