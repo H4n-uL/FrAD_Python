@@ -132,6 +132,7 @@ class encode:
             if profile == 1:
                 from .profiles.tools.profile1 import PsychoacousticModel
                 psychomodel = PsychoacousticModel()
+            else: psychomodel = None
 
             # Write file
             open(out, 'wb').write(headb.uilder(meta, img))

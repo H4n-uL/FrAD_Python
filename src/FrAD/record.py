@@ -36,6 +36,7 @@ class recorder:
             if profile == 1:
                 from .profiles.tools.profile1 import PsychoacousticModel
                 psycho = PsychoacousticModel()
+            else: psycho = None
 
             while True:
                 try:
