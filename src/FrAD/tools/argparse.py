@@ -98,7 +98,12 @@ def parse_args(args: list):
 
             # Play keys
             elif key in ['k', 'keys', 'key']:
-                key, value = 'keys', args.pop(0)
+                try:
+                    k = args.pop(0)
+                    key, value = 'keys', float(k)
+                except:
+                    print(f'Value cannot be parsed as Float: {arg} {k}')
+                    sys.exit(1)
 
             # Metadata
             elif key in ['m', 'meta', 'metadata']:
