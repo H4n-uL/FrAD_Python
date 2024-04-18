@@ -9,7 +9,6 @@ play_opt = ['play']
 record_opt = ['record']
 update_opt = ['update']
 
-global_help =      ''''''
 encode_help =      '''----------------------------------description-----------------------------------
 
 Encode
@@ -56,6 +55,7 @@ This action will encode any supporting FrAD files to another format.
                                                                      enable-ecc)
     --codec           | Codec for decoding (alias: c)
     --quality         | Quality for decoding in [bitrate]{c|v|a} (alias: q)
+    --output          | Output file path (alias: o, out, output-file)
     --bits            | Bit depth (alias: b, bit)
                       |
     --gain            | Gain level in both dBFS and amplitude (alias: g, gain)
