@@ -73,7 +73,7 @@ def parse_args(args: list):
                 key, value = 'ecc', True
 
             # Data/ECC ratio
-            elif key in ['ds', 'data-ecc-size', 'data-ecc-ratio']:
+            elif key in ['ds', 'data-ecc', 'data-ecc-size', 'data-ecc-ratio']:
                 try:
                     d = e = '<null>'
                     d = args.pop(0)
