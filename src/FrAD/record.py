@@ -29,7 +29,7 @@ class recorder:
 
         if os.path.exists(file_path) and 'y' not in input(f'{file_path} Already exists. Proceed? ').lower(): sys.exit('Aborted.')
         ecc_dsize, ecc_codesize = int(ecc_sizes[0]), int(ecc_sizes[1])
-        print("Recording...")
+        print('Recording...')
         open(file_path, 'wb').write(headb.uilder(meta, img))
         with sd.InputStream(samplerate=sample_rate, channels=channels, device=hw) as record, open(file_path, 'ab') as f:
 
@@ -81,4 +81,4 @@ class recorder:
                 except KeyboardInterrupt:
                     break
 
-        print("Recording stopped.")
+        print('Recording stopped.')

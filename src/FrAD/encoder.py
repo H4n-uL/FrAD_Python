@@ -47,16 +47,16 @@ class encode:
         subprocess.run(command)
         with open(variables.meta, 'r', encoding='utf-8') as m:
             meta = m.read()
-        metadata_lines = meta.split("\n")[1:]
+        metadata_lines = meta.split('\n')[1:]
         metadata = []
         current_key = None
         current_value = []
 
         for line in metadata_lines:
-            if "=" in line:
+            if '=' in line:
                 if current_key:
-                    metadata.append([current_key, "\n".join(current_value).replace("\n\\\n", "\n")])
-                current_key, value = line.split("=", 1)
+                    metadata.append([current_key, '\n'.join(current_value).replace('\n\\\n', '\n')])
+                current_key, value = line.split('=', 1)
                 if current_key in excluded:
                     current_key = None
                 else:
@@ -65,7 +65,7 @@ class encode:
                 current_value.append(line)
 
         if current_key:
-            metadata.append([current_key, "\n".join(current_value)])
+            metadata.append([current_key, '\n'.join(current_value)])
         os.remove(variables.meta)
         return metadata
 

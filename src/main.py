@@ -151,10 +151,10 @@ def main(action, file_path, kwargs: dict):
             jsonmeta = json.load(f)
         meta = []
         for item in jsonmeta:
-            value = item["value"]
-            if item["type"] == "base64":
+            value = item['value']
+            if item['type'] == 'base64':
                 value = base64.b64decode(value)
-            meta.append([item["key"], value])
+            meta.append([item['key'], value])
 
     img = None
     if kwargs.get('image') is not None:
@@ -252,7 +252,7 @@ def main(action, file_path, kwargs: dict):
     update      | Update FrAD codec from Github
 ''')
     else:
-        raise ValueError("Invalid action. type `fourier help` to get help.")
+        raise ValueError('Invalid action. type `fourier help` to get help.')
 
 if __name__ == '__main__':
     from FrAD.tools.argparse import parse_args

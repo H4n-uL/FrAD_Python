@@ -361,7 +361,7 @@ class decode:
                 s = 's16'
             elif bits == 8:
                 f = s = 'u8'
-            else: raise ValueError(f"Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.")
+            else: raise ValueError(f'Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.')
 
             if quality: int(quality.replace('k', '000'))
 
