@@ -1,10 +1,13 @@
 import sys
 
 def parse_args(args: list):
-    action = args.pop(0)
+    try: action = args.pop(0)
+    except: return None, None, None
     file_path = None
-    if action != 'update' and len(args) > 1:
-        file_path = args.pop(0)
+    try: file_path = args.pop(0)
+    except:
+        if action not in ['update', 'help']:
+            print('File path is required for the first argument.'); sys.exit(1)
     options = {}
 
     while args:
@@ -30,16 +33,16 @@ def parse_args(args: list):
                 key, value = 'image', args.pop(0)
 
             # New sample rate
-            elif key in ['nsr', 'new-sample-rate', 'resample']:
+            elif key in ['sr', 'srate', 'sample-rate', 'nsr', 'new-srate', 'new-sample-rate', 'resample']:
                 try:
                     nsr = args.pop(0)
-                    key, value = 'new-srate', int(nsr)
+                    key, value = 'srate', int(nsr)
                 except:
                     print(f'Value cannot be parsed as Integer: {arg} {nsr}')
                     sys.exit(1)
 
             # Samples per frame
-            elif key in ['fr', 'frame-size', 'samples-per-frame']:
+            elif key in ['fr', 'fsize', 'frame-size', 'samples-per-frame']:
                 try:
                     fsz = args.pop(0)
                     key, value = 'fsize', int(fsz)
@@ -66,7 +69,7 @@ def parse_args(args: list):
                     sys.exit(1)
 
             # Enable ECC
-            elif key in ['e', 'ecc', 'apply-ecc', 'applyecc', 'enable-ecc', 'enableecc']:
+            elif key in ['e', 'ecc', 'apply-ecc', 'enable-ecc']:
                 key, value = 'ecc', True
 
             # Data/ECC ratio
@@ -81,7 +84,7 @@ def parse_args(args: list):
                     sys.exit(1)
 
             # Play speed
-            elif key in ['s', 'speed']:
+            elif key in ['spd', 'speed']:
                 try:
                     spd = args.pop(0)
                     key, value = 'speed', float(spd)
@@ -119,7 +122,7 @@ def parse_args(args: list):
                 key, value = 'le', True
 
             # FrAD Profile
-            elif key in ['p', 'profile']:
+            elif key in ['prf', 'profile']:
                 try:
                     prf = args.pop(0)
                     key, value = 'profile', int(prf)
@@ -128,7 +131,7 @@ def parse_args(args: list):
                     sys.exit(1)
 
             # Compression level
-            elif key in ['lv', 'losslevel', 'level']:
+            elif key in ['lv', 'loss-level', 'level']:
                 try:
                     lv = args.pop(0)
                     key, value = 'loss-level', int(lv)
