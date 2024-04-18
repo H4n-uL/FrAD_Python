@@ -213,7 +213,7 @@ def main(action, file_path, kwargs: dict):
 
     elif action in update_opt:
         from FrAD.tools import update
-        if 'y' not in input('Do you really want to update FrAD codec?').lower(): print('Update aborted.'); sys.exit(0)
+        if 'y' not in input('Do you really want to update FrAD codec? (Y/N): ').lower(): print('Update aborted.'); sys.exit(0)
         download_ffmpeg_portables = 'y' in input('Do you want to update ffmpeg portables? (Y/N): ').lower()
         update.fetch_git('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents/src', os.path.dirname(__file__), download_ffmpeg_portables)
     
