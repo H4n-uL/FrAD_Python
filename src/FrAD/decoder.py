@@ -58,6 +58,7 @@ class decode:
                 framescount += 1
             if profile == 1: duration += samples_p_chnl // 16 / srate_frame
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
+            duration /= speed
 
             f.seek(header_length)
 
@@ -141,7 +142,7 @@ class decode:
                             print(f'Profile {profile}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} samples & {framelength} Bytes per frame')
                         else:
                             print('\x1b[1A\x1b[2K', end='')
-                            print(f'{(i):.3f} s / {(duration):.3f} s')
+                            print(f'{methods.tformat(i)} / {methods.tformat(duration)}')
 
                         stream.write(segment.astype(np.float32))
                     else:
