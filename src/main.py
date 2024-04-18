@@ -58,7 +58,7 @@ This action will encode any supporting FrAD files to another format.
     --output          | Output file path (alias: o, out, output-file)
     --bits            | Bit depth (alias: b, bit)
                       |
-    --gain            | Gain level in both dBFS and amplitude (alias: g, gain)
+    --gain            | Gain level in both dBFS and amplitude (alias: g)
     --sample-rate     | New sample rate (alias: sr, srate, nsr, new-srate,
                                                       new-sample-rate, resample)
                       |
@@ -70,7 +70,7 @@ This action will play FrAD files as real-time
 
 ------------------------------------options-------------------------------------
 
-    --gain            | Gain level in both dBFS and amplitude (alias: g, gain)
+    --gain            | Gain level in both dBFS and amplitude (alias: g)
     --keys / --speed  | Keys for playback (alias: k, key) | Playback speed
                                                                     (alias: spd)
     --ecc             | Check errors and fix while playback (alias: e,
