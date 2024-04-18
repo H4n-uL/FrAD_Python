@@ -203,7 +203,7 @@ class decode:
 
     ffmpeg_lossless = ['wav', 'flac', 'wavpack', 'tta', 'truehd', 'alac', 'dts', 'mlp']
 
-    def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy, nsr):
+    def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
@@ -221,7 +221,7 @@ class decode:
         if os.path.exists(f'{variables.meta}.image'):
             command.extend(['-map', '2:v'])
 
-        if nsr is not None and nsr != sample_rate: command.extend(['-ar', str(nsr)])
+        if new_srate is not None and new_srate != sample_rate: command.extend(['-ar', str(new_srate)])
 
         command.append('-c:a')
         if codec in ['wav', 'riff']:
@@ -298,7 +298,7 @@ class decode:
             os.remove(variables.temp_flac)
             sys.exit(0)
 
-    def AppleAAC_Windows(sample_rate, channels, out, quality, nsr):
+    def AppleAAC_Windows(sample_rate, channels, out, quality, new_srate):
         try:
             command = [
                 variables.aac,
@@ -309,7 +309,7 @@ class decode:
                 '--adts',
                 '-c', str(quality),
             ]
-            if nsr is not None and nsr != sample_rate: command.extend(['--rate', str(nsr)])
+            if new_srate is not None and new_srate != sample_rate: command.extend(['--rate', str(new_srate)])
             command.extend([
                 '-o', f'{out}.aac',
                 '-s'
@@ -321,9 +321,9 @@ class decode:
             os.remove(variables.temp_pcm)
             sys.exit(0)
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: list = None, nsr: int = None, verbose: bool = False):
+    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: list = None, new_srate: int = None, verbose: bool = False):
         # Decoding
-        sample_rate, channels = decode.internal(file_path, e=e, gain=methods.get_gain(gain), verbose=verbose)
+        sample_rate, channels = decode.internal(file_path, e=e, gain=gain, verbose=verbose)
         header.parse_to_ffmeta(file_path, variables.meta)
 
         try:
@@ -368,11 +368,11 @@ class decode:
             if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
                 if strategy in ['c', 'a']: quality = decode.setaacq(quality, channels)
                 if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, out, quality, strategy)
-                elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, out, quality, nsr)
+                elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, out, quality, new_srate)
             elif codec in ['dsd', 'dff']:
                 dsd.encode(sample_rate, channels, out, ext, verbose)
             elif codec not in ['pcm', 'raw']:
-                decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy, nsr)
+                decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy, new_srate)
             else:
                 shutil.move(variables.temp_pcm, f'{out}.{ext}')
 

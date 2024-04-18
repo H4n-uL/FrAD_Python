@@ -22,7 +22,7 @@ class encode:
                 return int(stream['channels']), int(stream['sample_rate']), stream['codec_name'], duration
         return None
 
-    def get_pcm_command(file_path: str, osr: int, nsr: int):
+    def get_pcm_command(file_path: str, osr: int, new_srate: int):
         command = [
             variables.ffmpeg,
             '-v', 'quiet',
@@ -31,8 +31,8 @@ class encode:
             '-acodec', 'pcm_f64le',
             '-vn'
         ]
-        if nsr not in [osr, None]:
-            command.extend(['-ar', str(nsr)])
+        if new_srate not in [osr, None]:
+            command.extend(['-ar', str(new_srate)])
         command.append('pipe:1')
         return command
 
@@ -83,14 +83,13 @@ class encode:
                 out: str = None, profile: int = 0, loss_level: int = 0,
                 samples_per_frame: int = 2048, gain: list = None,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
-                nsr: int = None,
+                new_srate: int = None,
                 meta = None, img: bytes = None,
                 verbose: bool = False):
         ecc_dsize = int(ecc_sizes[0])
         ecc_codesize = int(ecc_sizes[1])
 
         methods.cantreencode(open(file_path, 'rb').read(4))
-        gain = methods.get_gain(gain)
 
         if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
         if profile in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
@@ -102,9 +101,9 @@ class encode:
         if bits == 12 and samples_per_frame % 2 != 0: raise ValueError(f'Samples per frame should be even for 12-bit encoing.')
 
         # Getting command and new sample rate
-        cmd = encode.get_pcm_command(file_path, sample_rate, nsr)
-        if nsr is not None: duration = int(duration / sample_rate * nsr)
-        sample_rate = nsr is not None and nsr or sample_rate
+        cmd = encode.get_pcm_command(file_path, sample_rate, new_srate)
+        if new_srate is not None: duration = int(duration / sample_rate * new_srate)
+        sample_rate = new_srate is not None and new_srate or sample_rate
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
 

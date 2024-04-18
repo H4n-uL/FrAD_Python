@@ -1,10 +1,23 @@
-import argparse, base64, json, sys, traceback
+import base64, json, os, sys, traceback
 
-def main(action, args):
-    file_path = args.file_path
-    meta = args.meta
-    if args.jsonmeta is not None:
-        with open(args.jsonmeta, 'r', encoding='utf-8') as f:
+def main(action, file_path, kwargs: dict):
+    output = kwargs.get('output', None)
+    verbose = kwargs.get('verbose', False)
+    new_srate = kwargs.get('new-srate', None)
+    ecc_enabled = kwargs.get('ecc', False)
+    data_ecc = kwargs.get('data-ecc', [128, 20])
+    loss_level = kwargs.get('loss-level', 0)
+    le = kwargs.get('le', False)
+    gain = kwargs.get('gain', 1)
+
+
+    if file_path is None and action not in ['update', 'help']:
+        print('File path is required for the first argument.')
+        sys.exit(1)
+
+    meta = kwargs.get('meta', None)
+    if kwargs.get('jsonmeta', None) is not None:
+        with open(kwargs['jsonmeta'], 'r', encoding='utf-8') as f:
             jsonmeta = json.load(f)
         meta = []
         for item in jsonmeta:
@@ -12,93 +25,75 @@ def main(action, args):
             if item["type"] == "base64":
                 value = base64.b64decode(value)
             meta.append([item["key"], value])
+
     img = None
+    if kwargs.get('image') is not None:
+        img = open(kwargs['image'], 'rb').read()
 
-    if args.image:
-        with open(args.image, 'rb') as i:
-            img = i.read()
-
-    try: profile = int(args.profile)
-    except: profile = 0
-
+    profile = kwargs.get('profile', 0)
     if profile > 7 or profile < 0: profile = 0
 
     if action == 'encode':
         from FrAD import encode
-        if args.bits is None: raise ValueError('--bits option is required for encoding.')
-        nsr = args.new_sample_rate is not None and int(args.new_sample_rate) or None
+        if kwargs['bits'] is None: raise ValueError('--bits option is required for encoding.')
+        new_srate = kwargs.get('new_sample_rate', None)
         encode.enc(
-                file_path, int(args.bits), little_endian=args.little_endian,
-                out=args.output, profile=profile, loss_level=int(args.losslevel),
-                samples_per_frame=int(args.frame_size), gain=[args.gain, args.dbfs],
-                apply_ecc=args.ecc,
-                ecc_sizes=args.data_ecc_size,
-                nsr=nsr, meta=meta, img=img,
-                verbose=args.verbose)
+                file_path, int(kwargs['bits']), le,
+                output, profile, loss_level,
+                kwargs.get('fsize', 2048), gain,
+                ecc_enabled, data_ecc,
+                new_srate, meta, img, verbose)
+
     elif action == 'decode':
         from FrAD import decode
-        bits = 32 if args.bits == None else int(args.bits)
-        codec = args.codec if args.codec is not None else None
+        bits = kwargs.get('bits', 32)
         decode.dec(
-                file_path,
-                out=args.output, bits=bits,
-                codec=codec, quality=args.quality,
-                e=args.ecc, gain=[args.gain, args.dbfs], nsr=args.new_sample_rate,
-                verbose=args.verbose)
+                file_path, output, bits,
+                kwargs.get('codec', 'flac'),
+                kwargs.get('quality', None),
+                ecc_enabled, gain, new_srate,
+                verbose)
+
     elif action == 'parse':
         from FrAD import header
-        output = args.output if args.output is not None else 'metadata'
-        header.parse(file_path, output)
+        header.parse(file_path, kwargs.get('output', 'metadata'))
+
     elif action == 'modify' or action == 'meta-modify':
         from FrAD import header
         header.modify(file_path, meta=meta, img=img)
+
     elif action == 'ecc':
         from FrAD import repack
-        repack.ecc(file_path, args.data_ecc_size, args.verbose)
+        repack.ecc(file_path, data_ecc, kwargs['verbose'])
+
     elif action == 'play':
         from FrAD import player
         player.play(
-                file_path, gain=[args.gain, args.dbfs],
-                keys=float(args.keys) if args.keys is not None else None,
-                speed_in_times=float(args.speed) if args.speed is not None else None,
-                e=args.ecc, verbose=args.verbose)
+                file_path, gain, kwargs.get('keys', None),
+                kwargs.get('speed', None),
+                ecc_enabled, verbose)
+
     elif action == 'record':
         from FrAD import recorder
-        bits = 24 if args.bits == None else int(args.bits)
-        recorder.record_audio(args.file_path, sample_rate=48000, channels=1,
-            bit_depth=bits,
-            apply_ecc=args.ecc, ecc_sizes=args.data_ecc_size,
-            profile=profile, loss_level=int(args.losslevel), little_endian=args.little_endian)
+        bits = kwargs.get('bits', 24)
+        recorder.record_audio(file_path, 48000, 1, bits,
+            ecc_enabled, data_ecc,
+            profile, loss_level, le)
+
+    elif action == 'update':
+        from FrAD.tools import update
+        download_ffmpeg_portables = 'y' in input('Do you want to update ffmpeg portables? (Y/N): ').lower()
+        update.fetch_git('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents/src', os.path.dirname(__file__), download_ffmpeg_portables)
+
     else:
-        raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play'.")
+        raise ValueError("Invalid action. Please choose one of 'encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play', 'update'.")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Fourier Analogue-in-Digital Codec')
-    parser.add_argument('action', choices=['encode', 'decode', 'parse', 'modify', 'meta-modify', 'ecc', 'play', 'record'],  help='Codec action')
-    parser.add_argument('file_path',                                                                                        help='File path')
-    parser.add_argument('-o',   '--output', '--out', '--output_file',       required=False,                                 help='Output file path')
-    parser.add_argument('-b',   '--bits', '--bit',                          required=False,                                 help='Output file bit depth')
-    parser.add_argument('-img', '--image',                                  required=False,                                 help='Image file path')
-    parser.add_argument('-n',   '-nsr', '--new_sample_rate', '--resample',  required=False,                                 help='Resample as new sample rate')
-    parser.add_argument('-fr', '--frame_size', '--samples_per_frame',       required=False,          default='2048',        help='Samples per frame')
-    parser.add_argument('-c',   '--codec',                                  required=False,                                 help='Codec type')
-    parser.add_argument('-g',   '--gain',                                   required=False,                                 help='Gain in X.X for relative amplitude')
-    parser.add_argument('-db', '-dB', '--dbfs', '--dBFS',                                            action='store_true',   help='Converting gain as relative dB FS')
-    parser.add_argument('-e',   '--ecc', '--apply_ecc', '--applyecc', '--enable_ecc', '--enableecc', action='store_true',   help='Error Correction Code toggle')
-    parser.add_argument('-ds',  '--data_ecc_size', '--data_ecc_ratio',      required=False, nargs=2, default=['128', '20'], help='Original data size and ECC data size(in Data size : ECC size)')
-    parser.add_argument('-s',   '--speed',                                  required=False,                                 help='Play speed(in times)')
-    parser.add_argument('-q',   '--quality',                                required=False,                                 help='Decode quality(for lossy codec decode only)')
-    parser.add_argument('-k',   '--keys', '--key',                          required=False,                                 help='Play keys')
-    parser.add_argument('-m',   '--meta', '--metadata',                     required=False, nargs=2, action='append',       help='Metadata in "key" "value" format')
-    parser.add_argument('-jm',  '--jsonmeta',                               required=False,                                 help='Metadata in json, This will override --meta option.')
-    parser.add_argument('-le',  '--little_endian',                                                   action='store_true',   help='Little Endian Toggle')
-    parser.add_argument('-p',   '--profile',                                required=False,                                 help='FrAD Profile, THIS IS HIGHLY RECOMMENDED NOT TO BE USED OR SET TO 0')
-    parser.add_argument('-lv',  '--losslevel', '--level',                   required=False,          default='0',           help='Compression level, this will not work for Profile 0')
-    parser.add_argument('-v',   '--verbose',                                                         action='store_true',   help='Verbose CLI Toggle')
+    from FrAD.tools.argparse import parse_args
 
-    args = parser.parse_args()
+    action, file_path, kwargs = parse_args(sys.argv[1:])
     try:
-        main(args.action, args)
+        main(action, file_path, kwargs)
     except Exception as e:
         if type(e) == KeyboardInterrupt:
             sys.exit(0)

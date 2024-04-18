@@ -10,4 +10,4 @@ class player:
         elif not keys and speed_in_times:
             speed = speed_in_times
         else: speed = 1
-        decode.internal(file_path, True, speed, e, methods.get_gain(gain), verbose)
+        decode.internal(file_path, True, speed, e, gain, verbose)

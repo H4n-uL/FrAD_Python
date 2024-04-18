@@ -44,12 +44,6 @@ class methods:
         if sign == b'fRad':
             raise Exception('This is an already encoded Fourier Analogue file.')
 
-    def get_gain(glist):
-        if glist[0] is None: return 1
-        if glist[1] is True: return 10 ** (float(glist[0]) / 20)
-        else: return float(glist[0])
-
-
     def tformat(n: float) -> str:
         if n < 0: return f'-{methods.tformat(-n)}'
         if n == 0: return '0'
