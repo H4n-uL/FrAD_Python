@@ -252,8 +252,7 @@ def main(action, file_path, kwargs: dict):
     parse       | Parse metadata from FrAD
     ecc         | Enable/Repack ECC protection (alias: repack)
     meta-modify | Overwrite all metadata of FrAD (alias: modify)
-    update      | Update FrAD codec from Github
-''')
+    update      | Update FrAD codec from Github''')
         print()
     else:
         raise ValueError('Invalid action. type `fourier help` to get help.')
