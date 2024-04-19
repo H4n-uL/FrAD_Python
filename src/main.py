@@ -12,8 +12,8 @@ update_opt = ['update']
 encode_help =      '''----------------------------------description-----------------------------------
 
 Encode
-This action will encode your audio file to FrAD. This will not destroy original
-audio file.
+This action will encode your audio file to FrAD, Preserving all metadata, image,
+and original audio file.
 
 -------------------------------------usage--------------------------------------
 
@@ -24,71 +24,74 @@ fourier encode path/to/audio.file --bits [bit depth] {kwargs...}
     --bits            | Bit depth, REQUIRED (alias: b, bit)
                       |
     --ecc             | Enable ECC, recommended (alias: e, apply-ecc,
-                                                                     enable-ecc)
-    --data-ecc        | ECC size ratio in [data size] [ecc code size] (alias:
-                                                  ds, ecc-ratio, data-ecc-ratio)
+                      |                                              enable-ecc)
+    --data-ecc        | ECC size ratio in [data size] [ecc code size],
+                      |  default: 128, 20 (alias: ds, ecc-ratio, data-ecc-ratio)
                       |
     --output          | Output file path (alias: o, out, output-file)
     --sample-rate     | New sample rate (alias: sr, srate, nsr, new-srate,
-                                                      new-sample-rate, resample)
-    --fsize           | Samples per frame (alias: fs, frame-size,
-                                                              samples-per-frame)
+                      |                               new-sample-rate, resample)
+    --fsize           | Samples per frame, default: 2048 (alias: fs, frame-size,
+                      |                                       samples-per-frame)
     --gain            | Gain level in both dBFS and amplitude (alias: g, gain)
     --le              | Little Endian Toggle (alias: le, little-endian)
                       |
-    --meta            | Metadata in [key] [value] (alias: m, meta)
+    --meta            | Metadata in [key] [value], default: pre-embedded meta
+                      |                                         (alias: m, meta)
     --jsonmeta        | Metadata in JSON format (alias: jm)
-    --image           | Image to embed (alias: img)
+    --image           | Image to embed, default: pre-embedded image (alias: img)
                       |
     --profile         | FrAD Profile from 0 to 7, NOT RECOMMENDED (alias: prf)
-    --loss-level      | Lossy compression level (alias: lv, level)
+    --loss-level      | Lossy compression level, default: 0 (alias: lv, level)
                       |
     --verbose         | Verbose output (alias: v)'''
 decode_help =      '''----------------------------------description-----------------------------------
 
 Decode
-This action will encode any supporting FrAD files to another format.
+This action will encode any supporting FrAD files to another format. It highly
+leans on ffmpeg for re-encoding.
 
 ------------------------------------options-------------------------------------
 
     --ecc             | Check errors and fix, recommended (alias: e, apply-ecc,
-                                                                     enable-ecc)
-    --codec           | Codec for decoding (alias: c)
-    --quality         | Quality for decoding in [bitrate]{c|v|a} (alias: q)
+                      |                                              enable-ecc)
+    --codec           | Codec for decoding, default: 24-bit FLAC (alias: c)
+    --quality         | Quality for decoding in [bitrate]{c|v|a},
+                      |                      default: maximum quality (alias: q)
     --output          | Output file path (alias: o, out, output-file)
     --bits            | Bit depth (alias: b, bit)
                       |
     --gain            | Gain level in both dBFS and amplitude (alias: g)
     --sample-rate     | New sample rate (alias: sr, srate, nsr, new-srate,
-                                                      new-sample-rate, resample)
+                      |                               new-sample-rate, resample)
                       |
     --verbose         | Verbose output (alias: v)'''
 play_help =        '''----------------------------------description-----------------------------------
 
 Play
-This action will play FrAD files as real-time
+This action will play FrAD files, not decoding to any other format.
 
 ------------------------------------options-------------------------------------
 
     --gain            | Gain level in both dBFS and amplitude (alias: g)
     --keys / --speed  | Keys for playback (alias: k, key) | Playback speed
-                                                                    (alias: spd)
+                      |                                             (alias: spd)
     --ecc             | Check errors and fix while playback (alias: e,
-                                                          apply-ecc, enable-ecc)
+                      |                                   apply-ecc, enable-ecc)
     --verbose         | Verbose output (alias: v)'''
 record_help =      '''----------------------------------description-----------------------------------
 
 Record
-This action will capture audio files directly to FrAD.
+This action will capture audio stream and write directly to FrAD file.
 
 ------------------------------------options-------------------------------------
 
-    --bits            | Bit depth, default=24 (alias: b, bit)
-    --sample-rate     | Record srate, default=48000 (alias: sr, srate, ...)
+    --bits            | Bit depth, default: 24 (alias: b, bit)
+    --sample-rate     | Record srate, default: 48000 (alias: sr, srate, ...)
                       |
     --ecc             | Enable ECC (alias: e, apply-ecc, enable-ecc)
-    --data-ecc        | ECC size ratio in [data size] [ecc code size] (alias:
-                                                  ds, ecc-ratio, data-ecc-ratio)
+    --data-ecc        | ECC size ratio in [data size] [ecc code size]
+                      |  default: 128, 20 (alias: ds, ecc-ratio, data-ecc-ratio)
                       |
     --le              | Little Endian Toggle (alias: le, little-endian)
                       |
@@ -102,8 +105,8 @@ errors.
 
 ------------------------------------options-------------------------------------
 
-    --data-ecc        | ECC size ratio in [data size] [ecc code size] (alias:
-                                                  ds, ecc-ratio, data-ecc-ratio)
+    --data-ecc        | ECC size ratio in [data size] [ecc code size]
+                      |  default: 128, 20 (alias: ds, ecc-ratio, data-ecc-ratio)
     --verbose         | Verbose output (alias: v)'''
 parse_help =       '''----------------------------------description-----------------------------------
 
@@ -217,7 +220,7 @@ def main(action, file_path, kwargs: dict):
         download_ffmpeg_portables = 'y' in input('Do you want to update ffmpeg portables? (Y/N): ').lower()
         update.fetch_git('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents/src', os.path.dirname(__file__), download_ffmpeg_portables)
     
-    elif action in ['-h', 'help', '--help']:
+    elif action in ['help']:
         print(
 '''             Fourier Analogue-in-Digital Reference encoder/decoder
                              Original Author - HaמuL
@@ -260,7 +263,7 @@ if __name__ == '__main__':
     try:
         if action is not None: main(action, file_path, kwargs)
         else:
-            print('\033[1mFourier Analogue-in-Digital Reference encoder/decoder\033[0m')
+            print('Fourier Analogue-in-Digital Reference encoder/decoder')
             print('Please type `fourier help` to get help.')
             sys.exit(0)
     except Exception as e:
