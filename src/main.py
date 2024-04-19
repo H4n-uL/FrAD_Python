@@ -254,6 +254,7 @@ def main(action, file_path, kwargs: dict):
     meta-modify | Overwrite all metadata of FrAD (alias: modify)
     update      | Update FrAD codec from Github
 ''')
+        print()
     else:
         raise ValueError('Invalid action. type `fourier help` to get help.')
 
