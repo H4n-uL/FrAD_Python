@@ -61,10 +61,10 @@ def parse_args(args: list):
                     db = False
                     if g.lower().endswith('db'): g = g[:-2]; db = True
                     if g.lower().endswith('dbfs'): g = g[:-4]; db = True
-                    if args[0].lower() in ['db', 'dbfs']: db = True; args.pop(0)
+                    if len(args) > 0 and args[0].lower() in ['db', 'dbfs']: db = True; args.pop(0)
                     key, value = 'gain', float(g)
                     if db: value = 10 ** (value / 20)
-                except:
+                except ValueError:
                     print(f'Value cannot be parsed as Float: {arg} {g_b}')
                     sys.exit(1)
 
