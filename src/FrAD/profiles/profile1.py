@@ -78,7 +78,12 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
     thresholds = p1tools.get_thres(freqs*65536, channels, dlen, kwargs)/65536
     freqs = quant(freqs, thresholds, kwargs)
     # Inter-channel prediction
-    freqs[1:] -= freqs[0]
+    if channels == 1: pass
+    elif channels == 2:
+        freqs = np.array([(freqs[0] + freqs[1]) / 2, (freqs[0] - freqs[1]) / 2])
+    else:
+        mid = np.mean(freqs, axis=0)
+        freqs = np.vstack([mid, freqs-mid])
 
     # Overflow check & Increasing bit depth
     while not (2**(bits-1)-1 >= freqs.any() >= -(2**(bits-1))):
@@ -124,12 +129,17 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
 
     # Unpacking and unravelling
     data = np.frombuffer(data, dtype=endian+dtypes[bits]).astype(float)
+    if channels > 2: channels += 1
     freqs = [data[i::channels] for i in range(channels)]
 
     # Removing potential Infinities and Non-numbers
     freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
     # Inter-channel reconstruction
-    freqs[1:] += freqs[0]
+    
+    if channels == 1: pass
+    elif channels == 2:
+        freqs = np.array([freqs[0] + freqs[1], freqs[0] - freqs[1]])
+    else: freqs = freqs[1:] + freqs[0]
     freqs = dequant(freqs, kwargs)
 
     # Inverse DCT and stacking
