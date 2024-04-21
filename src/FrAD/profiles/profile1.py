@@ -5,22 +5,14 @@ import zlib
 
 dtypes = {128:'i16',64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2'}
 get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
-subband =  [0,      20,     99,     180,    264,    352,    447,    549,
-            660,    783,    920,    1072,   1243,   1435,   1651,   1897,
-            2174,   2490,   2848,   3255,   3718,   4245,   4844,   5528,
-            6306,   7193,   8204,   9355,   10668,  12164,  13869,  15813,
-            18029,  20555,  23435,  26718,  30460,  34727,  39590,  45135,
-            51456,  58663,  66878,  76244,  86921,  99094,  112971, 128791,
-            146827, 167389, 190830, 217553, 248019, 282752, 322348, 367489,
-            418951, 477621, 544506, 620758, 707688, 806791, 919773, 1048576, np.inf]
-qfactors = [4.03,   4.15,   4.39,   4.51,   4.75,   4.87,   4.99,   5.11,
-            5.23,   5.47,   5.71,   5.95,   6.19,   6.31,   6.56,   6.81,
-            7.06,   7.08,   7.03,   6.99,   7.05,   7.08,   7.04,   6.54,
-            6.45,   6.36,   6.27,   6.17,   6.09,   6.00,   5.41,   4.01,
-            3.87,   3.71,   3.56,   3.40,   3.24,   3.09,   2.93,   2.77,
-            2.63,   2.47,   2.35,   2.21,   2.09,   1.98,   1.87,   1.78,
-            1.69,   1.63,   1.57,   1.51,   1.47,   1.44,   1.40,   1.38,
-            1.33,   1.30,   1.26,   1.22,   1.15,   1.06,   0.95,   0.83]
+subbands = [0,     200,   400,   600,   800,   1000,  1200,  1400,
+            1600,  2000,  2400,  2800,  3200,  4000,  4800,  5600,
+            6800,  8000,  9600,  12000, 15600, 20000, 25000, 31000,
+            38400, 48000, np.inf]
+qfactors = [4.06,  4.68,  5.31,  5.93,  6.49,  7.00,  7.14,  7.38,
+            7.66,  7.82,  7.76,  7.56,  7.63,  7.37,  7.12,  7.07,
+            6.80,  6.32,  6.09,  5.46,  5.24,  4.63,  3.86,  3.43,
+            3.25,  2.94]
 
 def signext_24x(byte, bits, be):
     padding = int(byte.hex(), base=16) & (1<<be and (bits-1) or 7) and b'\xff' or b'\x00'
@@ -35,13 +27,13 @@ def signext_12(hex_str, be):
 
 def quant(freqs, thresholds, kwargs):
     dlen = len(freqs[0])
-    fs_list = {n: get_range(dlen, kwargs['sample_rate'], n) for n in subband}
+    fs_list = {n: get_range(dlen, kwargs['sample_rate'], n) for n in subbands}
 
     const_factor = np.log2(kwargs['level']+1)*2+1
 
     for c in range(len(freqs)):
-        for i, j in zip(subband[:-1], subband[1:]):
-            af = 2**(-qfactors[subband.index(i)])
+        for i, j in zip(subbands[:-1], subbands[1:]):
+            af = 2**(-qfactors[subbands.index(i)])
             band_freqs = freqs[c][fs_list[i]:fs_list[j]]
             band_thresholds = thresholds[c][fs_list[i]:fs_list[j]]
 
@@ -54,11 +46,11 @@ def quant(freqs, thresholds, kwargs):
 
 def dequant(freqs, kwargs):
     dlen = len(freqs[0])
-    fs_list = {n:get_range(dlen, kwargs['sample_rate'], n) for n in subband}
+    fs_list = {n:get_range(dlen, kwargs['sample_rate'], n) for n in subbands}
 
     for c in range(len(freqs)):
-        for i, j in zip(subband[:-1], subband[1:]):
-            af = 2**(-qfactors[subband.index(i)])
+        for i, j in zip(subbands[:-1], subbands[1:]):
+            af = 2**(-qfactors[subbands.index(i)])
             freqs[c][fs_list[i]:fs_list[j]] *= af
     return freqs
 
