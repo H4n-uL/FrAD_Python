@@ -67,6 +67,7 @@ class decode:
                 if play:
                     print()
                     if verbose: print()
+                    bps, avgbps = 0, []
                 else:
                     stream = open(variables.temp_pcm, 'ab')
                     dlen = os.path.getsize(file_path) - header_length
@@ -133,18 +134,24 @@ class decode:
 
                         i += len(segment) / (sample_rate*speed)
                         frameNo += 1
+
+                        bps = ((framelength * 8) * srate_frame / len(segment))
+                        avgbps.extend([bps, i])
+                        depth = [12, 16, 24, 32, 48, 64, 128][float_bits]
+                        lgs = int(math.log(srate_frame, 1000))
+                        lgv = int(math.log(sum(avgbps[::2])/(len(avgbps)//2), 1000))
                         if verbose:
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            depth = [12, 16, 24, 32, 48, 64, 128][float_bits]
-                            lg = int(math.log(srate_frame, 1000))
-                            kmgt = ['','k','M','G','T'][lg]
-                            print(f'{methods.tformat(i)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lg*3)} {kmgt}Hz {not endian and "B" or "L"}E {channels_frame} channel{channels_frame>1 and "s" or ""}')
-                            print(f'Profile {profile}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} samples & {framelength} Bytes per frame')
+                            print(f'{methods.tformat(i)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not endian and "B" or "L"}E {channels_frame} channel{channels_frame==1 and "" or "s"}')
+                            lgf = int(math.log(bps, 1000))
+                            print(f'Profile {profile}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} sample{len(segment)!=1 and"s"or""}/fr {framelength} B/fr {bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps/fr, {sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps avg')
                         else:
                             print('\x1b[1A\x1b[2K', end='')
-                            print(f'{methods.tformat(i)} / {methods.tformat(duration)}')
+                            cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(channels_frame, f'{channels_frame} ch')
+                            print(f'{methods.tformat(i)} / {methods.tformat(duration)}, {profile==0 and f"{depth}b@"or f"{sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
 
                         stream.write(segment.astype(np.float32))
+                        while avgbps[::1][0] < i - 30: avgbps = avgbps[2:]
                     else:
                         if channels != channels_frame or sample_rate != srate_frame:
                             if channels != None or sample_rate != None:
@@ -153,7 +160,7 @@ class decode:
                                 print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
                                 return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
-                        stream.write(segment.astype(np.float64).tobytes())
+                        stream.write(segment.astype('<d').tobytes())
                         i += framelength + 32
                         if verbose:
                             elapsed_time = time.time() - start_time
