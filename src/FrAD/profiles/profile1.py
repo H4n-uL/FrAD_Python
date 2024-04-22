@@ -15,11 +15,10 @@ qfactors = [4.06,  4.68,  5.31,  5.93,  6.49,  7.00,  7.14,  7.38,
             3.25,  2.94]
 
 def signext_24x(byte: bytes, bits, be):
-    byte = byte.hex()
-    prefix = be and byte[0] or byte[-2]
-    padding = int(prefix, base=16) > 7 and 'f' or '0'
-    if be: return bytes.fromhex(padding * (bits//12) + byte)
-    else: return bytes.fromhex(byte + padding * (bits//12))
+    prefix = be and byte.hex()[0] or byte.hex()[-2]
+    padding = int(prefix, base=16) > 7 and b'\xff' or b'\x00'
+    if be: return padding * (bits//24) + byte
+    else: return byte + padding * (bits//24)
 
 def signext_12(hex_str, be):
     prefix = be and hex_str[0] or hex_str[2]
