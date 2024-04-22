@@ -14,10 +14,12 @@ qfactors = [4.06,  4.68,  5.31,  5.93,  6.49,  7.00,  7.14,  7.38,
             6.80,  6.32,  6.09,  5.46,  5.24,  4.63,  3.86,  3.43,
             3.25,  2.94]
 
-def signext_24x(byte, bits, be):
-    padding = int(byte.hex(), base=16) & (1<<be and (bits-1) or 7) and b'\xff' or b'\x00'
-    if be: return padding * (bits//24) + byte
-    else: return byte + padding * (bits//24)
+def signext_24x(byte: bytes, bits, be):
+    byte = byte.hex()
+    prefix = be and byte[0] or byte[-2]
+    padding = int(prefix, base=16) > 7 and 'f' or '0'
+    if be: return bytes.fromhex(padding * (bits//12) + byte)
+    else: return bytes.fromhex(byte + padding * (bits//12))
 
 def signext_12(hex_str, be):
     prefix = be and hex_str[0] or hex_str[2]
@@ -89,7 +91,8 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
     if bits in [128, 64, 32, 16]:
         pass
     elif bits in [48, 24]:
-        data = b''.join([be and data[i+(bits//24):i+(bits//6)] or data[i:i+(bits//8)] for i in range(0, len(data), bits//6)])
+        data = data.hex()
+        data = bytes.fromhex(''.join([be and data[i+(bits//12):i+(bits//6*2)] or data[i:i+bits//4] for i in range(0, len(data), bits//6*2)]))
     elif bits == 12:
         data = data.hex()
         data = bytes.fromhex(''.join([be and data[i+1:i+4] or data[i:i+4][:2] + data[i:i+4][3:] for i in range(0, len(data), 4)]))
