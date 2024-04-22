@@ -43,11 +43,12 @@ class recorder:
                 try:
                     data = record.read(samples_per_frame)[0]
                     flen = len(data)
-                    data, bits = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level, model=psycho)
+                    data, bits, chnl = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level, model=psycho)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: data = ecc.encode(data, ecc_dsize, ecc_codesize)
 
+                    efb = headb.encode_efb(profile, apply_ecc, little_endian, bits)
                     data = bytes(
                         #-- 0x00 ~ 0x0f --#
                             # Frame Signature
@@ -56,10 +57,10 @@ class recorder:
                             # Segment length(Processed)
                             struct.pack('>I', len(data)) +
 
-                            headb.encode_efb(profile, apply_ecc, little_endian, bits) + # EFB
-                            struct.pack('>B', channels - 1) +                      # Channels
-                            struct.pack('>B', ecc_dsize if apply_ecc else 0) +     # ECC DSize
-                            struct.pack('>B', ecc_codesize if apply_ecc else 0) +  # ECC code size
+                            efb + # EFB
+                            struct.pack('>B', chnl - 1) +                         # Channels
+                            struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
+                            struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
 
                             struct.pack('>I', sample_rate) +                       # Sample Rate
 
