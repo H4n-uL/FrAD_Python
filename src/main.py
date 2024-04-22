@@ -211,6 +211,7 @@ def main(action, file_path, kwargs: dict):
         from FrAD import recorder
         bits = kwargs.get('bits', 24)
         recorder.record_audio(file_path, kwargs.get('srate', 48000), 1, bits,
+            kwargs.get('fsize', 2048),
             ecc_enabled, data_ecc,
             profile, loss_level, le)
 

@@ -8,9 +8,10 @@ class recorder:
     def record_audio(file_path, sample_rate = 48000, channels = 1,
             bit_depth = 24,
             samples_per_frame: int = 2048,
-            apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
+            apply_ecc: bool = False, ecc_sizes: list = [128, 20],
             profile = 0, loss_level: int = 0, little_endian = False,
             meta = None, img: bytes = None):
+        ecc_dsize, ecc_codesize = ecc_sizes
 
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
