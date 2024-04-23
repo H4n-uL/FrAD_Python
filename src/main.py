@@ -31,7 +31,7 @@ fourier encode path/to/audio.file --bits [bit depth] {kwargs...}
     --output          | Output file path (alias: o, out, output-file)
     --sample-rate     | New sample rate (alias: sr, srate, nsr, new-srate,
                       |                               new-sample-rate, resample)
-    --fsize           | Samples per frame, default: 2048 (alias: fs, frame-size,
+    --fsize           | Samples per frame, default: 2048 (alias: fr, frame-size,
                       |                                       samples-per-frame)
     --gain            | Gain level in both dBFS and amplitude (alias: g, gain)
     --le              | Little Endian Toggle (alias: le, little-endian)
