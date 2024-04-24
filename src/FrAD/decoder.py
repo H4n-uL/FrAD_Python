@@ -14,15 +14,15 @@ class decode:
     def internal(file_path, play: bool = False, speed: float = 1, e: bool = False, gain: float = 1, verbose: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
-            header = f.read(64)
+            head = f.read(64)
 
             # File signature verification
-            methods.signature(header[0x0:0x4])
+            methods.signature(head[0x0:0x4])
 
             # Taking Stream info
             channels = None
             sample_rate = None
-            header_length = struct.unpack('>Q', header[0x8:0x10])[0] # 0x08-8B: Total header size
+            header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
 
             f.seek(header_length)
 
@@ -61,6 +61,12 @@ class decode:
             duration /= speed
 
             f.seek(header_length)
+            # if verbose: 
+            #     meta, img = header.parse(file_path)
+            #     for m in meta:
+            #         if '\n' in m[1]:
+            #             m[1] = m[1].replace('\n', '\n'+' '*(len(m[0])+1))
+            #         print(f'{m[0]}={m[1]}')
 
             try:
                 # Starting stream
@@ -183,11 +189,7 @@ class decode:
                 if play:
                     try: stream.abort()
                     except UnboundLocalError: pass
-                else:
-                    try: stream.close()
-                    except UnboundLocalError: pass
-                    print('Aborting...')
-                    os.remove(variables.temp_pcm)
+                else: print('Aborting...')
                 sys.exit(0)
 
     def split_q(s):
@@ -263,7 +265,6 @@ class decode:
         # File name
         command.append(f'{out}.{ext}')
         subprocess.run(command)
-        os.remove(variables.temp_pcm)
 
     def AppleAAC_macOS(sample_rate, channels, out, quality, strategy):
         try:
@@ -279,11 +280,8 @@ class decode:
                 '-f', 'flac', variables.temp_flac
             ]
             subprocess.run(command)
-            os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp_pcm)
-            os.remove(variables.temp_flac)
             sys.exit(0)
         try:
             if strategy in ['c', '', None]: strategy = '0'
@@ -299,10 +297,8 @@ class decode:
                 '-s', strategy
             ]
             subprocess.run(command)
-            os.remove(variables.temp_flac)
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp_flac)
             sys.exit(0)
 
     def AppleAAC_Windows(sample_rate, channels, out, quality, new_srate):
@@ -322,10 +318,8 @@ class decode:
                 '-s'
             ])
             subprocess.run(command)
-            os.remove(variables.temp_pcm)
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp_pcm)
             sys.exit(0)
 
     def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: list = None, new_srate: int = None, verbose: bool = False):
@@ -385,13 +379,7 @@ class decode:
 
         except KeyboardInterrupt:
             print('Aborting...')
-            os.remove(variables.temp_pcm)
         except Exception as e:
-            if os.path.exists(variables.meta): os.remove(variables.meta)
-            if os.path.exists(f'{variables.meta}.image'): os.remove(f'{variables.meta}.image')
-            os.remove(variables.temp_pcm)
             sys.exit(traceback.format_exc())
         finally:
-            os.remove(variables.meta)
-            if os.path.exists(f'{variables.meta}.image'): os.remove(f'{variables.meta}.image')
             sys.exit(0)

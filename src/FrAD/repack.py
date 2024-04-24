@@ -98,10 +98,8 @@ class repack:
                 f.seek(0)
                 head = f.read(header_length)
             except KeyboardInterrupt:
-                os.remove(variables.temp)
                 sys.exit(1)
 
             with open(file_path, 'wb') as f, open(variables.temp, 'rb') as t:
                 f.write(head)
                 f.write(t.read())
-            os.remove(variables.temp)

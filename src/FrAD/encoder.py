@@ -39,7 +39,7 @@ class encode:
     def get_metadata(file_path: str):
         excluded = ['major_brand', 'minor_version', 'compatible_brands', 'encoder']
         command = [
-            variables.ffmpeg, '-v', 'quiet',
+            variables.ffmpeg, '-v', 'quiet', '-y',
             '-i', file_path,
             '-f', 'ffmetadata',
             variables.meta
@@ -231,7 +231,7 @@ class encode:
                 if verbose: print('\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt:
             print('Aborting...')
+            sys.exit(0)
         except Exception as e:
             if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
             sys.exit(traceback.format_exc())
-        sys.exit(0)

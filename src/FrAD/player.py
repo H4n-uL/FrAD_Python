@@ -1,4 +1,3 @@
-from .common import methods
 from .decoder import decode
 
 class player:

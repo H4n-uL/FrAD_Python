@@ -1,10 +1,32 @@
-import base64, json, os, shutil, struct, sys, zlib
+import base64, json, os, shutil, struct, sys
 from .common import variables, methods
-import numpy as np
 from .tools.headb import headb
 
 class header:
-    def parse(file_path, output):
+    def parse(file_path):
+        meta, img = [], None
+        with open(file_path, 'rb') as f:
+            head = f.read(64)
+
+            methods.signature(head[0x0:0x4])
+            while True:
+                block_type = f.read(2)
+                if not block_type: break
+                if block_type == b'\xfa\xaa':
+                    block_length = int.from_bytes(f.read(6), 'big')
+                    title_length = int(struct.unpack('>I', f.read(4))[0])
+                    title = f.read(title_length).decode('utf-8')
+                    data = f.read(block_length-title_length-12)
+                    try: d = [title, data.decode('utf-8')]
+                    except UnicodeDecodeError: d = [title, base64.b64encode(data).decode('utf-8')]
+                    meta.append(d)
+                elif block_type[0] == 0xf5:
+                    block_length = int(struct.unpack('>Q', f.read(8))[0])
+                    img = f.read(block_length-10)
+                elif block_type == b'\xff\xd0': break
+        return meta, img
+
+    def parse_file(file_path, output):
         try:
             open(output+'.meta.json', 'w', encoding='utf-8').write('[')
             with open(file_path, 'rb') as f:
@@ -79,6 +101,4 @@ class header:
             shutil.move(variables.temp, file_path)
         except KeyboardInterrupt:
             print('Aborting...')
-        finally:
-            os.remove(variables.temp2)
             sys.exit(0)

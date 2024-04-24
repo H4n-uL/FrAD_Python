@@ -190,7 +190,7 @@ def main(action, file_path, kwargs: dict):
 
     elif action in parse_opt:
         from FrAD import header
-        header.parse(file_path, kwargs.get('output', 'metadata'))
+        header.parse_file(file_path, kwargs.get('output', 'metadata'))
 
     elif action in meta_modify_opt:
         from FrAD import header

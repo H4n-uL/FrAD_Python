@@ -160,5 +160,3 @@ class dsd:
             h = dsd.build_dff_header(dlen, chb, dsd_srate)
             with open(f'{out}.{ext}', 'wb') as f, open(variables.temp_dsd, 'rb') as temp:
                 f.write(h + temp.read())
-            os.remove(variables.temp_pcm)
-            os.remove(variables.temp_dsd)
