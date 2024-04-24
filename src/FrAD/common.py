@@ -37,20 +37,12 @@ class variables:
     arch = platform.machine().lower()
 
     if getattr(sys, 'frozen', False):
-        # 컴파일된 실행 파일인 경우
+        ffmpeg = 'ffmpeg'
+        ffprobe = 'ffprobe'
         if oper.system == 'Windows':
-            ffmpeg = 'ffmpeg'
-            qaac = os.path.join(directory, 'qaac.exe')
-            ffprobe = 'ffprobe'
+            aac = os.path.join(directory, 'qaac.exe')
         elif oper.system == 'Darwin':
-            ffmpeg = 'ffmpeg'
-            qaac = 'afconvert'
-            ffprobe = 'ffprobe'
-        else:
-            ffmpeg = 'ffmpeg'
-            ffprobe = 'ffprobe'
-
-        # ffmpeg와 ffprobe가 시스템에 설치되어 있는지 확인
+            aac = 'afconvert'
         try:
             subprocess.run([ffmpeg, '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run([ffprobe, '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
