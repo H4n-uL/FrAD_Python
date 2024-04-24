@@ -260,13 +260,12 @@ def main(action, file_path, kwargs: dict):
 
 if __name__ == '__main__':
     from FrAD.tools.argparse import parse_args
-    action, file_path, kwargs = parse_args(sys.argv[1:])
     try:
-        if action is not None: main(action, file_path, kwargs)
-        else:
+        if len(sys.argv) == 1:
             print('Fourier Analogue-in-Digital Reference encoder/decoder')
             print('Please type `fourier help` to get help.')
             sys.exit(0)
+        main(parse_args(sys.argv[1:]))
     except Exception as e:
         if type(e) == KeyboardInterrupt:
             sys.exit(0)
