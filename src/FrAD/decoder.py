@@ -222,14 +222,7 @@ class decode:
             '-i', variables.temp_pcm,
             '-i', variables.meta,
         ]
-        if os.path.exists(f'{variables.meta}.image'):
-            command.extend(['-i', f'{variables.meta}.image', '-c:v', 'copy'])
-
         command.extend(['-map_metadata', '1', '-map', '0:a'])
-
-        if os.path.exists(f'{variables.meta}.image'):
-            command.extend(['-map', '2:v'])
-
         command.extend(ffmpeg_cmd)
         subprocess.run(command)
 
