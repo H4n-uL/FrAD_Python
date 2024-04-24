@@ -148,6 +148,10 @@ def parse_args(args: list):
             elif key in ['v', 'verbose']:
                 key, value = 'verbose', True
 
+            elif key in ['ffmpeg', 'ff', 'directcmd', 'direct-cmd', 'direct-ffmpeg']:
+                key, value = 'directcmd', args
+                args = []
+
             options[key] = value
 
     return action, file_path, options

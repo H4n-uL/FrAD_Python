@@ -212,6 +212,27 @@ class decode:
 
     ffmpeg_lossless = ['wav', 'flac', 'wavpack', 'tta', 'truehd', 'alac', 'dts', 'mlp']
 
+    def directcmd(sample_rate, channels, ffmpeg_cmd):
+        command = [
+            variables.ffmpeg, '-y',
+            '-loglevel', 'error',
+            '-f', 'f64le',
+            '-ar', str(sample_rate),
+            '-ac', str(channels),
+            '-i', variables.temp_pcm,
+            '-i', variables.meta,
+        ]
+        if os.path.exists(f'{variables.meta}.image'):
+            command.extend(['-i', f'{variables.meta}.image', '-c:v', 'copy'])
+
+        command.extend(['-map_metadata', '1', '-map', '0:a'])
+
+        if os.path.exists(f'{variables.meta}.image'):
+            command.extend(['-map', '2:v'])
+
+        command.extend(ffmpeg_cmd)
+        subprocess.run(command)
+
     def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
         command = [
             variables.ffmpeg, '-y',
@@ -322,7 +343,7 @@ class decode:
             print('Aborting...')
             sys.exit(0)
 
-    def dec(file_path, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: list = None, new_srate: int = None, verbose: bool = False):
+    def dec(file_path, ffmpeg_cmd, out: str = None, bits: int = 32, codec: str = None, quality: str = None, e: bool = False, gain: list = None, new_srate: int = None, verbose: bool = False):
         # Decoding
         sample_rate, channels = decode.internal(file_path, e=e, gain=gain, verbose=verbose)
         header.parse_to_ffmeta(file_path, variables.meta)
@@ -366,16 +387,19 @@ class decode:
 
             if quality: int(quality.replace('k', '000'))
 
-            if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
-                if strategy in ['c', 'a']: quality = decode.setaacq(quality, channels)
-                if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, out, quality, strategy)
-                elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, out, quality, new_srate)
-            elif codec in ['dsd', 'dff']:
-                dsd.encode(sample_rate, channels, out, ext, verbose)
-            elif codec not in ['pcm', 'raw']:
-                decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy, new_srate)
+            if ffmpeg_cmd is not None:
+                decode.directcmd(sample_rate, channels, ffmpeg_cmd)
             else:
-                shutil.move(variables.temp_pcm, f'{out}.{ext}')
+                if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
+                    if strategy in ['c', 'a']: quality = decode.setaacq(quality, channels)
+                    if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, out, quality, strategy)
+                    elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, out, quality, new_srate)
+                elif codec in ['dsd', 'dff']:
+                    dsd.encode(sample_rate, channels, out, ext, verbose)
+                elif codec not in ['pcm', 'raw']:
+                    decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy, new_srate)
+                else:
+                    shutil.move(variables.temp_pcm, f'{out}.{ext}')
 
         except KeyboardInterrupt:
             print('Aborting...')

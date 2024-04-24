@@ -39,15 +39,18 @@ class variables:
     if getattr(sys, 'frozen', False):
         ffmpeg = 'ffmpeg'
         ffprobe = 'ffprobe'
-        if oper.system == 'Windows':
-            aac = os.path.join(directory, 'qaac.exe')
-        elif oper.system == 'Darwin':
-            aac = 'afconvert'
+        if   oper.system == 'Windows': aac = 'qaac'
+        elif oper.system == 'Darwin':  aac = 'afconvert'
         try:
-            subprocess.run([ffmpeg, '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run([ffmpeg,  '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run([ffprobe, '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if oper.system in ['Windows', 'Darwin']:
+                subprocess.run([aac,       '-h'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except FileNotFoundError:
-            print("Error: ffmpeg or ffprobe not found. Please install them and try again.")
+            print('Error: ffmpeg or ffprobe not found. Please install them and try again.')
+            if oper.system == 'Windows':  print('On Windows, you should also install qaac and add these files to PATH.')
+            elif oper.system == 'Darwin': print('afconvert is built-in on macOS')
+            else: print('On Linux, you have no way to use Apple AAC encoder. Please use FDK-AAC or another OS.')
             sys.exit(1)
 
     else:

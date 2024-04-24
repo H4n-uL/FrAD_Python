@@ -51,21 +51,29 @@ Decode
 This action will encode any supporting FrAD files to another format. It highly
 leans on ffmpeg for re-encoding.
 
+-------------------------------------usage--------------------------------------
+
+fourier encode path/to/audio.file {kwargs...} {--ffmpeg {ffmpeg decode command}}
+
 ------------------------------------options-------------------------------------
 
     --ecc             | Check errors and fix, recommended (alias: e, apply-ecc,
                       |                                              enable-ecc)
+    --gain            | Gain level in both dBFS and amplitude (alias: g)
+    --verbose         | Verbose output (alias: v)
+                      |
+    --ffmpeg          | Pass a custom FFmpeg command for decoding.
+                      | recommended for advanced users. Any options specified
+                      |         after --ffmpeg will be passed directly to FFmpeg.
+                      |      (alias: ff, directcmd, direct-ffmpeg, direct-ffmpeg)
+                      |
     --codec           | Codec for decoding, default: 24-bit FLAC (alias: c)
     --quality         | Quality for decoding in [bitrate]{c|v|a},
                       |                      default: maximum quality (alias: q)
     --output          | Output file path (alias: o, out, output-file)
     --bits            | Bit depth (alias: b, bit)
-                      |
-    --gain            | Gain level in both dBFS and amplitude (alias: g)
     --sample-rate     | New sample rate (alias: sr, srate, nsr, new-srate,
-                      |                               new-sample-rate, resample)
-                      |
-    --verbose         | Verbose output (alias: v)'''
+                      |                               new-sample-rate, resample)'''
 play_help =        '''----------------------------------description-----------------------------------
 
 Play
@@ -182,7 +190,7 @@ def main(action, file_path, kwargs: dict):
         from FrAD import decode
         bits = kwargs.get('bits', 32)
         decode.dec(
-                file_path, output, bits,
+                file_path, kwargs.get('directcmd', None), output, bits,
                 kwargs.get('codec', 'flac'),
                 kwargs.get('quality', None),
                 ecc_enabled, gain, srate,
