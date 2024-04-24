@@ -265,7 +265,8 @@ if __name__ == '__main__':
             print('Fourier Analogue-in-Digital Reference encoder/decoder')
             print('Please type `fourier help` to get help.')
             sys.exit(0)
-        main(parse_args(sys.argv[1:]))
+        action, file_path, kwargs = parse_args(sys.argv[1:])
+        main(action, file_path, kwargs)
     except Exception as e:
         if type(e) == KeyboardInterrupt:
             sys.exit(0)
