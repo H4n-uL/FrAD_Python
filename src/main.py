@@ -66,7 +66,7 @@ fourier encode path/to/audio.file {kwargs...} {--ffmpeg {ffmpeg decode command}}
                       | recommended for advanced users. Any options specified
                       |         after --ffmpeg will be passed directly to FFmpeg.
                       |            Output file name auto-detection not supported.
-                      |      (alias: ff, directcmd, direct-ffmpeg, direct-ffmpeg)
+                      |         (alias: ff, directcmd, direct-cmd, direct-ffmpeg)
                       |
     --codec           | Codec for decoding, default: 24-bit FLAC (alias: c)
     --quality         | Quality for decoding in [bitrate]{c|v|a},
