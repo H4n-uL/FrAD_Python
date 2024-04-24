@@ -20,7 +20,7 @@ class fourier:
             bits = {12:16, 16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
         # Ravelling and packing
-        data: np.ndarray = freqs.T.ravel().astype(endian+fourier.dtypes[bits]).tobytes()
+        data: bytes = freqs.T.ravel().astype(endian+fourier.dtypes[bits]).tobytes()
 
         # Cutting off bits
         if bits in [128, 64, 32, 16]:
@@ -54,7 +54,7 @@ class fourier:
             raise Exception('Illegal bits value.')
 
         # Unpacking and unravelling
-        freqs = np.frombuffer(data, dtype=endian+fourier.dtypes[bits]).astype(float).reshape(-1, channels).T
+        freqs: np.ndarray = np.frombuffer(data, dtype=endian+fourier.dtypes[bits]).astype(float).reshape(-1, channels).T
 
         # Removing potential Infinities and Non-numbers
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
