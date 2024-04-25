@@ -1,11 +1,11 @@
 from .fourier import fourier
-import os, struct, sys, zlib
+import itertools, os, struct, sys, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
 
 class recorder:
-    def record_audio(file_path, sample_rate = 48000, channels = 1,
+    def record_audio(file_path, sample_rate = 48000, channels = None,
             bit_depth = 24,
             samples_per_frame: int = 2048,
             apply_ecc: bool = False, ecc_sizes: list = [128, 20],
@@ -13,15 +13,22 @@ class recorder:
             meta = None, img: bytes = None):
         ecc_dsize, ecc_codesize = ecc_sizes
 
-        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16)
+        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * 256 * 16)//16)
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if samples_per_frame < 2: raise ValueError(f'Sample size must be at least 2.')
         if samples_per_frame % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
 
         if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
 
-        hw = int(input(f'Please enter your recording device ID from below.\n{sd.query_devices()}\n> '))
+        print('Please enter your recording device ID from below.')
+        for ind, dev in enumerate(sd.query_devices()):
+            if dev['max_input_channels'] != 0:
+                print(f'{ind} {dev['name']}')
+                print(f'    srate={dev['default_samplerate']}\t channels={dev['max_input_channels']}')
+        hw = int(input('> '))
         if profile in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
+
+        if channels is None: channels = sd.query_devices()[hw]['max_input_channels']
 
         # Setting file extension
         if not (file_path.lower().endswith('.frad') or file_path.lower().endswith('.dsin') or file_path.lower().endswith('.fra') or file_path.lower().endswith('.dsn')):
@@ -32,7 +39,10 @@ class recorder:
         ecc_dsize, ecc_codesize = int(ecc_sizes[0]), int(ecc_sizes[1])
         print('Recording...')
         open(file_path, 'wb').write(headb.uilder(meta, img))
-        with sd.InputStream(samplerate=sample_rate, channels=channels, device=hw) as record, open(file_path, 'ab') as f:
+
+        record = sd.InputStream(samplerate=sample_rate, channels=channels, device=hw)
+        record.start()
+        with open(file_path, 'ab') as f:
 
             if profile == 1:
                 from .profiles.tools.profile1 import PsychoacousticModel
@@ -82,5 +92,5 @@ class recorder:
 
                 except KeyboardInterrupt:
                     break
-
+        record.close()
         print('Recording stopped.')
