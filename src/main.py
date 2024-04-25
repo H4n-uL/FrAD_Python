@@ -232,7 +232,7 @@ def main(action, file_path, kwargs: dict):
     
     elif action in ['help']:
         print(
-'''             Fourier Analogue-in-Digital Reference encoder/decoder
+'''               Fourier Analogue-in-Digital Master encoder/decoder
                              Original Author - HaמuL
 ''')
         if file_path in encode_opt:
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     from FrAD.tools.argparse import parse_args
     try:
         if len(sys.argv) == 1:
-            print('Fourier Analogue-in-Digital Reference encoder/decoder')
+            print('Fourier Analogue-in-Digital Master encoder/decoder')
             print('Please type `fourier help` to get help.')
             sys.exit(0)
         action, file_path, kwargs = parse_args(sys.argv[1:])
