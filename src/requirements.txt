@@ -2,4 +2,5 @@ ffmpeg
 numpy
 scipy
 reedsolo
+requests
 sounddevice
