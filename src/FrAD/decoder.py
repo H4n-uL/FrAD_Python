@@ -84,12 +84,14 @@ class decode:
 
                 while True:
                     # Reading Frame Header
-                    fhead = f.read(32)
-                    if not fhead:
-                        if prev is not None:
-                            if play == True: stream.write(prev.astype(np.float32))
-                            else: stream.write(prev.astype(np.float64).tobytes())
+                    fhead = f.read(4)
+                    if len(fhead)<4:
+                        if prev is not None: stream.write(prev.astype(np.float32) if play else prev.astype('<d').tobytes())
                         break
+                    if fhead != b'\xff\xd0\xd2\x97':
+                        f.seek(-3, 1)
+                        continue
+                    fhead += f.read(28)
                     framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                     efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
                     profile, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
