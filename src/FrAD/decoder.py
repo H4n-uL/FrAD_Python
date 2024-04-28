@@ -63,10 +63,11 @@ class decode:
             f.seek(header_length)
             # if verbose: 
             #     meta, img = header.parse(file_path)
+            #     meta_tlen = max([len(m[0]) for m in meta])
             #     for m in meta:
             #         if '\n' in m[1]:
-            #             m[1] = m[1].replace('\n', '\n'+' '*(len(m[0])+1))
-            #         print(f'{m[0]}={m[1]}')
+            #             m[1] = m[1].replace('\n', '\n'+' '*(meta_tlen+3))
+            #         print(f'{m[0].rjust(meta_tlen, ' ')} = {m[1]}')
 
             try:
                 # Starting stream
