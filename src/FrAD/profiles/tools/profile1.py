@@ -41,23 +41,22 @@ class filter_tools:
         maxbark = 6 * np.arcsinh(fs / 1200)
         step_bark = maxbark / (nfilts - 1)
         binbarks = 6 * np.arcsinh(np.linspace(0, fs/2, nfft//2+1) / 1200)
-        
+
         W = np.zeros((nfilts, nfft), dtype=np.int8)
         bark_indices = np.round(binbarks / step_bark).astype(int)
         W[bark_indices, np.arange(nfft//2+1)] = 1
-        
+
         freq_indices = [np.where(W[i, :(nfft//2+1)])[0] for i in range(nfilts)]
         W_inv = np.zeros((nfft//2+1, nfilts))
         for i, indices in enumerate(freq_indices):
             if len(indices) > 0:
                 W_inv[indices, i] = 1 / np.sqrt(len(indices))
-        
         return W, W_inv
 
     @staticmethod
     def mapping2bark(mX, W, nfft):
         nfreqs = nfft // 2
-        return np.sqrt((mX[:nfreqs] ** 2) @ W[:, :nfreqs].T)
+        return np.sqrt(np.square(mX[:nfreqs]) @ W[:, :nfreqs].T)
 
     @staticmethod
     def mappingfrombark(mTbark, W_inv, nfft):
