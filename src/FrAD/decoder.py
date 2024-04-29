@@ -94,6 +94,7 @@ class decode:
                     if fhead != b'\xff\xd0\xd2\x97':
                         f.seek(-3, 1)
                         continue
+                    t_frame = time.time()
                     fhead += f.read(28)
                     framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                     efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
@@ -176,12 +177,13 @@ class decode:
                         if verbose:
                             elapsed_time = time.time() - start_time
                             bps = i / elapsed_time
-                            mult = bps / (ssize_dict[float_bits] * sample_rate)
+                            lgb = int(math.log(bps, 1000))
+                            mult = (samples_p_chnl / srate_frame) / (time.time() - t_frame)
                             percent = i*100 / dlen
                             b = int(percent / 100 * cli_width)
                             eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            print(f'Decode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
+                            print(f'Decode Speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s, X{mult:.3f}')
                             print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                 time.sleep(1)

@@ -26,50 +26,21 @@ def signext_12(hex_str, be):
     if be: return padding + hex_str
     else: return hex_str[:2] + padding + hex_str[2]
 
-def quant(freqs, thresholds, kwargs):
-    dlen = len(freqs[0])
-    fs_list = {n: get_range(dlen, kwargs['sample_rate'], n) for n in subbands}
-
-    const_factor = np.log2(kwargs['level']+1)*2+1
-
-    for c in range(len(freqs)):
-        for i, j in zip(subbands[:-1], subbands[1:]):
-            af = 2**(-qfactors[subbands.index(i)])
-            band_freqs = freqs[c][fs_list[i]:fs_list[j]]
-            band_thresholds = thresholds[c][fs_list[i]:fs_list[j]]
-
-            mask = np.abs(band_freqs) < band_thresholds * const_factor
-            band_freqs[mask] = 0
-
-            freqs[c][fs_list[i]:fs_list[j]] = band_freqs / af
-
-    return freqs
-
-def dequant(freqs, kwargs):
-    dlen = len(freqs[0])
-    fs_list = {n:get_range(dlen, kwargs['sample_rate'], n) for n in subbands}
-
-    for c in range(len(freqs)):
-        for i, j in zip(subbands[:-1], subbands[1:]):
-            af = 2**(-qfactors[subbands.index(i)])
-            freqs[c][fs_list[i]:fs_list[j]] *= af
-    return freqs
-
 def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> bytes:
     be = not little_endian
     endian = be and '>' or '<'
 
     # DCT
-    freqs = np.array([dct(data[:, i], norm='ortho') for i in range(channels)])
     dlen = len(data)
+    freqs = np.array([dct(data[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
     if kwargs['level'] > 10:
         for chnl in range(channels):
             res = int(dlen / kwargs['sample_rate'] * 2 * (24000 - (kwargs['level']-10)*2000))
             freqs[chnl][res:] = 0
 
-    thresholds = p1tools.get_thres(freqs*65536, channels, dlen, kwargs)/65536
-    freqs = quant(freqs, thresholds, kwargs)
+    freqs, denoms = p1tools.quant(freqs, channels, dlen, kwargs)
+    # freqs = quant(freqs, thresholds, kwargs)
     # Inter-channel prediction
     if channels == 1: pass
     elif channels == 2:
@@ -84,7 +55,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
         bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
     # Ravelling and packing
-    data: np.ndarray = np.column_stack(np.array(freqs).astype(dtypes[bits]).newbyteorder(endian)).ravel(order='C').tobytes()
+    data: np.ndarray = freqs.T.ravel().astype(endian+dtypes[bits]).tobytes()
 
     # Cutting off bits
     if bits in [128, 64, 32, 16]:
@@ -96,6 +67,8 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
         data = data.hex()
         data = bytes.fromhex(''.join([be and data[i+1:i+4] or data[i:i+4][:2] + data[i:i+4][3:] for i in range(0, len(data), 4)]))
     else: raise Exception('Illegal bits value.')
+
+    data = denoms.astype(endian+'e').tobytes() + data
 
     # Deflating
     data = zlib.compress(data, level=9)
@@ -109,6 +82,8 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
 
     # Inflating
     data = zlib.decompress(data)
+    denoms = np.frombuffer(data[:p1tools.nfilts*channels*2], dtype=endian+'e').reshape((channels, -1))
+    data = data[p1tools.nfilts*channels*2:]
 
     # Padding bits
     if bits % 3 != 0: pass
@@ -122,9 +97,8 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
         raise Exception('Illegal bits value.')
 
     # Unpacking and unravelling
-    data = np.frombuffer(data, dtype=endian+dtypes[bits]).astype(float)
     if channels > 2: channels += 1
-    freqs = [data[i::channels] for i in range(channels)]
+    freqs: np.ndarray = np.frombuffer(data, dtype=endian+dtypes[bits]).astype(float).reshape(-1, channels).T
 
     # Removing potential Infinities and Non-numbers
     freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
@@ -134,7 +108,7 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
     elif channels == 2:
         freqs = np.array([freqs[0] + freqs[1], freqs[0] - freqs[1]])
     else: freqs = freqs[1:] + freqs[0]
-    freqs = dequant(freqs, kwargs)
+    freqs = p1tools.dequant(freqs, channels, len(freqs[0]), denoms, kwargs)
 
     # Inverse DCT and stacking
-    return np.column_stack([idct(chnl, norm='ortho') for chnl in freqs])
+    return np.column_stack([idct(chnl*len(chnl)) for chnl in freqs])/(2**(bits-1))
