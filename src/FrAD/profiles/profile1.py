@@ -74,7 +74,7 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
 
     # Inflating
     data = zlib.decompress(data)
-    denoms = np.frombuffer(data[:p1tools.nfilts*channels*2], dtype=endian+'e').reshape((channels, -1))
+    masks = np.frombuffer(data[:p1tools.nfilts*channels*2], dtype=endian+'e').reshape((channels, -1))
     data = data[p1tools.nfilts*channels*2:]
 
     # Padding bits
@@ -100,7 +100,7 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
     elif channels == 2:
         freqs = np.array([freqs[0] + freqs[1], freqs[0] - freqs[1]])
     else: freqs = freqs[1:] + freqs[0]
-    freqs = p1tools.dequant(freqs, channels, len(freqs[0]), denoms, kwargs)
+    freqs = p1tools.dequant(freqs, channels, masks, kwargs)
 
     # Inverse DCT and stacking
     return np.column_stack([idct(chnl*len(chnl)) for chnl in freqs])/(2**(bits-1))

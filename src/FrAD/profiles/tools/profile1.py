@@ -60,6 +60,5 @@ def quant(freqs, channels, dlen, kwargs):
 
     return np.array(filtered), np.array(mask)
 
-def dequant(filtered, channels, dlen, denoms, kwargs):
-    return np.array([filtered[c] * filter_tools.mappingfromopus(denoms[c], dlen, kwargs['sample_rate'])
-    for c in range(channels)])
+def dequant(filtered, channels, masks, kwargs):
+    return np.array([filtered[c] * filter_tools.mappingfromopus(masks[c], len(filtered[c]), kwargs['sample_rate']) for c in range(channels)])
