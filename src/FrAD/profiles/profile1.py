@@ -47,7 +47,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
         bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
     # Ravelling and packing
-    data: np.ndarray = freqs.T.ravel().astype(endian+dtypes[bits]).tobytes()
+    data: bytes = freqs.T.ravel().astype(endian+dtypes[bits]).tobytes()
 
     # Cutting off bits
     if bits in [128, 64, 32, 16]:
@@ -60,7 +60,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
         data = bytes.fromhex(''.join([be and data[i+1:i+4] or data[i:i+4][:2] + data[i:i+4][3:] for i in range(0, len(data), 4)]))
     else: raise Exception('Illegal bits value.')
 
-    data = denoms.astype(endian+'e').tobytes() + data
+    data = denoms.astype(endian+'f').tobytes() + data
 
     # Deflating
     data = zlib.compress(data, level=9)
@@ -74,8 +74,8 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
 
     # Inflating
     data = zlib.decompress(data)
-    masks = np.frombuffer(data[:p1tools.nfilts*channels*2], dtype=endian+'e').reshape((channels, -1))
-    data = data[p1tools.nfilts*channels*2:]
+    masks = np.frombuffer(data[:p1tools.nfilts*channels*4], dtype=endian+'f').reshape((channels, -1))
+    data = data[p1tools.nfilts*channels*4:]
 
     # Padding bits
     if bits % 3 != 0: pass
