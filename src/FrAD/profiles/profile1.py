@@ -60,7 +60,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
         data = bytes.fromhex(''.join([be and data[i+1:i+4] or data[i:i+4][:2] + data[i:i+4][3:] for i in range(0, len(data), 4)]))
     else: raise Exception('Illegal bits value.')
 
-    data = denoms.astype(endian+'f').tobytes() + data
+    data = (denoms/(2**(bits-1))).astype(endian+'e').tobytes() + data
 
     # Deflating
     data = zlib.compress(data, level=9)
@@ -74,8 +74,8 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
 
     # Inflating
     data = zlib.decompress(data)
-    masks = np.frombuffer(data[:p1tools.nfilts*channels*4], dtype=endian+'f').reshape((channels, -1))
-    data = data[p1tools.nfilts*channels*4:]
+    masks = np.frombuffer(data[:p1tools.nfilts*channels*2], dtype=endian+'e').reshape((channels, -1)) * (2**(bits-1))
+    data = data[p1tools.nfilts*channels*2:]
 
     # Padding bits
     if bits % 3 != 0: pass
