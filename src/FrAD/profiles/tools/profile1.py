@@ -45,7 +45,7 @@ class PsychoacousticModel:
 
 def quant(freqs, channels, dlen, kwargs):
     alpha = 0.8
-    const_factor = 0.5 + kwargs['level']/20
+    const_factor = 0.25 + kwargs['level']/16
 
     # Masking threshold
     filtered = []
