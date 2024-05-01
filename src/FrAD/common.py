@@ -3,11 +3,11 @@ import atexit, os, platform, subprocess, sys, tempfile
 yd = 365.25
 ys = yd * 86400
 
+directory = os.path.dirname(os.path.realpath(__file__))
+res = os.path.join(directory, 'res')
+
 class variables:
     hash_block_size = 2**20
-
-    directory = os.path.dirname(os.path.realpath(__file__))
-    res = os.path.join(directory, 'res')
 
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.swv').name
     temp2 =     tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.swv').name
@@ -16,26 +16,11 @@ class variables:
     temp_flac = tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.flac').name
     meta =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.meta').name
 
-    @atexit.register
-    def cleanup():
-        temp_files = [
-            variables.temp,
-            variables.temp2,
-            variables.temp_pcm,
-            variables.temp_dsd,
-            variables.temp_flac,
-            variables.meta]
-
-        for file in temp_files:
-            if os.path.exists(file):
-                try:os.remove(file)
-                except:pass
-
-    files = lambda x: [f for f in os.listdir(variables.res) if x in f]
-    if files('ffmpeg'): ffmpeg = os.path.join(res, files('ffmpeg')[0])
-    else:               ffmpeg = 'ffmpeg'
-    if files('ffprobe'): ffprobe = os.path.join(res, files('ffprobe')[0])
-    else:                ffprobe = 'ffprobe'
+    resfiles = lambda x: [f for f in os.listdir(res) if x in f]
+    if resfiles('ffmpeg'):  ffmpeg  = os.path.join(res, resfiles('ffmpeg')[0])
+    else:                   ffmpeg  = 'ffmpeg'
+    if resfiles('ffprobe'): ffprobe = os.path.join(res, resfiles('ffprobe')[0])
+    else:                   ffprobe = 'ffprobe'
 
     oper = platform.uname()
     arch = platform.machine().lower()
@@ -77,3 +62,18 @@ class methods:
         if n < 86400: return f'{int(n//3600)%24}:{int(n//60)%60:02d}:{n%60:06.3f}'
         if n < ys: return f'{int(n//86400)%yd}:{int(n//3600)%24:02d}:{int(n//60)%60:02d}:{n%60:06.3f}'
         return f'J{int(n//ys)}.{int((n%ys//86400)%yd):03d}:{int(n%ys//3600)%24:02d}:{int(n%ys//60)%60:02d}:{n%ys%60:06.3f}'
+
+    @atexit.register
+    def cleanup():
+        temp_files = [
+            variables.temp,
+            variables.temp2,
+            variables.temp_pcm,
+            variables.temp_dsd,
+            variables.temp_flac,
+            variables.meta]
+
+        for file in temp_files:
+            if os.path.exists(file):
+                try:os.remove(file)
+                except:pass
