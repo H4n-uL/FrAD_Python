@@ -12,7 +12,6 @@ def fetch_git(url, dir_path):
     for content in res.json():
         if content['type'] == 'dir':
             new_dir_path = os.path.join(dir_path, content['name'])
-            if content['name'] == 'res': continue
             os.makedirs(new_dir_path, exist_ok=True)
             fetch_git(content['url'], new_dir_path)
         else: open(os.path.join(dir_path, content['name']), 'wb').write(requests.get(content['download_url']).content)
