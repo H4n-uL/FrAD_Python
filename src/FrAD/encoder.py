@@ -27,8 +27,7 @@ class encode:
             variables.ffmpeg,
             '-v', 'quiet',
             '-i', file_path,
-            '-f', 'f64le',
-            '-acodec', 'pcm_f64le',
+            '-f', 'f64be',
             '-vn'
         ]
         if new_srate not in [osr, None]:
@@ -167,7 +166,7 @@ class encode:
                     else: last = b''
 
                     # RAW PCM to Numpy
-                    frame = np.frombuffer(data, dtype='<d').reshape(-1, channels) * gain
+                    frame = np.frombuffer(data, dtype='>d').reshape(-1, channels) * gain
                     flen = len(frame)
 
                     # DCT

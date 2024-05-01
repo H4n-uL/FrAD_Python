@@ -89,7 +89,7 @@ class decode:
                     # Reading Frame Header
                     fhead = f.read(4)
                     if len(fhead)<4:
-                        if prev is not None: stream.write(prev.astype(np.float32) if play else prev.astype('<d').tobytes())
+                        if prev is not None: stream.write(prev.astype(np.float32) if play else prev.astype('>d').tobytes())
                         break
                     if fhead != b'\xff\xd0\xd2\x97':
                         f.seek(-3, 1)
@@ -172,7 +172,7 @@ class decode:
                                 print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
                                 return sample_rate, channels
                             channels, sample_rate = channels_frame, srate_frame
-                        stream.write(segment.astype('<d').tobytes())
+                        stream.write(segment.astype('>d').tobytes())
                         i += framelength + 32
                         if verbose:
                             elapsed_time = time.time() - start_time
@@ -223,7 +223,7 @@ class decode:
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
-            '-f', 'f64le',
+            '-f', 'f64be',
             '-ar', str(sample_rate),
             '-ac', str(channels),
             '-i', variables.temp_pcm,
@@ -237,7 +237,7 @@ class decode:
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
-            '-f', 'f64le',
+            '-f', 'f64be',
             '-ar', str(sample_rate),
             '-ac', str(channels),
             '-i', variables.temp_pcm,
@@ -293,7 +293,7 @@ class decode:
             command = [
                 variables.ffmpeg, '-y',
                 '-loglevel', 'error',
-                '-f', 'f64le',
+                '-f', 'f64be',
                 '-ar', str(sample_rate),
                 '-ac', str(channels),
                 '-i', variables.temp_pcm,

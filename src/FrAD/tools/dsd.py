@@ -113,12 +113,12 @@ class dsd:
             command = [
                 variables.ffmpeg,
                 '-v', 'quiet',
-                '-f', 'f64le',
+                '-f', 'f64be',
                 '-ar', str(srate),
                 '-ac', str(channels),
                 '-i', variables.temp_pcm,
                 '-ar', str(dsd_srate),
-                '-f', 'f64le',
+                '-f', 'f64be',
                 'pipe:1']
 
             pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -131,7 +131,7 @@ class dsd:
                     data = pipe.stdout.read(BUFFER_SIZE)
                     if not data or data == b'': break
                     # print(data)
-                    data_numpy = np.frombuffer(data, dtype='<d') / 2
+                    data_numpy = np.frombuffer(data, dtype='>d') / 2
                     freq = [data_numpy[i::channels] for i in range(channels)]
                     block = np.column_stack([delta_sigma[c].modulator(freq[c]) for c in range(len(freq))]).ravel(order='C').tobytes()
 
