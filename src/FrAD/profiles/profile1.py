@@ -94,8 +94,8 @@ def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
 
     # Removing potential Infinities and Non-numbers
     freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
+
     # Inter-channel reconstruction
-    
     if channels == 1: pass
     elif channels == 2:
         freqs = np.array([freqs[0] + freqs[1], freqs[0] - freqs[1]])
