@@ -7,6 +7,7 @@ class variables:
     hash_block_size = 2**20
 
     directory = os.path.dirname(os.path.realpath(__file__))
+    res = os.path.join(directory, 'res')
 
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.swv').name
     temp2 =     tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.swv').name
@@ -17,58 +18,44 @@ class variables:
 
     @atexit.register
     def cleanup():
-        try:
-            if os.path.exists(variables.temp):      os.remove(variables.temp)
-            if os.path.exists(variables.temp2):     os.remove(variables.temp2)
-            if os.path.exists(variables.temp_pcm):  os.remove(variables.temp_pcm)
-            if os.path.exists(variables.temp_dsd):  os.remove(variables.temp_dsd)
-            if os.path.exists(variables.temp_flac): os.remove(variables.temp_flac)
-            if os.path.exists(variables.meta):      os.remove(variables.meta)
-        except:
-            if os.path.exists(variables.temp):      os.remove(variables.temp)
-            if os.path.exists(variables.temp2):     os.remove(variables.temp2)
-            if os.path.exists(variables.temp_pcm):  os.remove(variables.temp_pcm)
-            if os.path.exists(variables.temp_dsd):  os.remove(variables.temp_dsd)
-            if os.path.exists(variables.temp_flac): os.remove(variables.temp_flac)
-            if os.path.exists(variables.meta):      os.remove(variables.meta)
-            sys.exit(0)
+        temp_files = [
+            variables.temp,
+            variables.temp2,
+            variables.temp_pcm,
+            variables.temp_dsd,
+            variables.temp_flac,
+            variables.meta]
+
+        for file in temp_files:
+            if os.path.exists(file):
+                try:os.remove(file)
+                except:pass
+
+    files = lambda x: [f for f in os.listdir(variables.res) if x in f]
+    if files('ffmpeg'): ffmpeg = os.path.join(res, files('ffmpeg')[0])
+    else:               ffmpeg = 'ffmpeg'
+    if files('ffprobe'): ffprobe = os.path.join(res, files('ffprobe')[0])
+    else:                ffprobe = 'ffprobe'
 
     oper = platform.uname()
     arch = platform.machine().lower()
+    if   oper.system == 'Windows': aac = os.path.join(res, 'AppleAAC.Windows')
+    elif oper.system == 'Darwin':  aac = 'afconvert'
 
-    if getattr(sys, 'frozen', False):
-        ffmpeg = 'ffmpeg'
-        ffprobe = 'ffprobe'
-        if   oper.system == 'Windows': aac = 'qaac'
-        elif oper.system == 'Darwin':  aac = 'afconvert'
-        try:
-            subprocess.run([ffmpeg,  '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run([ffprobe, '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if oper.system in ['Windows', 'Darwin']:
-                subprocess.run([aac,       '-h'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except FileNotFoundError:
-            print('Error: ffmpeg or ffprobe not found. Please install them and try again.')
-            if oper.system == 'Windows':  print('On Windows, you should also install qaac and add these files to PATH.')
-            elif oper.system == 'Darwin': print('afconvert is built-in on macOS')
-            else: print('On Linux, you have no way to use Apple AAC encoder. Please use FDK-AAC or another OS.')
-            sys.exit(1)
-
-    else:
-        if oper.system == 'Windows' and arch in ['amd64', 'x86_64']:
-            ffmpeg =      os.path.join(directory, 'res', 'codec',  'ffmpeg.Windows')
-            aac =         os.path.join(directory, 'res', 'codec',  'AppleAAC.Windows')
-            ffprobe =     os.path.join(directory, 'res', 'parser', 'ffprobe.Windows')
-        elif oper.system == 'Darwin':
-            ffmpeg =      os.path.join(directory, 'res', 'codec',  'ffmpeg.macOS')
-            aac =         'afconvert'
-            ffprobe =     os.path.join(directory, 'res', 'parser', 'ffprobe.macOS')
+    try:
+        subprocess.run([ffmpeg,  '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run([ffprobe, '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if oper.system in ['Windows', 'Darwin']:
+            subprocess.run([aac,       '-h'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        print('Error: ffmpeg or ffprobe not found. Please install and try again,')
+        print(f'or download and put them in {res}')
+        if oper.system == 'Windows':  print('QAAC is built-in on this repository.')
+        elif oper.system == 'Darwin': print('afconvert is built-in on macOS')
         else:
-            if arch in ['amd64', 'x86_64']:
-                ffmpeg =  os.path.join(directory, 'res', 'codec',  'ffmpeg.AMD64')
-                ffprobe = os.path.join(directory, 'res', 'parser', 'ffprobe.AMD64')
-            if arch == 'arm64':
-                ffmpeg =  os.path.join(directory, 'res', 'codec',  'ffmpeg.AArch64')
-                ffprobe = os.path.join(directory, 'res', 'parser', 'ffprobe.AArch64')
+            print('On Linux, you have no way to use Apple AAC encoder.')
+            print('can anyone please reverse-engineer it and open its source')
+        sys.exit(1)
 
 class methods:
     def signature(sign):

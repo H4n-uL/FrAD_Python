@@ -1,7 +1,7 @@
 import requests
 import os, sys
 
-def fetch_git(url, dir_path, download_ffmpeg_portables=False):
+def fetch_git(url, dir_path):
     res = requests.get(url, params={'ref': 'main'})
 
     if res.status_code != 200:
@@ -12,7 +12,7 @@ def fetch_git(url, dir_path, download_ffmpeg_portables=False):
     for content in res.json():
         if content['type'] == 'dir':
             new_dir_path = os.path.join(dir_path, content['name'])
-            if content['name'] == 'res' and not download_ffmpeg_portables: continue
+            if content['name'] == 'res': continue
             os.makedirs(new_dir_path, exist_ok=True)
             fetch_git(content['url'], new_dir_path)
         else: open(os.path.join(dir_path, content['name']), 'wb').write(requests.get(content['download_url']).content)
