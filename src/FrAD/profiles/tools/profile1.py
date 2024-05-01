@@ -14,7 +14,7 @@ class filter_tools:
     def getbinrng(dlen, sample_rate, subband_index):
         return slice(rndint(dlen/(sample_rate/2)*subbands[subband_index]),
             None if subbands[subband_index+1] is None else rndint(dlen/(sample_rate/2)*subbands[subband_index+1]))
-    
+
     @staticmethod
     def maskingThresholdOpus(mX, alpha, fs):
         mT = np.zeros_like(mX)
@@ -31,7 +31,7 @@ class filter_tools:
             if len(subband_mX) > 0:
                 mapped_mX[i] = np.sqrt(np.mean(subband_mX**2))
         return mapped_mX
-    
+
     @staticmethod
     def mappingfromopus(mapped_mX, mX_shape, fs):
         mX = np.zeros(mX_shape)
