@@ -131,11 +131,6 @@ class encode:
 
             last = b''
 
-            if profile == 1:
-                from .profiles.tools.profile1 import PsychoacousticModel
-                psychomodel = PsychoacousticModel()
-            else: psychomodel = None
-
             # Write file
             open(out, 'wb').write(headb.uilder(meta, img))
             with open(out, 'ab') as file:
@@ -171,7 +166,7 @@ class encode:
 
                     # DCT
                     frame, bit_depth_frame, channels_frame = \
-                        fourier.analogue(frame, bits, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level, model=psychomodel)
+                        fourier.analogue(frame, bits, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level)
 
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 

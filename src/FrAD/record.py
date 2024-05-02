@@ -1,5 +1,5 @@
 from .fourier import fourier
-import itertools, os, struct, sys, zlib
+import os, struct, sys, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -43,17 +43,11 @@ class recorder:
         record = sd.InputStream(samplerate=sample_rate, channels=channels, device=hw)
         record.start()
         with open(file_path, 'ab') as f:
-
-            if profile == 1:
-                from .profiles.tools.profile1 import PsychoacousticModel
-                psycho = PsychoacousticModel()
-            else: psycho = None
-
             while True:
                 try:
                     data = record.read(samples_per_frame)[0]
                     flen = len(data)
-                    data, bits, chnl = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level, model=psycho)
+                    data, bits, chnl = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: data = ecc.encode(data, ecc_dsize, ecc_codesize)
