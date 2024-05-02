@@ -1,6 +1,6 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .tools import profile1 as p1tools
+from .tools import p1tools
 import zlib
 
 dtypes = {128:'i16',64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2'}
@@ -26,13 +26,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
     dlen = len(data)
     freqs = np.array([dct(data[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
-    if kwargs['level'] > 10:
-        for chnl in range(channels):
-            res = int(dlen / kwargs['sample_rate'] * 2 * (24000 - (kwargs['level']-10)*2000))
-            freqs[chnl][res:] = 0
-
-    freqs, denoms = p1tools.quant(freqs, channels, dlen, kwargs)
-    # freqs = quant(freqs, thresholds, kwargs)
+    freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
     # Inter-channel prediction
     if channels == 1: pass
     elif channels == 2:
@@ -60,7 +54,7 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
         data = bytes.fromhex(''.join([be and data[i+1:i+4] or data[i:i+4][:2] + data[i:i+4][3:] for i in range(0, len(data), 4)]))
     else: raise Exception('Illegal bits value.')
 
-    data = (denoms/(2**(bits-1))).astype(endian+'e').tobytes() + data
+    data = (pns/(2**(bits-1))).astype(endian+'e').tobytes() + data
 
     # Deflating
     data = zlib.compress(data, level=9)
