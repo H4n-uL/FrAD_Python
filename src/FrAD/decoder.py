@@ -83,16 +83,15 @@ class decode:
                     cli_width = 40
                     start_time = time.time()
                     if verbose: print('\n\n')
-                prev = None
+                fhead, prev = None, None
 
                 while True:
                     # Reading Frame Header
-                    fhead = f.read(4)
-                    if len(fhead)<4:
-                        if prev is not None: stream.write(prev.astype(np.float32) if play else prev.astype('>d').tobytes())
-                        break
+                    if fhead is None: fhead = f.read(4)
                     if fhead != b'\xff\xd0\xd2\x97':
-                        f.seek(-3, 1)
+                        hq = f.read(1)
+                        if not hq: break
+                        fhead = fhead[1:]+hq
                         continue
                     t_frame = time.time()
                     fhead += f.read(28)
@@ -186,6 +185,8 @@ class decode:
                             print(f'Decode Speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s, X{mult:.3f}')
                             print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                    fhead = None
+
                 time.sleep(1)
                 stream.close()
                 if play or verbose:
