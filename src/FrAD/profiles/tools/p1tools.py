@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.signal import lfilter
 
 subbands = [0,     200,   400,   600,   800,   1000,  1200,  1400,
             1600,  2000,  2400,  2800,  3200,  4000,  4800,  5600,
@@ -21,7 +20,11 @@ class pns:
         mT = np.zeros_like(mX)
         for i in range(nfilts):
             subband_mX = mX[pns.getbinrng(len(mX), fs, i)]
-            if len(subband_mX) > 0: mT[pns.getbinrng(len(mX), fs, i)] = np.max(subband_mX) ** alpha
+            if len(subband_mX) > 0:
+                f = (subbands[i] + subbands[i+1]) / 2
+                ABS = (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))
+                ABS = np.clip(ABS, None, 912)
+                mT[pns.getbinrng(len(mX), fs, i)] = np.maximum(np.max(subband_mX)**alpha, 10.0**((ABS-96)/20))
         return mT
 
     @staticmethod
@@ -43,7 +46,7 @@ class pns:
 def quant(freqs, channels, dlen, kwargs):
     alpha = 0.8
 
-    if kwargs['level'] < 11: const_factor = 0.25 + kwargs['level']/16
+    if kwargs['level'] < 11: const_factor = (kwargs['level']+1)*7/80
     else: const_factor = (kwargs['level']+1 - 10) / 2
 
     # Perceptual Noise Substitution
@@ -55,7 +58,7 @@ def quant(freqs, channels, dlen, kwargs):
         mask.append(mT)
         mT *= const_factor
         mT = pns.mappingfromopus(mT,dlen,kwargs['sample_rate'])
-        pns_sgnl.append(freqs[c] * np.where(mT > 0, 1, 0) / np.where(mT > 0, mT, 1))
+        pns_sgnl.append(freqs[c] / mT)
 
     return np.array(pns_sgnl), np.array(mask)
 
