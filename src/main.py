@@ -266,12 +266,12 @@ def main(action, file_path, kwargs: dict):
         raise ValueError('Invalid action. type `fourier help` to get help.')
 
 if __name__ == '__main__':
-    from FrAD.tools.argparse import parse_args
     try:
         if len(sys.argv) == 1:
             print('Fourier Analogue-in-Digital Master encoder/decoder')
             print('Please type `fourier help` to get help.')
             sys.exit(0)
+        from FrAD.tools.argparse import parse_args
         action, file_path, kwargs = parse_args(sys.argv[1:])
         main(action, file_path, kwargs)
     except Exception as e:
