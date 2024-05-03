@@ -23,7 +23,7 @@ class pns:
             if len(subband_mX) > 0:
                 f = (subbands[i] + subbands[i+1]) / 2
                 ABS = (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))
-                ABS = np.clip(ABS, None, 912)
+                ABS = np.clip(ABS, None, 96)
                 mT[pns.getbinrng(len(mX), fs, i)] = np.maximum(np.max(subband_mX)**alpha, 10.0**((ABS-96)/20))
         return mT
 
