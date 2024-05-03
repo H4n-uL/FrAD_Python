@@ -58,7 +58,7 @@ def quant(freqs, channels, dlen, kwargs):
         mask.append(mT)
         mT *= const_factor
         mT = pns.mappingfromopus(mT,dlen,kwargs['sample_rate'])
-        pns_sgnl.append(freqs[c] / mT)
+        pns_sgnl.append(np.around(freqs[c] / mT))
 
     return np.array(pns_sgnl), np.array(mask)
 
