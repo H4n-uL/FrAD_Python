@@ -3,7 +3,8 @@ import numpy as np
 from .tools import p1tools
 import zlib
 
-dtypes = {128:'i16',64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2'}
+depths = [8, 12, 16, 24, 32, 48, 64]
+dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
 get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
 
 def signext_24x(byte: bytes, bits, be):
@@ -37,14 +38,14 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
 
     # Overflow check & Increasing bit depth
     while not (2**(bits-1)-1 >= freqs.any() >= -(2**(bits-1))):
-        if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
-        bits = {16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
+        if bits == 64: raise Exception('Overflow with reaching the max bit depth.')
+        bits = {8:12, 12:16, 16:24, 24:32, 32:48, 48:64}.get(bits, 64)
 
     # Ravelling and packing
     data: bytes = freqs.T.ravel().astype(endian+dtypes[bits]).tobytes()
 
     # Cutting off bits
-    if bits in [128, 64, 32, 16]:
+    if bits in [64, 32, 16, 8]:
         pass
     elif bits in [48, 24]:
         data = data.hex()
@@ -59,12 +60,12 @@ def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, kw
     # Deflating
     data = zlib.compress(data, level=9)
 
-    return data, bits, channels
+    return data, bits, channels, depths.index(bits)
 
 def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, kwargs) -> np.ndarray:
     be = not little_endian
     endian = be and '>' or '<'
-    bits = {0b110:128,0b101:64,0b100:48,0b011:32,0b010:24,0b001:16,0b000:12}[fb]
+    bits = [8, 12, 16, 24, 32, 48, 64][fb]
 
     # Inflating
     data = zlib.decompress(data)

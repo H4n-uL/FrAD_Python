@@ -165,12 +165,12 @@ class encode:
                     flen = len(frame)
 
                     # DCT
-                    frame, bit_depth_frame, channels_frame = \
+                    frame, bit_depth_frame, channels_frame, bits_efb = \
                         fourier.analogue(frame, bits, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level)
 
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
-                    efb = headb.encode_efb(profile, apply_ecc, little_endian, bit_depth_frame)
+                    efb = headb.encode_efb(profile, apply_ecc, little_endian, bits_efb)
 
                     data = bytes(
                         #-- 0x00 ~ 0x0f --#

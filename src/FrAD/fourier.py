@@ -3,6 +3,7 @@ import numpy as np
 from .profiles import profile1
 
 class fourier:
+    depths = [12, 16, 24, 32, 48, 64, 128]
     dtypes = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
 
     def analogue(data: np.ndarray, bits: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> bytes:
@@ -32,14 +33,14 @@ class fourier:
             data = bytes.fromhex(''.join([be and data[i:i+3] or data[i:i+4][0] + data[i:i+4][2:] for i in range(0, len(data), 4)]))
         else: raise Exception('Illegal bits value.')
 
-        return data, bits, channels
+        return data, bits, channels, fourier.depths.index(bits)
 
     def digital(data: bytes, fb: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> np.ndarray:
         if profile == 1: return profile1.digital(data, fb, channels, little_endian, kwargs=kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'
-        bits = {0b110:128,0b101:64,0b100:48,0b011:32,0b010:24,0b001:16,0b000:12}[fb]
+        bits = fourier.depths[fb]
 
         # Padding bits
         if bits % 3 != 0: pass
