@@ -1,5 +1,7 @@
 import base64, json, os, sys, traceback
 
+from sympy import EX
+
 encode_opt = ['encode']
 decode_opt = ['decode']
 parse_opt = ['parse']
@@ -147,7 +149,7 @@ This action will update Fourier Analogue-in-Digital from the repository.
 
     No option for this action.'''
 
-def main(action, file_path, kwargs: dict):
+def main(action: str, file_path: str | None, kwargs: dict):
     output = kwargs.get('output', None)
     verbose = kwargs.get('verbose', False)
     srate = kwargs.get('srate', None)
@@ -175,11 +177,14 @@ def main(action, file_path, kwargs: dict):
     profile = kwargs.get('profile', 0)
     if profile > 7 or profile < 0: profile = 0
 
+    if file_path is None and action not in ['update', 'help']: print('File path is required.'); sys.exit(1)
+
     if action in encode_opt:
         from FrAD import encode
         if kwargs.get('bits', None) is None:
             print('bit depth is required for encoding.')
             sys.exit(1)
+        if file_path is None: print('File path is required.'); sys.exit(1)
         encode.enc(
                 file_path, int(kwargs['bits']), le,
                 output, profile, loss_level,

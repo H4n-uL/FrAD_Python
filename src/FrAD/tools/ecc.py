@@ -1,6 +1,7 @@
 from reedsolo import RSCodec, ReedSolomonError
 
 class ecc:
+    @staticmethod
     def unecc(data, ecc_dsize, ecc_codesize):
         blocksize = ecc_dsize + ecc_codesize
 
@@ -9,9 +10,11 @@ class ecc:
             block.extend(data[i:i+blocksize][:-ecc_codesize]) # Carrying Data Bytes from ECC chunk
         return bytes(block)
 
+    @staticmethod
     def split_data(data, chunk_size):
         for i in range(0, len(data), chunk_size): yield data[i:i+chunk_size]
 
+    @staticmethod
     def encode(data, ecc_dsize, ecc_codesize):
         blocksize = ecc_dsize + ecc_codesize
         rs = RSCodec(ecc_codesize, blocksize)
@@ -21,6 +24,7 @@ class ecc:
         data = b''.join(encoded_chunks)
         return data
 
+    @staticmethod
     def decode(data, ecc_dsize, ecc_codesize):
         blocksize = ecc_dsize + ecc_codesize
         rs = RSCodec(ecc_codesize, blocksize)

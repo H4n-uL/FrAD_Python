@@ -1,7 +1,8 @@
 from .decoder import decode
 
 class player:
-    def play(file_path, gain, keys: float = None, speed_in_times: float = None, e: bool = False, verbose: bool = False):
+    @staticmethod
+    def play(file_path, gain, keys: float | None = None, speed_in_times: float | None = None, e: bool = False, verbose: bool = False):
         if keys and speed_in_times:
             raise ValueError('Keys and Speed parameter cannot be set at the same time.')
         elif keys and not speed_in_times:

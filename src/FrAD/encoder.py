@@ -1,3 +1,4 @@
+from turtle import st
 from .common import variables, methods
 from .fourier import fourier
 import json, os, math, random, struct, subprocess, sys, time, traceback, zlib
@@ -6,7 +7,8 @@ from .tools.ecc import ecc
 from .tools.headb import headb
 
 class encode:
-    def get_info(file_path):
+    @staticmethod
+    def get_info(file_path) -> tuple[int, int, str, int] | None:
         command = [variables.ffprobe,
             '-v', 'quiet',
             '-print_format', 'json',
@@ -22,7 +24,8 @@ class encode:
                 return int(stream['channels']), int(stream['sample_rate']), stream['codec_name'], duration
         return None
 
-    def get_pcm_command(file_path: str, osr: int, new_srate: int):
+    @staticmethod
+    def get_pcm_command(file_path: str, osr: int, new_srate: int | None) -> list[str]:
         command = [
             variables.ffmpeg,
             '-v', 'quiet',
@@ -30,11 +33,12 @@ class encode:
             '-f', 'f64be',
             '-vn'
         ]
-        if new_srate not in [osr, None]:
+        if new_srate is not None or new_srate != osr:
             command.extend(['-ar', str(new_srate)])
         command.append('pipe:1')
         return command
 
+    @staticmethod
     def get_metadata(file_path: str):
         excluded = ['major_brand', 'minor_version', 'compatible_brands', 'encoder']
         command = [
@@ -68,6 +72,7 @@ class encode:
         os.remove(variables.meta)
         return metadata
 
+    @staticmethod
     def get_image(file_path: str):
         command = [
             variables.ffmpeg, '-v', 'quiet', '-i', file_path,
@@ -78,12 +83,13 @@ class encode:
         image, _ = process.communicate()
         return image
 
+    @staticmethod
     def enc(file_path: str, bits: int, little_endian: bool = False,
-                out: str = None, profile: int = 0, loss_level: int = 0,
-                samples_per_frame: int = 2048, gain: list = None,
+                out: str | None = None, profile: int = 0, loss_level: int = 0,
+                samples_per_frame: int = 2048, gain: list | None = None,
                 apply_ecc: bool = False, ecc_sizes: list = ['128', '20'],
-                new_srate: int = None,
-                meta = None, img: bytes = None,
+                new_srate: int | None = None,
+                meta = None, img: bytes | None = None,
                 verbose: bool = False):
         ecc_dsize = int(ecc_sizes[0])
         ecc_codesize = int(ecc_sizes[1])
@@ -94,7 +100,9 @@ class encode:
         if profile in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
 
         # Getting Audio info w. ffmpeg & ffprobe
-        channels, sample_rate, codec, duration = encode.get_info(file_path)
+        streaminfo = encode.get_info(file_path)
+        if type(streaminfo)==tuple: channels, sample_rate, codec, duration = streaminfo
+        else: raise ValueError('No audio stream found.')
         segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if bits == 12 and samples_per_frame % 2 != 0: raise ValueError(f'Samples per frame should be even for 12-bit encoing.')
@@ -128,6 +136,7 @@ class encode:
 
             # Open FFmpeg
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            if process.stdout == None: raise FileNotFoundError('Broken pipe.')
 
             last = b''
 

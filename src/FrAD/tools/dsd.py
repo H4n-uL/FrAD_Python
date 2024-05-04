@@ -44,7 +44,8 @@ class dsd:
         6: [b'MLFT', b'MRGT', b'C   ', b'LFE ', b'LS  ', b'RS  ']
     }
 
-    def build_dff_header(datalen: int, channels: int, sample_rate: int):
+    @staticmethod
+    def build_dff_header(datalen: int, channels: list, sample_rate: int):
         CMPR = base64.b64decode('RFNEIA9ub3QgY29tcHJlc3NlZAA=')
 
         PROP = bytes(
@@ -66,6 +67,7 @@ class dsd:
         HEAD[0x4:0xc] = struct.pack('>Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
+    @staticmethod
     def build_dsf_header(datalen: int, chtype: int, sample_rate: int, dsfblock: int):
         channels = chtype - 1 if chtype > 4 else chtype
         FMT = bytearray(
@@ -98,6 +100,7 @@ class dsd:
         HEAD[0xc:0x14] = struct.pack('<Q', len(HEAD) + datalen)
         return bytes(HEAD)
 
+    @staticmethod
     def encode(srate, channels, out, ext, verbose: bool = False):
         chb = dsd.channels_dict[channels]
 
@@ -122,6 +125,7 @@ class dsd:
                 'pipe:1']
 
             pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            if pipe.stdout is None: raise Exception('Broken pipe.')
 
             with open(variables.temp_dsd, 'wb') as bstr:
                 if verbose: print('\n\n')

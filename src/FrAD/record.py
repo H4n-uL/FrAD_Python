@@ -5,12 +5,13 @@ from .tools.ecc import ecc
 from .tools.headb import headb
 
 class recorder:
+    @staticmethod
     def record_audio(file_path, sample_rate = 48000, channels = None,
             bit_depth = 24,
             samples_per_frame: int = 2048,
             apply_ecc: bool = False, ecc_sizes: list = [128, 20],
             profile = 0, loss_level: int = 0, little_endian = False,
-            meta = None, img: bytes = None):
+            meta = None, img: bytes | None = None):
         ecc_dsize, ecc_codesize = ecc_sizes
 
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * 256 * 16)//16)
@@ -47,12 +48,12 @@ class recorder:
                 try:
                     data = record.read(samples_per_frame)[0]
                     flen = len(data)
-                    data, bits, chnl = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level)
+                    data, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: data = ecc.encode(data, ecc_dsize, ecc_codesize)
 
-                    efb = headb.encode_efb(profile, apply_ecc, little_endian, bits)
+                    efb = headb.encode_efb(profile, apply_ecc, little_endian, bf)
                     data = bytes(
                         #-- 0x00 ~ 0x0f --#
                             # Frame Signature

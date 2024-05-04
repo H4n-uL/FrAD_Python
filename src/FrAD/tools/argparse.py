@@ -1,13 +1,11 @@
 import sys
 
-def parse_args(args: list):
+def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
     try: action = args.pop(0)
-    except: return None, None, None
+    except: return '', '', dict()
     file_path = None
-    try: file_path = args.pop(0)
-    except:
-        if action not in ['update', 'help']:
-            print('File path is required for the first argument.'); sys.exit(1)
+    try: file_path = str(args.pop(0))
+    except: pass
     options = {}
 
     while args:

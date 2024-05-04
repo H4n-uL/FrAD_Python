@@ -3,6 +3,7 @@ from .common import variables, methods
 from .tools.headb import headb
 
 class header:
+    @staticmethod
     def parse(file_path):
         meta, img = [], None
         with open(file_path, 'rb') as f:
@@ -26,6 +27,7 @@ class header:
                 elif block_type == b'\xff\xd0': break
         return meta, img
 
+    @staticmethod
     def parse_file(file_path, output):
         try:
             open(output+'.meta.json', 'w', encoding='utf-8').write('[')
@@ -53,6 +55,7 @@ class header:
                 with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.truncate(); m.write(b']')
             except: open(output+'.meta.json', 'a').write(']')
 
+    @staticmethod
     def parse_to_ffmeta(file_path, output):
         open(output, 'w', encoding='utf-8').write(';FFMETADATA1\n')
         with open(file_path, 'rb') as f:
@@ -75,7 +78,8 @@ class header:
                     open(f'{output}.image', 'wb').write(f.read(block_length-10))
                 elif block_type == b'\xff\xd0': break
 
-    def modify(file_path, meta = None, img: bytes = None):
+    @staticmethod
+    def modify(file_path, meta = None, img: bytes | None = None):
         try:
             shutil.copy2(file_path, variables.temp)
             with open(variables.temp, 'rb') as f:

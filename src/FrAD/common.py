@@ -1,5 +1,7 @@
 import atexit, os, platform, subprocess, sys, tempfile
 
+from numpy import Infinity
+
 yd = 365.25
 ys = yd * 86400
 
@@ -43,15 +45,19 @@ class variables:
         sys.exit(1)
 
 class methods:
-    def signature(sign):
+    @staticmethod
+    def signature(sign: bytes):
         if sign != b'fRad':
             raise Exception('This is not Fourier Analogue file.')
 
-    def cantreencode(sign):
+    @staticmethod
+    def cantreencode(sign: bytes):
         if sign == b'fRad':
             raise Exception('This is an already encoded Fourier Analogue file.')
 
-    def tformat(n: float) -> str:
+    @staticmethod
+    def tformat(n: float | str) -> str:
+        if type(n) != float: return str(n)
         if n < 0: return f'-{methods.tformat(-n)}'
         if n == 0: return '0'
         if n < 0.000001: return f'{n*10**9:.3f} ns'

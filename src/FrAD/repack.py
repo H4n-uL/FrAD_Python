@@ -4,6 +4,7 @@ from .tools.ecc import ecc
 from .tools.headb import headb
 
 class repack:
+    @staticmethod
     def ecc(file_path, ecc_sizes: list, verbose: bool = False):
         with open(file_path, 'rb') as f:
             head = f.read(64)

@@ -43,7 +43,7 @@ class pns:
             mX[pns.getbinrng(mX_shape, fs, i)] = mapped_mX[i]
         return mX
 
-def quant(freqs, channels, dlen, kwargs):
+def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np.ndarray, np.ndarray]:
     alpha = 0.8
 
     if kwargs['level'] < 11: const_factor = (kwargs['level']+1)*7/80
@@ -62,5 +62,5 @@ def quant(freqs, channels, dlen, kwargs):
 
     return np.array(pns_sgnl), np.array(mask)
 
-def dequant(pns_sgnl, channels, masks, kwargs):
+def dequant(pns_sgnl: np.ndarray, channels: int, masks: np.ndarray, kwargs: dict) -> np.ndarray:
     return np.array([pns_sgnl[c] * pns.mappingfromopus(masks[c], len(pns_sgnl[c]), kwargs['sample_rate']) for c in range(channels)])
