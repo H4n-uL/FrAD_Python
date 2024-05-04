@@ -97,4 +97,4 @@ def digital(frad: bytes, fb: int, channels: int, little_endian: bool, *, kwargs)
     freqs = p1tools.dequant(freqs, channels, masks, kwargs)
 
     # Inverse DCT and stacking
-    return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in freqs]).T)
+    return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in freqs]).T)/(2**(bits-1))
