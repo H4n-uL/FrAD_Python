@@ -11,36 +11,36 @@ rndint = lambda x: int(x+0.5)
 
 class pns:
     @staticmethod
-    def getbinrng(dlen, sample_rate, subband_index):
-        return slice(rndint(dlen/(sample_rate/2)*subbands[subband_index]),
-            None if subbands[subband_index+1] is None else rndint(dlen/(sample_rate/2)*subbands[subband_index+1]))
+    def getbinrng(dlen: int, smprate: int, subband_index: int) -> slice:
+        return slice(rndint(dlen/(smprate/2)*subbands[subband_index]),
+            None if subbands[subband_index+1] is None else rndint(dlen/(smprate/2)*subbands[subband_index+1]))
 
     @staticmethod
-    def maskingThresholdOpus(mX, alpha, fs):
+    def maskingThresholdOpus(mX: np.ndarray, alpha: float, smprate: int) -> np.ndarray:
         mT = np.zeros_like(mX)
         for i in range(nfilts):
-            subband_mX = mX[pns.getbinrng(len(mX), fs, i)]
+            subband_mX = mX[pns.getbinrng(len(mX), smprate, i)]
             if len(subband_mX) > 0:
                 f = (subbands[i] + subbands[i+1]) / 2
                 ABS = (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))
                 ABS = np.clip(ABS, None, 96)
-                mT[pns.getbinrng(len(mX), fs, i)] = np.maximum(np.max(subband_mX)**alpha, 10.0**((ABS-96)/20))
+                mT[pns.getbinrng(len(mX), smprate, i)] = np.maximum(np.max(subband_mX)**alpha, 10.0**((ABS-96)/20))
         return mT
 
     @staticmethod
-    def mapping2opus(mX, fs):
+    def mapping2opus(mX: np.ndarray, smprate):
         mapped_mX = np.zeros(nfilts)
         for i in range(nfilts):
-            subband_mX = mX[pns.getbinrng(len(mX), fs, i)]
+            subband_mX = mX[pns.getbinrng(len(mX), smprate, i)]
             if len(subband_mX) > 0:
                 mapped_mX[i] = np.sqrt(np.mean(subband_mX**2))
         return mapped_mX
 
     @staticmethod
-    def mappingfromopus(mapped_mX, mX_shape, fs):
+    def mappingfromopus(mapped_mX, mX_shape, smprate):
         mX = np.zeros(mX_shape)
         for i in range(nfilts):
-            mX[pns.getbinrng(mX_shape, fs, i)] = mapped_mX[i]
+            mX[pns.getbinrng(mX_shape, smprate, i)] = mapped_mX[i]
         return mX
 
 def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np.ndarray, np.ndarray]:
@@ -54,13 +54,13 @@ def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np
     mask = []
     for c in range(channels):
         mT = pns.maskingThresholdOpus(
-            pns.mapping2opus(np.abs(freqs[c]),kwargs['sample_rate']),alpha,kwargs['sample_rate'])
+            pns.mapping2opus(np.abs(freqs[c]),kwargs['smprate']),alpha,kwargs['smprate'])
         mask.append(mT)
         mT *= const_factor
-        mT = pns.mappingfromopus(mT,dlen,kwargs['sample_rate'])
+        mT = pns.mappingfromopus(mT,dlen,kwargs['smprate'])
         pns_sgnl.append(np.around(freqs[c] / mT))
 
     return np.array(pns_sgnl), np.array(mask)
 
 def dequant(pns_sgnl: np.ndarray, channels: int, masks: np.ndarray, kwargs: dict) -> np.ndarray:
-    return np.array([pns_sgnl[c] * pns.mappingfromopus(masks[c], len(pns_sgnl[c]), kwargs['sample_rate']) for c in range(channels)])
+    return np.array([pns_sgnl[c] * pns.mappingfromopus(masks[c], len(pns_sgnl[c]), kwargs['smprate']) for c in range(channels)])

@@ -7,7 +7,7 @@ class fourier:
     dtypes = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
 
     @staticmethod
-    def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs: dict) -> tuple[bytes, int, int, int]:
+    def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> tuple[bytes, int, int, int]:
         if profile == 1: return profile1.analogue(pcm, bits, channels, little_endian, kwargs)
 
         be = not little_endian
@@ -37,7 +37,7 @@ class fourier:
         return frad, bits, channels, fourier.depths.index(bits)
 
     @staticmethod
-    def digital(frad: bytes, fb: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs: dict) -> np.ndarray:
+    def digital(frad: bytes, fb: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> np.ndarray:
         if profile == 1: return profile1.digital(frad, fb, channels, little_endian, kwargs=kwargs)
 
         be = not little_endian

@@ -6,7 +6,7 @@ from .tools.headb import headb
 
 class recorder:
     @staticmethod
-    def record_audio(file_path, sample_rate = 48000, channels = None,
+    def record_audio(file_path, smprate = 48000, channels = None,
             bit_depth = 24,
             samples_per_frame: int = 2048,
             apply_ecc: bool = False, ecc_sizes: list = [128, 20],
@@ -41,14 +41,14 @@ class recorder:
         print('Recording...')
         open(file_path, 'wb').write(headb.uilder(meta, img))
 
-        record = sd.InputStream(samplerate=sample_rate, channels=channels, device=hw)
+        record = sd.InputStream(samplerate=smprate, channels=channels, device=hw)
         record.start()
         with open(file_path, 'ab') as f:
             while True:
                 try:
                     data = record.read(samples_per_frame)[0]
                     flen = len(data)
-                    data, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level)
+                    data, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: data = ecc.encode(data, ecc_dsize, ecc_codesize)
@@ -67,7 +67,7 @@ class recorder:
                             struct.pack('>B', ecc_dsize if apply_ecc else 0) +    # ECC DSize
                             struct.pack('>B', ecc_codesize if apply_ecc else 0) + # ECC code size
 
-                            struct.pack('>I', sample_rate) +                       # Sample Rate
+                            struct.pack('>I', smprate) +                       # Sample Rate
 
                         #-- 0x10 ~ 0x1f --#
                             b'\x00'*8 +

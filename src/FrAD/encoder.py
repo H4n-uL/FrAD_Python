@@ -20,8 +20,8 @@ class encode:
 
         for stream in info['streams']:
             if stream['codec_type'] == 'audio':
-                duration = stream['duration_ts'] * int(stream['sample_rate']) // int(stream['time_base'][2:])
-                return int(stream['channels']), int(stream['sample_rate']), stream['codec_name'], duration
+                duration = stream['duration_ts'] * int(stream['smprate']) // int(stream['time_base'][2:])
+                return int(stream['channels']), int(stream['smprate']), stream['codec_name'], duration
         return None
 
     @staticmethod
@@ -101,16 +101,16 @@ class encode:
 
         # Getting Audio info w. ffmpeg & ffprobe
         streaminfo = encode.get_info(file_path)
-        if type(streaminfo)==tuple: channels, sample_rate, codec, duration = streaminfo
+        if type(streaminfo)==tuple: channels, smprate, codec, duration = streaminfo
         else: raise ValueError('No audio stream found.')
         segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if bits == 12 and samples_per_frame % 2 != 0: raise ValueError(f'Samples per frame should be even for 12-bit encoing.')
 
         # Getting command and new sample rate
-        cmd = encode.get_pcm_command(file_path, sample_rate, new_srate)
-        if new_srate is not None: duration = int(duration / sample_rate * new_srate)
-        sample_rate = new_srate is not None and new_srate or sample_rate
+        cmd = encode.get_pcm_command(file_path, smprate, new_srate)
+        if new_srate is not None: duration = int(duration / smprate * new_srate)
+        smprate = new_srate is not None and new_srate or smprate
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
 
@@ -175,7 +175,7 @@ class encode:
 
                     # DCT
                     frame, bit_depth_frame, channels_frame, bits_efb = \
-                        fourier.analogue(frame, bits, channels, little_endian, profile=profile, sample_rate=sample_rate, level=loss_level)
+                        fourier.analogue(frame, bits, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
 
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
@@ -195,7 +195,7 @@ class encode:
                             struct.pack('>B', apply_ecc and ecc_codesize or 0) + # ECC Code Size
 
                             # Sample Rate
-                            struct.pack('>I', sample_rate) +
+                            struct.pack('>I', smprate) +
 
                         #-- 0x10 ~ 0x1f --#
                             b'\x00'*8 +
@@ -222,7 +222,7 @@ class encode:
                             total_samples -= flen//16
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
-                        mult = bps / sample_rate / sample_size
+                        mult = bps / smprate / sample_size
                         percent = total_samples / duration * 100
                         prgbar = int(percent / 100 * cli_width)
                         eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'

@@ -45,12 +45,12 @@ class dsd:
     }
 
     @staticmethod
-    def build_dff_header(datalen: int, channels: list, sample_rate: int):
+    def build_dff_header(datalen: int, channels: list, smprate: int):
         CMPR = base64.b64decode('RFNEIA9ub3QgY29tcHJlc3NlZAA=')
 
         PROP = bytes(
             b'SND ' + \
-            b'FS  ' + struct.pack('>Q', 4) + struct.pack('>I', sample_rate) +
+            b'FS  ' + struct.pack('>Q', 4) + struct.pack('>I', smprate) +
             b'CHNL' + struct.pack('>Q', 2+len(b''.join(channels))) + struct.pack('>H', len(channels)) + b''.join(channels) +
             b'CMPR' + struct.pack('>Q', len(CMPR)) + CMPR
         )
@@ -68,7 +68,7 @@ class dsd:
         return bytes(HEAD)
 
     @staticmethod
-    def build_dsf_header(datalen: int, chtype: int, sample_rate: int, dsfblock: int):
+    def build_dsf_header(datalen: int, chtype: int, smprate: int, dsfblock: int):
         channels = chtype - 1 if chtype > 4 else chtype
         FMT = bytearray(
             b'fmt ' + struct.pack('<Q', 52) +
@@ -76,7 +76,7 @@ class dsd:
             struct.pack('<I', 0) +                        # Format ID
             struct.pack('<I', chtype) +                   # Channel Type
             struct.pack('<I', channels) +
-            struct.pack('<I', sample_rate) +
+            struct.pack('<I', smprate) +
             struct.pack('<I', 8) +                        # Sample bits
             struct.pack('<Q', datalen * 8 // channels) +  # Sample count
             struct.pack('<I', dsfblock) +                 # Block size / channel

@@ -22,7 +22,7 @@ class decode:
 
             # Taking Stream info
             channels = int()
-            sample_rate = int()
+            smprate = int()
             header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
 
             f.seek(header_length)
@@ -114,7 +114,7 @@ class decode:
                             frame = ecc.decode(frame, ecc_dsize, ecc_codesize)
                         else: frame = ecc.unecc(frame, ecc_dsize, ecc_codesize)
 
-                    segment = fourier.digital(frame, float_bits, channels_frame, endian, profile=profile, sample_rate=srate_frame) * gain # Inversing
+                    segment = fourier.digital(frame, float_bits, channels_frame, endian, profile=profile, smprate=srate_frame) * gain # Inversing
 
                     if prev is not None:
                         fade_in = np.linspace(0, 1, len(prev))
@@ -128,10 +128,10 @@ class decode:
                         prev = None
 
                     if play:
-                        if channels != channels_frame or sample_rate != srate_frame:
+                        if channels != channels_frame or smprate != srate_frame:
                             stdoutstrm = sd.OutputStream(samplerate=int(srate_frame*speed), channels=channels_frame)
                             stdoutstrm.start()
-                            channels, sample_rate = channels_frame, srate_frame
+                            channels, smprate = channels_frame, srate_frame
 
                         # for i in range(channels_frame):
                         #     plt.subplot(channels_frame, 1, i+1)
@@ -144,7 +144,7 @@ class decode:
                         # plt.pause(0.000001)
                         # plt.clf()
 
-                        i += len(segment) / (sample_rate*speed)
+                        i += len(segment) / (smprate*speed)
                         frameNo += 1
 
                         bps = ((framelength * 8) * srate_frame / len(segment))
@@ -165,13 +165,13 @@ class decode:
                         stdoutstrm.write(segment.astype(np.float32))
                         while avgbps[::1][0] < i - 30: avgbps = avgbps[2:]
                     else:
-                        if channels != channels_frame or sample_rate != srate_frame:
-                            if channels != int() or sample_rate != int():
+                        if channels != channels_frame or smprate != srate_frame:
+                            if channels != int() or smprate != int():
                                 print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                                 print('Warning: Fourier Analogue-in-Digital supports variable sample rates and channels, while other codecs do not.')
                                 print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
-                                return sample_rate, channels
-                            channels, sample_rate = channels_frame, srate_frame
+                                return smprate, channels
+                            channels, smprate = channels_frame, srate_frame
                         tempfstrm.write(segment.astype('>d').tobytes())
                         i += framelength + 32
                         if verbose:
@@ -194,7 +194,7 @@ class decode:
                 if play or verbose:
                     print('\x1b[1A\x1b[2K', end='')
                     if play and verbose: print('\x1b[1A\x1b[2K', end='')
-                return sample_rate, channels
+                return smprate, channels
             except KeyboardInterrupt:
                 if play:
                     try: stdoutstrm.abort()
@@ -225,12 +225,12 @@ class decode:
     ffmpeg_lossless = ['wav', 'flac', 'wavpack', 'tta', 'truehd', 'alac', 'dts', 'mlp']
 
     @staticmethod
-    def directcmd(sample_rate, channels, ffmpeg_cmd):
+    def directcmd(smprate, channels, ffmpeg_cmd):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
             '-f', 'f64be',
-            '-ar', str(sample_rate),
+            '-ar', str(smprate),
             '-ac', str(channels),
             '-i', variables.temp_pcm,
             '-i', variables.meta,
@@ -240,12 +240,12 @@ class decode:
         subprocess.run(command)
 
     @staticmethod
-    def ffmpeg(sample_rate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
+    def ffmpeg(smprate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
             '-f', 'f64be',
-            '-ar', str(sample_rate),
+            '-ar', str(smprate),
             '-ac', str(channels),
             '-i', variables.temp_pcm,
             '-i', variables.meta,
@@ -258,7 +258,7 @@ class decode:
         if os.path.exists(f'{variables.meta}.image'):
             command.extend(['-map', '2:v'])
 
-        if new_srate is not None and new_srate != sample_rate: command.extend(['-ar', str(new_srate)])
+        if new_srate is not None and new_srate != smprate: command.extend(['-ar', str(new_srate)])
 
         command.append('-c:a')
         if codec in ['wav', 'riff']:
@@ -295,14 +295,14 @@ class decode:
         subprocess.run(command)
 
     @staticmethod
-    def AppleAAC_macOS(sample_rate, channels, out, quality, strategy):
+    def AppleAAC_macOS(smprate, channels, out, quality, strategy):
         try:
             quality = str(quality)
             command = [
                 variables.ffmpeg, '-y',
                 '-loglevel', 'error',
                 '-f', 'f64be',
-                '-ar', str(sample_rate),
+                '-ar', str(smprate),
                 '-ac', str(channels),
                 '-i', variables.temp_pcm,
                 '-sample_fmt', 's32',
@@ -331,18 +331,18 @@ class decode:
             sys.exit(0)
 
     @staticmethod
-    def AppleAAC_Windows(sample_rate, channels, out, quality, new_srate):
+    def AppleAAC_Windows(smprate, channels, out, quality, new_srate):
         try:
             command = [
                 variables.aac,
                 '--raw', variables.temp_pcm,
                 '--raw-channels', str(channels),
-                '--raw-rate', str(sample_rate),
+                '--raw-rate', str(smprate),
                 '--raw-format', 'f64l',
                 '--adts',
                 '-c', str(quality),
             ]
-            if new_srate is not None and new_srate != sample_rate: command.extend(['--rate', str(new_srate)])
+            if new_srate is not None and new_srate != smprate: command.extend(['--rate', str(new_srate)])
             command.extend([
                 '-o', f'{out}.aac',
                 '-s'
@@ -356,7 +356,7 @@ class decode:
     def dec(file_path, ffmpeg_cmd, out: str | None = None, bits: int = 32, codec: str | None = None,
             quality: str | None = None, e: bool = False, gain: float | None = None, new_srate: int | None = None, verbose: bool = False):
         # Decoding
-        sample_rate, channels = decode.internal(file_path, e=e, gain=gain, verbose=verbose)
+        smprate, channels = decode.internal(file_path, e=e, gain=gain, verbose=verbose)
         header.parse_to_ffmeta(file_path, variables.meta)
 
         try:
@@ -398,16 +398,16 @@ class decode:
             else: raise ValueError(f'Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.')
 
             if ffmpeg_cmd is not None:
-                decode.directcmd(sample_rate, channels, ffmpeg_cmd)
+                decode.directcmd(smprate, channels, ffmpeg_cmd)
             else:
-                if (codec == 'aac' and sample_rate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
+                if (codec == 'aac' and smprate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
                     if strategy in ['c', 'a']: q = decode.setaacq(q, channels)
-                    if platform.system() == 'Darwin': decode.AppleAAC_macOS(sample_rate, channels, out, q, strategy)
-                    elif platform.system() == 'Windows': decode.AppleAAC_Windows(sample_rate, channels, out, q, new_srate)
+                    if platform.system() == 'Darwin': decode.AppleAAC_macOS(smprate, channels, out, q, strategy)
+                    elif platform.system() == 'Windows': decode.AppleAAC_Windows(smprate, channels, out, q, new_srate)
                 elif codec in ['dsd', 'dff']:
-                    dsd.encode(sample_rate, channels, out, ext, verbose)
+                    dsd.encode(smprate, channels, out, ext, verbose)
                 elif codec not in ['pcm', 'raw']:
-                    decode.ffmpeg(sample_rate, channels, codec, f, s, out, ext, q, strategy, new_srate)
+                    decode.ffmpeg(smprate, channels, codec, f, s, out, ext, q, strategy, new_srate)
                 else:
                     shutil.move(variables.temp_pcm, f'{out}.{ext}')
 
