@@ -28,11 +28,12 @@ class variables:
     arch = platform.machine().lower()
     if   oper.system == 'Windows': aac = os.path.join(res, 'AppleAAC.Windows')
     elif oper.system == 'Darwin':  aac = 'afconvert'
+    else:                          aac = None
 
     try:
         subprocess.run([ffmpeg,  '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run([ffprobe, '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if oper.system in ['Windows', 'Darwin']:
+        if aac is not None:
             subprocess.run([aac,       '-h'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
         print('Error: ffmpeg or ffprobe not found. Please install and try again,')
