@@ -78,7 +78,7 @@ class decode:
                     print()
                     if verbose: print()
                     bps, avgbps = 0, []
-                    stdoutstrm = sd.OutputStream(samplerate=1, channels=1)
+                    stdoutstrm = sd.OutputStream()
                 else:
                     tempfstrm = open(variables.temp_pcm, 'ab')
                     dlen = os.path.getsize(file_path) - header_length
