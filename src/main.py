@@ -1,7 +1,5 @@
 import base64, json, os, sys, traceback
 
-from sympy import EX
-
 encode_opt = ['encode']
 decode_opt = ['decode']
 parse_opt = ['parse']
