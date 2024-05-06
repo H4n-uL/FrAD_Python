@@ -1,7 +1,5 @@
 import atexit, os, platform, subprocess, sys, tempfile
 
-from numpy import Infinity
-
 yd = 365.25
 ys = yd * 86400
 

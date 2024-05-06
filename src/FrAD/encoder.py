@@ -1,4 +1,3 @@
-from turtle import st
 from .common import variables, methods
 from .fourier import fourier
 import json, os, math, random, struct, subprocess, sys, time, traceback, zlib
