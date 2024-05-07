@@ -32,7 +32,7 @@ class encode:
             '-f', 'f64be',
             '-vn'
         ]
-        if new_srate is not None or new_srate != osr:
+        if new_srate is not None and new_srate != osr:
             command.extend(['-ar', str(new_srate)])
         command.append('pipe:1')
         return command
