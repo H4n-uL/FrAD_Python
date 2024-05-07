@@ -7,7 +7,7 @@ from .tools.headb import headb
 
 class encode:
     @staticmethod
-    def get_info(file_path) -> tuple[int, int, str, int] | None:
+    def get_info(file_path) -> tuple[int, int, str, int]:
         command = [variables.ffprobe,
             '-v', 'quiet',
             '-print_format', 'json',
@@ -21,7 +21,7 @@ class encode:
             if stream['codec_type'] == 'audio':
                 duration = stream['duration_ts'] * int(stream['sample_rate']) // int(stream['time_base'][2:])
                 return int(stream['channels']), int(stream['sample_rate']), stream['codec_name'], duration
-        return None
+        raise ValueError('No audio stream found.')
 
     @staticmethod
     def get_pcm_command(file_path: str, osr: int, new_srate: int | None) -> list[str]:
@@ -99,9 +99,7 @@ class encode:
         if profile in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
 
         # Getting Audio info w. ffmpeg & ffprobe
-        streaminfo = encode.get_info(file_path)
-        if type(streaminfo)==tuple: channels, smprate, codec, duration = streaminfo
-        else: raise ValueError('No audio stream found.')
+        channels, smprate, codec, duration = encode.get_info(file_path)
         segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
         if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
         if bits == 12 and samples_per_frame % 2 != 0: raise ValueError(f'Samples per frame should be even for 12-bit encoing.')
