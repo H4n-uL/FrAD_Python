@@ -148,14 +148,17 @@ This action will update Fourier Analogue-in-Digital from the repository.
     No option for this action.'''
 
 def main(action: str, file_path: str | None, kwargs: dict):
-    output = kwargs.get('output', None)
-    verbose = kwargs.get('verbose', False)
+    le = kwargs.get('le', False)
+    fsize = kwargs.get('fsize', 2048)
     srate = kwargs.get('srate', None)
+
     ecc_enabled = kwargs.get('ecc', False)
     data_ecc = kwargs.get('data-ecc', [128, 20])
-    loss_level = kwargs.get('loss-level', 0)
-    le = kwargs.get('le', False)
+
     gain = kwargs.get('gain', 1)
+
+    output = kwargs.get('output', None)
+    verbose = kwargs.get('verbose', False)
 
     meta = kwargs.get('meta', None)
     if kwargs.get('jsonmeta', None) is not None:
@@ -174,6 +177,7 @@ def main(action: str, file_path: str | None, kwargs: dict):
 
     profile = kwargs.get('profile', 0)
     if profile > 7 or profile < 0: profile = 0
+    loss_level = kwargs.get('loss-level', 0)
 
     if file_path is None and action not in ['update', 'help']: print('File path is required.'); sys.exit(1)
 
@@ -184,9 +188,9 @@ def main(action: str, file_path: str | None, kwargs: dict):
             sys.exit(1)
         if file_path is None: print('File path is required.'); sys.exit(1)
         encode.enc(
-                file_path, int(kwargs['bits']), le,
+                file_path, kwargs['bits'], le,
                 output, profile, loss_level,
-                kwargs.get('fsize', 2048), gain,
+                fsize, gain,
                 ecc_enabled, data_ecc,
                 srate, meta, img, verbose)
 
@@ -223,7 +227,7 @@ def main(action: str, file_path: str | None, kwargs: dict):
         from FrAD import recorder
         bits = kwargs.get('bits', 24)
         recorder.record_audio(file_path, kwargs.get('srate', 48000), None, bits,
-            kwargs.get('fsize', 2048),
+            fsize,
             ecc_enabled, data_ecc,
             profile, loss_level, le)
 
