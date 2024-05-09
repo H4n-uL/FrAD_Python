@@ -188,7 +188,6 @@ class decode:
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                     fhead = None
 
-                time.sleep(1)
                 if play: stdoutstrm.stop()
                 else: tempfstrm.close()
                 if play or verbose:
@@ -199,7 +198,10 @@ class decode:
                 if play:
                     try: stdoutstrm.abort()
                     except UnboundLocalError: pass
-                else: print('Aborting...')
+                else:
+                    try: stdoutstrm.close()
+                    except UnboundLocalError: pass
+                    print('Aborting...')
                 sys.exit(0)
 
     @staticmethod
