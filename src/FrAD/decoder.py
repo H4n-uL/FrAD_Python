@@ -92,7 +92,11 @@ class decode:
                     if fhead is None: fhead = f.read(4)
                     if fhead != b'\xff\xd0\xd2\x97':
                         hq = f.read(1)
-                        if not hq: break
+                        if not hq:
+                            if prev:
+                                if play: stdoutstrm.write(segment.astype(np.float32))
+                                else: tempfstrm.write(segment.astype('>d').tobytes())
+                            break
                         fhead = fhead[1:]+hq
                         continue
                     t_frame = time.time()
