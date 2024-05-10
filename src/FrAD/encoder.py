@@ -85,7 +85,7 @@ class encode:
     @staticmethod
     def enc(file_path: str, bits: int, little_endian: bool = False,
                 out: str | None = None, profile: int = 0, loss_level: int = 0,
-                samples_per_frame: int = 2048, gain: list | None = None,
+                fsize: int = 2048, gain: list | None = None,
                 apply_ecc: bool = False, ecc_sizes: list = [128, 20],
                 new_srate: int | None = None,
                 meta = None, img: bytes | None = None,
@@ -95,14 +95,19 @@ class encode:
 
         methods.cantreencode(open(file_path, 'rb').read(4))
 
-        if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
-        if profile in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
+        if not 20 >= loss_level >= 0: raise ValueError(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.')
+        if profile == 2 and fsize%8!=0: raise ValueError(f'Invalid frame size {fsize} Frame size should be multiple of 8 for Profile 2.')
+        if profile in [1, 2]:
+            while True:
+                x = input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower()
+                if x == 'y': break
+                if x == 'n': sys.exit('Aborted.')
 
         # Getting Audio info w. ffmpeg & ffprobe
         channels, smprate, codec, duration = encode.get_info(file_path)
         segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
-        if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if bits == 12 and samples_per_frame % 2 != 0: raise ValueError(f'Samples per frame should be even for 12-bit encoing.')
+        if fsize > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
+        if bits == 12 and fsize % 2 != 0: raise ValueError(f'Samples per frame should be even for 12-bit encoing.')
 
         # Getting command and new sample rate
         cmd = encode.get_pcm_command(file_path, smprate, new_srate)
@@ -143,18 +148,18 @@ class encode:
                 if verbose: print('\n\n')
                 while True:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
-                    # samples_per_frame = random.choice(list(range(32, 8193))) # Random spf test
+                    # fsize = random.choice(list(range(32, 8193))) # Random spf test
                     # profile = random.choice(list(range(2))) # Random profile test
                     # loss_level = random.choice(list(range(21))) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
                     # ecc_dsize, ecc_codesize = random.choice(list(range(64, 129))), random.choice(list(range(16, 64))) # Random ECC test
 
-                    rlen = samples_per_frame * 8 * channels
-                    spf = samples_per_frame
+                    rlen = fsize * 8 * channels
+                    spf = fsize
                     while rlen < len(last):
                         spf += 128
                         rlen = spf * 8 * channels
-                    if profile == 1 and len(last) != 0:
+                    if profile in [1, 2] and len(last) != 0:
                         rlen -= len(last)
 
                     data = process.stdout.read(rlen) # Reading PCM
@@ -162,8 +167,8 @@ class encode:
 
                     if len(last) != 0:
                         data = last + data
-                    if profile == 1:
-                        last = data[-samples_per_frame//16*8*channels:]
+                    if profile in [1, 2]:
+                        last = data[-fsize//16*8*channels:]
                     else: last = b''
 
                     # RAW PCM to Numpy
@@ -214,7 +219,7 @@ class encode:
                         sample_size = bit_depth_frame // 8 * channels
                         total_bytes += flen * sample_size
                         total_samples += flen
-                        if profile == 1:
+                        if profile in [1, 2]:
                             total_bytes -= flen//16 * sample_size
                             total_samples -= flen//16
                         elapsed_time = time.time() - start_time

@@ -8,18 +8,23 @@ class recorder:
     @staticmethod
     def record_audio(file_path, smprate = 48000, channels = None,
             bit_depth = 24,
-            samples_per_frame: int = 2048,
+            fsize: int = 2048,
             apply_ecc: bool = False, ecc_sizes: list = [128, 20],
             profile = 0, loss_level: int = 0, little_endian = False,
             meta = None, img: bytes | None = None):
         ecc_dsize, ecc_codesize = ecc_sizes
 
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * 256 * 16)//16)
-        if samples_per_frame > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if samples_per_frame < 2: raise ValueError(f'Sample size must be at least 2.')
-        if samples_per_frame % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
-
-        if not 20 >= loss_level >= 0: raise ValueError(f'Lossy compression level should be between 0 and 20.')
+        if fsize > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
+        if fsize < 2: raise ValueError(f'Sample size must be at least 2.')
+        if fsize % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
+        if not 20 >= loss_level >= 0: raise ValueError(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.')
+        if profile == 2 and fsize%8!=0: raise ValueError(f'Invalid frame size {fsize} Frame size should be multiple of 8 for Profile 2.')
+        if profile in [1, 2]:
+            while True:
+                x = input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower()
+                if x == 'y': break
+                if x == 'n': sys.exit('Aborted.')
 
         print('Please enter your recording device ID from below.')
         for ind, dev in enumerate(sd.query_devices()):
@@ -27,7 +32,6 @@ class recorder:
                 print(f'{ind} {dev['name']}')
                 print(f'    srate={dev['default_samplerate']}\t channels={dev['max_input_channels']}')
         hw = int(input('> '))
-        if profile in [1] and 'y' not in input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower(): sys.exit('Aborted.')
 
         if channels is None: channels = sd.query_devices()[hw]['max_input_channels']
 
@@ -46,7 +50,7 @@ class recorder:
         with open(file_path, 'ab') as f:
             while True:
                 try:
-                    data = record.read(samples_per_frame)[0]
+                    data = record.read(fsize)[0]
                     flen = len(data)
                     data, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
 
