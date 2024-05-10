@@ -1,5 +1,4 @@
-import requests
-import os, sys
+import hashlib, os, requests, sys
 
 def fetch_git(url, dir_path):
     res = requests.get(url, params={'ref': 'main'})
@@ -14,4 +13,7 @@ def fetch_git(url, dir_path):
             new_dir_path = os.path.join(dir_path, content['name'])
             os.makedirs(new_dir_path, exist_ok=True)
             fetch_git(content['url'], new_dir_path)
-        else: open(os.path.join(dir_path, content['name']), 'wb').write(requests.get(content['download_url']).content)
+        else:
+            data = open(os.path.join(dir_path, content['name']), 'rb').read()
+            if content['sha'] != hashlib.sha1((f'blob {len(data)}\x00').encode() + data).hexdigest():
+                open(os.path.join(dir_path, content['name']), 'wb').write(requests.get(content['download_url']).content)
