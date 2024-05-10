@@ -55,7 +55,7 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
         frad = bytes.fromhex(''.join([be and hexa[i+1:i+4] or hexa[i:i+4][:2] + hexa[i:i+4][3:] for i in range(0, len(hexa), 4)]))
     else: raise Exception('Illegal bits value.')
 
-    frad = (pns/(2**(bits-1))).astype(endian+'e').tobytes() + frad
+    frad = (pns.T/(2**(bits-1))).astype(endian+'e').tobytes() + frad
 
     # Deflating
     frad = zlib.compress(frad, level=9)
@@ -69,8 +69,9 @@ def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) ->
 
     # Inflating
     frad = zlib.decompress(frad)
-    masks = np.frombuffer(frad[:p1tools.subbands*channels*2], dtype=endian+'e').reshape((channels, -1)) * (2**(bits-1))
-    frad = frad[p1tools.subbands*channels*2:]
+    thresbytes = frad[:p1tools.subbands*channels*2]
+    thres = np.frombuffer(thresbytes, dtype=endian+'e').reshape((-1, channels)).T * (2**(bits-1))
+    frad = frad.removeprefix(thresbytes)
 
     # Padding bits
     if bits % 3 != 0: pass
@@ -94,7 +95,7 @@ def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) ->
     elif channels == 2:
         freqs = np.array([freqs[0] + freqs[1], freqs[0] - freqs[1]])
     else: freqs = freqs[1:] + freqs[0]
-    freqs = p1tools.dequant(freqs, channels, masks, kwargs)
+    freqs = p1tools.dequant(freqs, channels, thres, kwargs)
 
     # Inverse DCT and stacking
     return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in freqs]).T)/(2**(bits-1))

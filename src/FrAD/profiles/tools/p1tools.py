@@ -21,6 +21,7 @@ class pns:
         for i in range(subbands):
             subband_mX = mX[pns.getbinrng(len(mX), smprate, i)]
             if len(subband_mX) > 0:
+                if MOS[i+1] == None: mT[pns.getbinrng(len(mX), smprate, i)] = np.inf; continue
                 f = (MOS[i] + MOS[i+1]) / 2
                 ABS = (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))
                 ABS = np.clip(ABS, None, 96)
@@ -61,4 +62,5 @@ def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np
     return np.array(pns_sgnl), np.array(mask)
 
 def dequant(pns_sgnl: np.ndarray, channels: int, masks: np.ndarray, kwargs: dict) -> np.ndarray:
+    masks = np.where(np.isnan(masks) | np.isinf(masks), 0, masks)
     return np.array([pns_sgnl[c] * pns.mappingfromopus(masks[c], len(pns_sgnl[c]), kwargs['smprate']) for c in range(channels)])
