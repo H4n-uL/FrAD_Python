@@ -40,7 +40,7 @@ class fourier:
     @staticmethod
     def digital(frad: bytes, fb: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> np.ndarray:
         if profile == 1: return profile1.digital(frad, fb, channels, little_endian, kwargs)
-        # if profile == 2: return profile2.digital(frad, bits, channels, little_endian, kwargs)
+        # if profile == 2: return profile2.digital(frad, fb, channels, little_endian, kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'

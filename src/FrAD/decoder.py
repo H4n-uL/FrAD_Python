@@ -153,7 +153,7 @@ class decode:
 
                         bps = ((framelength * 8) * srate_frame / len(segment))
                         avgbps.extend([bps, i])
-                        depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64]][profile][float_bits]
+                        depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64],[8,12,16,24,32,48,64]][profile][float_bits]
                         lgs = int(math.log(srate_frame, 1000))
                         lgv = int(math.log(sum(avgbps[::2])/(len(avgbps)//2), 1000))
                         if verbose:

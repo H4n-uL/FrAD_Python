@@ -1,6 +1,6 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .tools import p1tools
+from .tools import p1tools, p2tools
 import zlib
 
 depths = [8, 12, 16, 24, 32, 48, 64]
@@ -27,6 +27,7 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
     dlen = len(pcm)
     freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
+    sbr = p2tools.sbr_encode(freqs, channels)
     freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
     # Inter-channel prediction
     if channels == 1: pass
@@ -42,7 +43,7 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
         bits = {8:12, 12:16, 16:24, 24:32, 32:48, 48:64}.get(bits, 64)
 
     # Ravelling and packing
-    frad: bytes = freqs.T.ravel().astype(endian+dtypes[bits]).tobytes()
+    frad: bytes = freqs.T[:dlen//8].ravel().astype(endian+dtypes[bits]).tobytes()
 
     # Cutting off bits
     if bits in [64, 32, 16, 8]:
@@ -55,7 +56,7 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
         frad = bytes.fromhex(''.join([be and hexa[i+1:i+4] or hexa[i:i+4][:2] + hexa[i:i+4][3:] for i in range(0, len(hexa), 4)]))
     else: raise Exception('Illegal bits value.')
 
-    frad = (pns/(2**(bits-1))).astype(endian+'e').tobytes() + frad
+    frad = (pns/(2**(bits-1))).astype(endian+'e').tobytes()+sbr.astype(endian+'B').tobytes()+frad
 
     # Deflating
     frad = zlib.compress(frad, level=9)
@@ -69,8 +70,10 @@ def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) ->
 
     # Inflating
     frad = zlib.decompress(frad)
-    masks = np.frombuffer(frad[:p1tools.nfilts*channels*2], dtype=endian+'e').reshape((channels, -1)) * (2**(bits-1))
-    frad = frad[p1tools.nfilts*channels*2:]
+    pns = np.frombuffer(frad[:p1tools.subbands*channels*2], dtype=endian+'e').reshape((channels, -1)) * (2**(bits-1))
+    frad = frad[len(pns.ravel())*2:]
+    sbr = np.frombuffer(frad[:8*channels], dtype=endian+'B').reshape((channels, -1))
+    frad = frad[len(sbr.ravel()):]
 
     # Padding bits
     if bits % 3 != 0: pass
@@ -94,7 +97,8 @@ def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) ->
     elif channels == 2:
         freqs = np.array([freqs[0] + freqs[1], freqs[0] - freqs[1]])
     else: freqs = freqs[1:] + freqs[0]
-    freqs = p1tools.dequant(freqs, channels, masks, kwargs)
+    freqs = p2tools.sbr_decode(freqs, channels, sbr)
+    freqs = p1tools.dequant(freqs, channels, pns, kwargs)
 
     # Inverse DCT and stacking
     return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in freqs]).T)/(2**(bits-1))

@@ -98,8 +98,9 @@ class encode:
         if not 20 >= loss_level >= 0: raise ValueError(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.')
         if profile == 2 and fsize%8!=0: raise ValueError(f'Invalid frame size {fsize} Frame size should be multiple of 8 for Profile 2.')
         if profile in [1, 2]:
+            print('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N)')
             while True:
-                x = input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower()
+                x = input('> ').lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
 
@@ -128,7 +129,12 @@ class encode:
                 if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.dsn'
                 else: out += '.dsin'
 
-        if os.path.exists(out) and 'y' not in input(f'{out} Already exists. Proceed? ').lower(): sys.exit('Aborted.')
+        if os.path.exists(out):
+            print(f'{out} Already exists. Proceed?')
+            while True:
+                x = input('> ').lower()
+                if x == 'y': break
+                if x == 'n': sys.exit('Aborted.')
 
         # Fourier Transform
         try:
