@@ -62,15 +62,15 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
 
     return frad, bits, channels, depths.index(bits)
 
-def digital(frad: bytes, fb: int, channels: int, little_endian: bool, *, kwargs) -> np.ndarray:
+def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) -> np.ndarray:
     be = not little_endian
     endian = be and '>' or '<'
     bits = depths[fb]
 
     # Inflating
     frad = zlib.decompress(frad)
-    masks = np.frombuffer(frad[:p1tools.nfilts*channels*2], dtype=endian+'e').reshape((channels, -1)) * (2**(bits-1))
-    frad = frad[p1tools.nfilts*channels*2:]
+    masks = np.frombuffer(frad[:p1tools.subbands*channels*2], dtype=endian+'e').reshape((channels, -1)) * (2**(bits-1))
+    frad = frad[p1tools.subbands*channels*2:]
 
     # Padding bits
     if bits % 3 != 0: pass
