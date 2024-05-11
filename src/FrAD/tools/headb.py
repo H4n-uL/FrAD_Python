@@ -24,10 +24,10 @@ class headb:
 
         blocks = bytes()
 
-        if meta is not None and meta != []:
+        if meta:
             for i in range(len(meta)):
                 blocks += cb.comment(meta[i][0], meta[i][1])
-        if img is not None and img != b'': blocks += cb.image(img)
+        if img: blocks += cb.image(img)
 
         length = struct.pack('>Q', (64 + len(blocks)))
 
