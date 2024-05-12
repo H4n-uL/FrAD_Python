@@ -79,7 +79,8 @@ class decode:
             #             print(f'  {m[0].ljust(17, ' ')}: {m[1]}')
 
             stdoutstrm = sd.OutputStream()
-            tempfstrm = open(variables.temp_pcm, 'ab')
+            if play: tempfstrm = open(os.devnull, 'wb')
+            else: tempfstrm = open(variables.temp_pcm, 'ab')
             try:
                 # Starting stream
                 if play:
