@@ -40,16 +40,17 @@ class decode:
             while True:
                 if fhead is None: fhead = f.read(4)
                 if fhead != b'\xff\xd0\xd2\x97':
+                    print(fhead)
                     hq = f.read(1)
                     if not hq: break
                     fhead = fhead[1:]+hq
                     continue
                 fhead += f.read(28)
-                framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
-                profile = struct.unpack('>B', fhead[0x8:0x9])[0]>>5&0b1==0b1 and True or False
-                srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
-                fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]   # 0x18-4B: Samples in a frame per channel
-                crc32 = fhead[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+                framelength = struct.unpack('>I', fhead[0x4:0x8])[0]  # 0x04-4B: Audio Stream Frame length
+                profile = struct.unpack('>B', fhead[0x8:0x9])[0]>>5
+                srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0] # 0x0c-4B: Sample rate
+                fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
+                crc32 = fhead[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
                 frame = f.read(framelength)
                 if e and zlib.crc32(frame) != struct.unpack('>I', crc32)[0]:
                     error_dir.append(str(framescount))
@@ -62,6 +63,7 @@ class decode:
 
                 dlen += len(frame)
                 framescount += 1
+                fhead = None
             if profile in [1, 2]: duration += fsize // 16 / srate_frame
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
             duration /= speed
