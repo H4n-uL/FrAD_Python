@@ -121,7 +121,7 @@ class encode:
         if img == None: img = encode.get_image(file_path)
 
         # Setting file extension
-        if not (out.lower().endswith('.frad') or out.lower().endswith('.dsin') or out.lower().endswith('.fra') or out.lower().endswith('.dsn')):
+        if not out.lower().endswith(('.frad', '.dsin', '.fra', '.dsn')):
             if profile == 0:
                 if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.fra'
                 else: out += '.frad'

@@ -12,7 +12,7 @@ from .tools.dsd import dsd
 
 class decode:
     @staticmethod
-    def internal(file_path, play: bool = False, speed: float = 1, e: bool = False, gain: float | None = 1, verbose: bool = False):
+    def internal(file_path: str, play: bool = False, speed: float = 1, e: bool = False, gain: float | None = 1, verbose: bool = False):
         with open(file_path, 'rb') as f:
             # Fixed Header
             head = f.read(64)
