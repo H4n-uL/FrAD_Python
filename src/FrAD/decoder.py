@@ -32,14 +32,19 @@ class decode:
             frameNo = 0
 
             # Getting secure framed source length
-            dlen = framescount = 0
-            ecc_dsize = ecc_codesize = 0
-            duration = 0
+            dlen = framescount = ecc_dsize = ecc_codesize = \
+                profile = fsize = srate_frame = duration = 0
             warned = False
             error_dir = []
+            fhead = None
             while True:
-                fhead = f.read(32)
-                if not fhead: break
+                if fhead is None: fhead = f.read(4)
+                if fhead != b'\xff\xd0\xd2\x97':
+                    hq = f.read(1)
+                    if not hq: break
+                    fhead = fhead[1:]+hq
+                    continue
+                fhead += f.read(28)
                 framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                 profile = struct.unpack('>B', fhead[0x8:0x9])[0]>>5&0b1==0b1 and True or False
                 srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
@@ -72,20 +77,20 @@ class decode:
             #                 m[1] = m[1].replace('\n', '\n'+' '*max(meta_tlen+2, 20))
             #             print(f'  {m[0].ljust(17, ' ')}: {m[1]}')
 
+            stdoutstrm = sd.OutputStream()
+            tempfstrm = open(variables.temp_pcm, 'ab')
             try:
                 # Starting stream
                 if play:
                     print()
                     if verbose: print()
-                    bps, avgbps = 0, []
-                    stdoutstrm = sd.OutputStream()
                 else:
-                    tempfstrm = open(variables.temp_pcm, 'ab')
-                    dlen = os.path.getsize(file_path) - header_length
-                    cli_width = 40
-                    start_time = time.time()
                     if verbose: print('\n\n')
-                fhead, prev = None, None
+                bps, avgbps = 0, []
+                dlen = os.path.getsize(file_path) - header_length
+                cli_width = 40
+                start_time = time.time()
+                fhead, prev, segment = None, None, np.array(0)
 
                 while True:
                     # Reading Frame Header
@@ -95,7 +100,7 @@ class decode:
                         if not hq:
                             if prev is not None:
                                 if play: stdoutstrm.write(segment.astype(np.float32))
-                                else: tempfstrm.write(segment.astype('>d').tobytes())
+                                else:    tempfstrm.write(segment.astype('>d').tobytes())
                             break
                         fhead = fhead[1:]+hq
                         continue
@@ -192,19 +197,16 @@ class decode:
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                     fhead = None
 
-                if play: stdoutstrm.stop()
-                else: tempfstrm.close()
+                stdoutstrm.stop()
+                tempfstrm.close()
                 if play or verbose:
                     print('\x1b[1A\x1b[2K', end='')
                     if play and verbose: print('\x1b[1A\x1b[2K', end='')
                 return smprate, channels
             except KeyboardInterrupt:
-                if play:
-                    try: stdoutstrm.abort()
-                    except UnboundLocalError: pass
-                else:
-                    try: stdoutstrm.close()
-                    except UnboundLocalError: pass
+                stdoutstrm.abort()
+                stdoutstrm.close()
+                if not play:
                     print('Aborting...')
                 sys.exit(0)
 

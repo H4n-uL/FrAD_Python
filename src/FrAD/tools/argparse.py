@@ -19,6 +19,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Bit depth
             elif key in ['b', 'bits', 'bit']:
+                b = '<null>'
                 try:
                     b = args.pop(0)
                     key, value = 'bits', int(b)
@@ -32,6 +33,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # New sample rate
             elif key in ['sr', 'srate', 'sample-rate', 'nsr', 'new-srate', 'new-sample-rate', 'resample']:
+                nsr = '<null>'
                 try:
                     nsr = args.pop(0)
                     key, value = 'srate', int(nsr)
@@ -41,6 +43,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Samples per frame
             elif key in ['fr', 'fsize', 'frame-size', 'samples-per-frame']:
+                fsz = '<null>'
                 try:
                     fsz = args.pop(0)
                     key, value = 'fsize', int(fsz)
@@ -54,6 +57,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Gain
             elif key in ['g', 'gain']:
+                g_b = '<null>'
                 try:
                     g = g_b = args.pop(0)
                     db = False
@@ -72,8 +76,8 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Data/ECC ratio
             elif key in ['ds', 'data-ecc', 'data-ecc-size', 'data-ecc-ratio']:
+                d = e = '<null>'
                 try:
-                    d = e = '<null>'
                     d = args.pop(0)
                     e = args.pop(0)
                     key, value = 'data-ecc', [int(d), int(e)]
@@ -83,6 +87,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Play speed
             elif key in ['spd', 'speed']:
+                spd = '<null>'
                 try:
                     spd = args.pop(0)
                     key, value = 'speed', float(spd)
@@ -96,6 +101,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Play keys
             elif key in ['k', 'keys', 'key']:
+                k = '<null>'
                 try:
                     k = args.pop(0)
                     key, value = 'keys', float(k)
@@ -105,13 +111,12 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Metadata
             elif key in ['m', 'meta', 'metadata']:
+                mk = mv = '<null>'
                 try:
-                    mk = mv = '<null>'
                     mk = args.pop(0)
                     mv = args.pop(0)
-                    key, value = 'meta', options['meta']+[[mk, mv]]
-                except KeyError:
-                    key, value = 'meta', [[mk, mv]]
+                    try: key, value = 'meta', options['meta']+[[mk, mv]]
+                    except KeyError: key, value = 'meta', [[mk, mv]]
                 except IndexError:
                     print(f'Metadata requires key and value: {arg} {mk} {mv}')
                     sys.exit(1)
@@ -126,6 +131,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # FrAD Profile
             elif key in ['prf', 'profile']:
+                prf = '<null>'
                 try:
                     prf = args.pop(0)
                     key, value = 'profile', int(prf)
@@ -135,6 +141,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Compression level
             elif key in ['lv', 'loss-level', 'level']:
+                lv = '<null>'
                 try:
                     lv = args.pop(0)
                     key, value = 'loss-level', int(lv)
@@ -149,6 +156,8 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
             elif key in ['ffmpeg', 'ff', 'directcmd', 'direct-cmd', 'direct-ffmpeg']:
                 key, value = 'directcmd', args
                 args = []
+
+            else: value = args.pop(0)
 
             options[key] = value
 
