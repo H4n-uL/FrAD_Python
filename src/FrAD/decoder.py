@@ -40,7 +40,6 @@ class decode:
             while True:
                 if fhead is None: fhead = f.read(4)
                 if fhead != b'\xff\xd0\xd2\x97':
-                    print(fhead)
                     hq = f.read(1)
                     if not hq: break
                     fhead = fhead[1:]+hq
