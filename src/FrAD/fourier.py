@@ -23,6 +23,7 @@ class fourier:
             bits = {12:16, 16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
         # Ravelling and packing
+        if bits%8!=0: endian = '>'
         frad: bytes = freqs.T.ravel().astype(endian+fourier.dtypes[bits]).tobytes()
 
         # Cutting off bits
@@ -32,7 +33,7 @@ class fourier:
             frad = b''.join([be and frad[i:i+(bits//8)] or frad[i+(bits//24):i+(bits//6)] for i in range(0, len(frad), bits//6)])
         elif bits == 12:
             hexa = frad.hex()
-            frad = bytes.fromhex(''.join([be and hexa[i:i+3] or hexa[i:i+4][0] + hexa[i:i+4][2:] for i in range(0, len(hexa), 4)]))
+            frad = bytes.fromhex(''.join([hexa[i:i+3] for i in range(0, len(hexa), 4)]))
         else: raise Exception('Illegal bits value.')
 
         return frad, bits, channels, fourier.depths.index(bits)
@@ -52,12 +53,13 @@ class fourier:
             frad = b''.join([be and frad[i:i+(bits//8)]+(b'\x00'*(bits//24)) or (b'\x00'*(bits//24))+frad[i:i+(bits//8)] for i in range(0, len(frad), bits//8)])
         elif bits == 12:
             hexa = frad.hex()
-            frad = bytes.fromhex(''.join([be and (hexa[i:i+3] + '0') or (hexa[i:i+3][0] + '0' + hexa[i:i+3][1:]) for i in range(0, len(hexa), 3)]))
+            frad = bytes.fromhex(''.join([f'{hexa[i:i+3]}0' for i in range(0, len(hexa), 3)]))
         else:
             raise Exception('Illegal bits value.')
 
         # Unpacking and unravelling
-        freqs: np.ndarray = np.frombuffer(frad, dtype=endian+fourier.dtypes[bits]).astype(float).reshape(-1, channels).T
+        if bits%8!=0: endian = '>'
+        freqs: np.ndarray = np.frombuffer(frad, endian+fourier.dtypes[bits]).astype(float).reshape(-1, channels).T
 
         # Removing potential Infinities and Non-numbers
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
