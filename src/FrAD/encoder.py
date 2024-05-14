@@ -21,7 +21,8 @@ class encode:
             if stream['codec_type'] == 'audio':
                 duration = stream['duration_ts'] * int(stream['sample_rate']) // int(stream['time_base'][2:])
                 return int(stream['channels']), int(stream['sample_rate']), stream['codec_name'], duration
-        raise ValueError('No audio stream found.')
+        print('No audio stream found.')
+        sys.exit(1)
 
     @staticmethod
     def get_pcm_command(file_path: str, osr: int, new_srate: int | None) -> list[str]:
@@ -95,8 +96,7 @@ class encode:
 
         methods.cantreencode(open(file_path, 'rb').read(4))
 
-        if not 20 >= loss_level >= 0: raise ValueError(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.')
-        if profile == 2 and fsize%8!=0: raise ValueError(f'Invalid frame size {fsize} Frame size should be multiple of 8 for Profile 2.')
+        if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
         if profile in [1, 2]:
             print('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N)')
             while True:
@@ -107,7 +107,7 @@ class encode:
         # Getting Audio info w. ffmpeg & ffprobe
         channels, smprate, codec, duration = encode.get_info(file_path)
         segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
-        if fsize > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
+        if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
 
         # Getting command and new sample rate
         cmd = encode.get_pcm_command(file_path, smprate, new_srate)

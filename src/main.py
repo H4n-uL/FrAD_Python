@@ -179,14 +179,12 @@ def main(action: str, file_path: str | None, kwargs: dict):
     if profile > 7 or profile < 0: profile = 0
     loss_level = kwargs.get('loss-level', 0)
 
-    if file_path is None and action not in ['update', 'help']: print('File path is required.'); sys.exit(1)
-
     if action in encode_opt:
-        from FrAD import encode
+        if file_path is None: print('File path is required.'); sys.exit(1)
         if kwargs.get('bits', None) is None:
             print('bit depth is required for encoding.')
             sys.exit(1)
-        if file_path is None: print('File path is required.'); sys.exit(1)
+        from FrAD import encode
         encode.enc(
                 file_path, kwargs['bits'], le,
                 output, profile, loss_level,
@@ -195,6 +193,7 @@ def main(action: str, file_path: str | None, kwargs: dict):
                 srate, meta, img, verbose)
 
     elif action in decode_opt:
+        if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import decode
         bits = kwargs.get('bits', 32)
         decode.dec(
@@ -205,18 +204,22 @@ def main(action: str, file_path: str | None, kwargs: dict):
                 verbose)
 
     elif action in parse_opt:
+        if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import header
         header.parse_file(file_path, kwargs.get('output', 'metadata'))
 
     elif action in meta_modify_opt:
+        if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import header
         header.modify(file_path, meta=meta, img=img)
 
     elif action in repack_ecc_opt:
+        if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import repack
         repack.ecc(file_path, data_ecc, kwargs['verbose'])
 
     elif action in play_opt:
+        if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import player
         player.play(
                 file_path, gain, kwargs.get('keys', None),
@@ -224,6 +227,7 @@ def main(action: str, file_path: str | None, kwargs: dict):
                 ecc_enabled, verbose)
 
     elif action in record_opt:
+        if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import recorder
         bits = kwargs.get('bits', 24)
         recorder.record_audio(file_path, kwargs.get('srate', 48000), None, bits,
@@ -270,7 +274,8 @@ def main(action: str, file_path: str | None, kwargs: dict):
     update      | Update FrAD codec from Github''')
         print()
     else:
-        raise ValueError('Invalid action. type `fourier help` to get help.')
+        print(f'Invalid action: {{{action}}} type `fourier help` to get help.')
+        sys.exit(1)
 
 if __name__ == '__main__':
     try:

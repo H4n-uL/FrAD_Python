@@ -57,8 +57,7 @@ class fourier:
             hexa = frad.hex()
             if len(hexa)%3!=0: hexa=hexa[:-1]
             frad = bytes.fromhex(''.join([f'{hexa[i:i+3]}0' for i in range(0, len(hexa), 3)]))
-        else:
-            raise Exception('Illegal bits value.')
+        else: raise Exception('Illegal bits value.')
 
         # Unpacking and unravelling
         if bits%8!=0: endian = '>'

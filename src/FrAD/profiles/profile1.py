@@ -78,8 +78,7 @@ def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) ->
     elif bits == 12:
         hexa = frad.hex()
         frad = bytes.fromhex(''.join([signext_12(hexa[i:i+3]) for i in range(0, len(hexa), 3)]))
-    else:
-        raise Exception('Illegal bits value.')
+    else: raise Exception('Illegal bits value.')
 
     # Unpacking and unravelling
     if channels > 2: channels += 1

@@ -217,7 +217,8 @@ class decode:
         if s == None:
             return None, 'c'
         if not s[0].isdigit():
-            raise ValueError('Quality format should be [{Positive integer}{c/v/a}]')
+            print('Quality format should be [{Positive integer}{c/v/a}]')
+            sys.exit(1)
         number = int(''.join(filter(str.isdigit, s)))
         strategy = ''.join(filter(str.isalpha, s))
         return number, strategy

@@ -15,11 +15,11 @@ class recorder:
         ecc_dsize, ecc_codesize = ecc_sizes
 
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * 256 * 16)//16)
-        if fsize > segmax: raise ValueError(f'Sample size cannot exceed {segmax}.')
-        if fsize < 2: raise ValueError(f'Sample size must be at least 2.')
-        if fsize % 2 != 0: raise ValueError('Sample size must be multiple of 2.')
-        if not 20 >= loss_level >= 0: raise ValueError(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.')
-        if profile == 2 and fsize%8!=0: raise ValueError(f'Invalid frame size {fsize} Frame size should be multiple of 8 for Profile 2.')
+        if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit()
+        if fsize < 2: print(f'Sample size must be at least 2.'); sys.exit()
+        if fsize % 2 != 0: print('Sample size must be multiple of 2.'); sys.exit()
+        if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
+        if profile == 2 and fsize%8!=0: print(f'Invalid frame size {fsize} Frame size should be multiple of 8 for Profile 2.'); sys.exit()
         if profile in [1, 2]:
             while True:
                 x = input('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N) ').lower()
