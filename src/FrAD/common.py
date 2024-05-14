@@ -1,4 +1,4 @@
-import atexit, os, platform, subprocess, sys, tempfile
+import atexit, os, platform, subprocess, sys, tempfile, tarfile
 
 yd = 365.25
 ys = yd * 86400
@@ -24,7 +24,10 @@ class variables:
 
     oper = platform.uname()
     arch = platform.machine().lower()
-    if   oper.system == 'Windows': aac = os.path.join(res, 'AppleAAC.Windows')
+    if oper.system == 'Windows':
+        AppleAAC_win = os.path.join(res, 'AppleAAC.Win.tar.gz')
+        aac = os.path.join(res, 'AppleAAC.Windows')
+        if os.path.isfile(AppleAAC_win) and not os.path.isfile(aac): tarfile.open(AppleAAC_win, 'r:gz').extractall(path=res)
     elif oper.system == 'Darwin':  aac = 'afconvert'
     else:                          aac = None
 
