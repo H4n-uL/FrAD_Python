@@ -1,8 +1,8 @@
 from .common import variables, methods
 from .fourier import fourier
 from .header import header
-# import matplotlib.pyplot as plt
-# from scipy.fft import dct
+import matplotlib.pyplot as plt
+from scipy.fft import dct
 import numpy as np
 import math, os, platform, shutil, struct, subprocess, sys, time, traceback, zlib
 import sounddevice as sd
@@ -92,7 +92,7 @@ class decode:
                 dlen = os.path.getsize(file_path) - header_length
                 cli_width = 40
                 start_time = time.time()
-                fhead, prev, segment = None, None, np.array(0)
+                fhead, prev, frame = None, None, np.array(0)
 
                 while True:
                     # Reading Frame Header
@@ -101,8 +101,8 @@ class decode:
                         hq = f.read(1)
                         if not hq:
                             if prev is not None:
-                                if play: stdoutstrm.write(segment.astype(np.float32))
-                                else:    tempfstrm.write(segment.astype('>d').tobytes())
+                                if play: stdoutstrm.write(frame.astype(np.float32))
+                                else:    tempfstrm.write(frame.astype('>d').tobytes())
                             break
                         fhead = fhead[1:]+hq
                         continue
@@ -118,23 +118,23 @@ class decode:
                     crc32 = fhead[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
 
                     # Reading Block
-                    frame = f.read(framelength)
+                    data: bytes = f.read(framelength)
 
                     if is_ecc_on:
-                        if e and zlib.crc32(frame) != struct.unpack('>I', crc32)[0]:
-                            frame = ecc.decode(frame, ecc_dsize, ecc_codesize)
-                        else: frame = ecc.unecc(frame, ecc_dsize, ecc_codesize)
+                        if e and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
+                            data = ecc.decode(data, ecc_dsize, ecc_codesize)
+                        else: data = ecc.unecc(data, ecc_dsize, ecc_codesize)
 
-                    segment = fourier.digital(frame, float_bits, channels_frame, endian, profile=profile, smprate=srate_frame, fsize=fsize) * gain # Inversing
+                    frame: np.ndarray = fourier.digital(data, float_bits, channels_frame, endian, profile=profile, smprate=srate_frame, fsize=fsize) * gain # Inversing
 
                     if prev is not None:
                         fade_in = np.linspace(0, 1, len(prev))
                         fade_out = np.linspace(1, 0, len(prev))
                         for c in range(channels_frame):
-                            segment[:len(prev), c] = (segment[:len(prev), c] * fade_in) + (prev[:, c] * fade_out)
+                            frame[:len(prev), c] = (frame[:len(prev), c] * fade_in) + (prev[:, c] * fade_out)
                     if profile in [1, 2]:
-                        prev = segment[-len(segment)//16:]
-                        segment = segment[:-len(prev)]
+                        prev = frame[-len(frame)//16:]
+                        frame = frame[:-len(prev)]
                     else:
                         prev = None
 
@@ -146,19 +146,19 @@ class decode:
 
                         # for i in range(channels_frame):
                         #     plt.subplot(channels_frame, 1, i+1)
-                        #     plt.plot(segment[:, i], alpha=0.5)
-                        #     y = np.abs(dct(segment[:, i]) / len(segment))
+                        #     # plt.plot(frame[:, i], alpha=0.5)
+                        #     y = np.abs(dct(frame[:, i]) / len(frame))
                         #     plt.fill_between(range(1, len(y)+1), y, -y, edgecolor='none')
-                        #     # plt.xscale('log', base=2)
+                        #     plt.xscale('log', base=2)
                         #     plt.ylim(-1, 1)
                         # plt.draw()
                         # plt.pause(0.000001)
                         # plt.clf()
 
-                        i += len(segment) / (smprate*speed)
+                        i += len(frame) / (smprate*speed)
                         frameNo += 1
 
-                        bps = ((framelength * 8) * srate_frame / len(segment))
+                        bps = ((framelength * 8) * srate_frame / len(frame))
                         avgbps.extend([bps, i])
                         depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64],[8,12,16,24,32,48,64]][profile][float_bits]
                         lgs = int(math.log(srate_frame, 1000))
@@ -167,13 +167,13 @@ class decode:
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
                             print(f'{methods.tformat(i)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not endian and "B" or "L"}E {channels_frame} channel{channels_frame==1 and "" or "s"}')
                             lgf = int(math.log(bps, 1000))
-                            print(f'Profile {profile}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(segment)} sample{len(segment)!=1 and"s"or""}/fr {framelength} B/fr {bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps/fr, {sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps avg')
+                            print(f'Profile {profile}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(frame)} sample{len(frame)!=1 and"s"or""}/fr {framelength} B/fr {bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps/fr, {sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps avg')
                         else:
                             print('\x1b[1A\x1b[2K', end='')
                             cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(channels_frame, f'{channels_frame} ch')
                             print(f'{methods.tformat(i)} / {methods.tformat(duration)}, {profile==0 and f"{depth}b@"or f"{sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
 
-                        stdoutstrm.write(segment.astype(np.float32))
+                        stdoutstrm.write(frame.astype(np.float32))
                         while avgbps[::1][0] < i - 30: avgbps = avgbps[2:]
                     else:
                         if channels != channels_frame or smprate != srate_frame:
@@ -183,7 +183,7 @@ class decode:
                                 print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
                                 return smprate, channels
                             channels, smprate = channels_frame, srate_frame
-                        tempfstrm.write(segment.astype('>d').tobytes())
+                        tempfstrm.write(frame.astype('>d').tobytes())
                         i += framelength + 32
                         if verbose:
                             elapsed_time = time.time() - start_time
