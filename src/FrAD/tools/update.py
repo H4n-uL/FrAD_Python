@@ -4,9 +4,9 @@ def fetch_git(url, dir_path):
     res = requests.get(url, params={'ref': 'main'})
 
     if res.status_code != 200:
-        sys.stderr.write(f'STATUS CODE: {res.status_code}, Failed to update FrAD\n')
-        sys.stderr.write(f'{res.json()['message']}\n')
-        return
+        print(f'STATUS CODE: {res.status_code}, Failed to update FrAD')
+        print(f'{res.json()['message']}')
+        sys.exit(1)
 
     for content in res.json():
         if content['type'] == 'dir':
@@ -14,6 +14,9 @@ def fetch_git(url, dir_path):
             os.makedirs(new_dir_path, exist_ok=True)
             fetch_git(content['url'], new_dir_path)
         else:
-            data = open(os.path.join(dir_path, content['name']), 'rb').read()
-            if content['sha'] != hashlib.sha1((f'blob {len(data)}\x00').encode() + data).hexdigest():
+            try: data = open(os.path.join(dir_path, content['name']), 'rb').read()
+            except: data = b''
+            sha = hashlib.sha1((f'blob {len(data)}\x00').encode() + data).hexdigest()
+            if content['sha'] != sha:
+                print(f'Updating {content['name']} from {sha[:8]}... to {content['sha'][:8]}...')
                 open(os.path.join(dir_path, content['name']), 'wb').write(requests.get(content['download_url']).content)
