@@ -11,6 +11,7 @@ def signext_24x(byte: bytes, bits):
     return (int(byte.hex()[0], base=16) > 7 and b'\xff' or b'\x00') * (bits//24) + byte
 
 def signext_12(hex_str):
+    if len(hex_str)!=3: return ''
     return (int(hex_str[0], base=16) > 7 and 'f' or '0') + hex_str
 
 def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> tuple[bytes, int, int, int]:
@@ -47,7 +48,9 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
         frad = bytes.fromhex(''.join([be and hexa[i+(bits//12):i+(bits//6*2)] or hexa[i:i+bits//4] for i in range(0, len(hexa), bits//6*2)]))
     elif bits == 12:
         hexa = frad.hex()
-        frad = bytes.fromhex(''.join([hexa[i+1:i+4] for i in range(0, len(hexa), 4)]))
+        hexa = ''.join([hexa[i+1:i+4] for i in range(0, len(hexa), 4)])
+        if len(hexa)%2!=0: hexa+='0'
+        frad = bytes.fromhex(hexa)
     else: raise Exception('Illegal bits value.')
 
     frad = (pns.T/(2**(bits-1))).astype(endian+'e').tobytes() + frad

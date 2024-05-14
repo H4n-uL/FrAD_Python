@@ -33,7 +33,9 @@ class fourier:
             frad = b''.join([be and frad[i:i+(bits//8)] or frad[i+(bits//24):i+(bits//6)] for i in range(0, len(frad), bits//6)])
         elif bits == 12:
             hexa = frad.hex()
-            frad = bytes.fromhex(''.join([hexa[i:i+3] for i in range(0, len(hexa), 4)]))
+            hexa = ''.join([hexa[i:i+3] for i in range(0, len(hexa), 4)])
+            if len(hexa)%2!=0: hexa+='0'
+            frad = bytes.fromhex(hexa)
         else: raise Exception('Illegal bits value.')
 
         return frad, bits, channels, fourier.depths.index(bits)
@@ -53,6 +55,7 @@ class fourier:
             frad = b''.join([be and frad[i:i+(bits//8)]+(b'\x00'*(bits//24)) or (b'\x00'*(bits//24))+frad[i:i+(bits//8)] for i in range(0, len(frad), bits//8)])
         elif bits == 12:
             hexa = frad.hex()
+            if len(hexa)%3!=0: hexa=hexa[:-1]
             frad = bytes.fromhex(''.join([f'{hexa[i:i+3]}0' for i in range(0, len(hexa), 3)]))
         else:
             raise Exception('Illegal bits value.')
