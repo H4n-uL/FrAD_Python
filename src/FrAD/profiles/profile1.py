@@ -8,7 +8,7 @@ dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
 get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
 
 def signext_24x(byte: bytes, bits, be):
-    return (int((be and byte.hex()[0] or bytes.hex()[-1]), base=16) > 7 and b'\xff' or b'\x00') * (bits//24) + byte
+    return (int((be and byte.hex()[0] or byte.hex()[-1]), base=16) > 7 and b'\xff' or b'\x00') * (bits//24) + byte
 
 def signext_12(hex_str):
     if len(hex_str)!=3: return ''
