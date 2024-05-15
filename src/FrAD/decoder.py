@@ -163,7 +163,7 @@ class decode:
                         lgv = int(math.log(sum(avgbps[::2])/(len(avgbps)//2), 1000))
                         if verbose:
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            print(f'{methods.tformat(i)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not endian and "B" or "L"}E {channels_frame} channel{channels_frame==1 and "" or "s"}')
+                            print(f'{methods.tformat(i)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not endian and "B" or "L"}E {channels_frame} channel{(channels_frame!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
                             print(f'Profile {profile}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(frame)} sample{len(frame)!=1 and"s"or""}/fr {framelength} B/fr {bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps/fr, {sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps avg')
                         else:
