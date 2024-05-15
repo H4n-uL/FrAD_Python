@@ -9,22 +9,24 @@ class header:
         with open(file_path, 'rb') as f:
             head = f.read(64)
 
-            methods.signature(head[0x0:0x4])
-            while True:
-                block_type = f.read(2)
-                if not block_type: break
-                if block_type == b'\xfa\xaa':
-                    block_length = int.from_bytes(f.read(6), 'big')
-                    title_length = int(struct.unpack('>I', f.read(4))[0])
-                    title = f.read(title_length).decode('utf-8')
-                    data = f.read(block_length-title_length-12)
-                    try: d = [title, data.decode('utf-8')]
-                    except UnicodeDecodeError: d = [title, base64.b64encode(data).decode('utf-8')]
-                    meta.append(d)
-                elif block_type[0] == 0xf5:
-                    block_length = int(struct.unpack('>Q', f.read(8))[0])
-                    img = f.read(block_length-10)
-                elif block_type == b'\xff\xd0': break
+            ftype = methods.signature(head[0x0:0x4])
+            if ftype == 'container':
+                while True:
+                    block_type = f.read(2)
+                    if not block_type: break
+                    if block_type == b'\xfa\xaa':
+                        block_length = int.from_bytes(f.read(6), 'big')
+                        title_length = int(struct.unpack('>I', f.read(4))[0])
+                        title = f.read(title_length).decode('utf-8')
+                        data = f.read(block_length-title_length-12)
+                        try: d = [title, data.decode('utf-8')]
+                        except UnicodeDecodeError: d = [title, base64.b64encode(data).decode('utf-8')]
+                        meta.append(d)
+                    elif block_type[0] == 0xf5:
+                        block_length = int(struct.unpack('>Q', f.read(8))[0])
+                        img = f.read(block_length-10)
+                    elif block_type == b'\xff\xd0': break
+            elif ftype == 'stream': return None, None
         return meta, img
 
     @staticmethod
@@ -34,22 +36,22 @@ class header:
             with open(file_path, 'rb') as f:
                 head = f.read(64)
 
-                methods.signature(head[0x0:0x4])
-                while True:
-                    block_type = f.read(2)
-                    if not block_type: break
-                    if block_type == b'\xfa\xaa':
-                        block_length = int.from_bytes(f.read(6), 'big')
-                        title_length = int(struct.unpack('>I', f.read(4))[0])
-                        title = f.read(title_length).decode('utf-8')
-                        data = f.read(block_length-title_length-12)
-                        try: d = {'key': title, 'type': 'string', 'value': data.decode('utf-8')}
-                        except UnicodeDecodeError: d = {'key': title, 'type': 'base64', 'value': base64.b64encode(data).decode('utf-8')}
-                        open(output+'.meta.json', 'a', encoding='utf-8').write(f'{json.dumps(d, ensure_ascii=False)}, ')
-                    elif block_type[0] == 0xf5:
-                        block_length = int(struct.unpack('>Q', f.read(8))[0])
-                        open(output+'.meta.image', 'wb').write(f.read(block_length-10))
-                    elif block_type == b'\xff\xd0': break
+                if methods.signature(head[0x0:0x4]) == 'container':
+                    while True:
+                        block_type = f.read(2)
+                        if not block_type: break
+                        if block_type == b'\xfa\xaa':
+                            block_length = int.from_bytes(f.read(6), 'big')
+                            title_length = int(struct.unpack('>I', f.read(4))[0])
+                            title = f.read(title_length).decode('utf-8')
+                            data = f.read(block_length-title_length-12)
+                            try: d = {'key': title, 'type': 'string', 'value': data.decode('utf-8')}
+                            except UnicodeDecodeError: d = {'key': title, 'type': 'base64', 'value': base64.b64encode(data).decode('utf-8')}
+                            open(output+'.meta.json', 'a', encoding='utf-8').write(f'{json.dumps(d, ensure_ascii=False)}, ')
+                        elif block_type[0] == 0xf5:
+                            block_length = int(struct.unpack('>Q', f.read(8))[0])
+                            open(output+'.meta.image', 'wb').write(f.read(block_length-10))
+                        elif block_type == b'\xff\xd0': break
         finally:
             try:
                 with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.truncate(); m.write(b']')
@@ -61,22 +63,22 @@ class header:
         with open(file_path, 'rb') as f:
             head = f.read(64)
 
-            methods.signature(head[0x0:0x4])
-            while True:
-                block_type = f.read(2)
-                if not block_type: break
-                if block_type == b'\xfa\xaa':
-                    block_length = int.from_bytes(f.read(6), 'big')
-                    title_length = int(struct.unpack('>I', f.read(4))[0])
-                    title = f.read(title_length).decode('utf-8')
-                    data = f.read(block_length-title_length-12)
-                    try: d = f'{title}={data.decode('utf-8').replace('\n', '\\\n')}\n'
-                    except UnicodeDecodeError: d = f'{title}={base64.b64encode(data).decode('utf-8')}\n'
-                    open(output, 'a', encoding='utf-8').write(d)
-                elif block_type[0] == 0xf5:
-                    block_length = int(struct.unpack('>Q', f.read(8))[0])
-                    open(f'{output}.image', 'wb').write(f.read(block_length-10))
-                elif block_type == b'\xff\xd0': break
+            if methods.signature(head[0x0:0x4]) == 'container':
+                while True:
+                    block_type = f.read(2)
+                    if not block_type: break
+                    if block_type == b'\xfa\xaa':
+                        block_length = int.from_bytes(f.read(6), 'big')
+                        title_length = int(struct.unpack('>I', f.read(4))[0])
+                        title = f.read(title_length).decode('utf-8')
+                        data = f.read(block_length-title_length-12)
+                        try: d = f'{title}={data.decode('utf-8').replace('\n', '\\\n')}\n'
+                        except UnicodeDecodeError: d = f'{title}={base64.b64encode(data).decode('utf-8')}\n'
+                        open(output, 'a', encoding='utf-8').write(d)
+                    elif block_type[0] == 0xf5:
+                        block_length = int(struct.unpack('>Q', f.read(8))[0])
+                        open(f'{output}.image', 'wb').write(f.read(block_length-10))
+                    elif block_type == b'\xff\xd0': break
 
     @staticmethod
     def modify(file_path, meta = None, img: bytes | None = None):
@@ -86,11 +88,12 @@ class header:
                 # Fixed Header
                 head = f.read(64)
 
-                methods.signature(head[0x0:0x4])
-                header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
+                if methods.signature(head[0x0:0x4]) == 'container':
+                    head_len = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
+                else: head_len = 0
 
                 # Backing up audio data
-                f.seek(header_length)
+                f.seek(head_len)
                 with open(variables.temp2, 'wb') as temp:
                     temp.write(f.read())
 

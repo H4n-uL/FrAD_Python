@@ -9,14 +9,13 @@ class repack:
         with open(file_path, 'rb') as f:
             head = f.read(64)
 
-            methods.signature(head[0x0:0x4])
-
-            header_length = struct.unpack('>Q', head[0x8:0x10])[0]
-
-            f.seek(header_length)
+            if methods.signature(head[0x0:0x4]) == 'container':
+                head_len = struct.unpack('>Q', head[0x8:0x10])[0]
+            else: head_len = 0
+            f.seek(head_len)
 
             try:
-                dlen = os.path.getsize(file_path) - header_length
+                dlen = os.path.getsize(file_path) - head_len
                 start_time = time.time()
                 total_bytes = 0
                 cli_width = 40
@@ -97,7 +96,7 @@ class repack:
                     if verbose: print('\x1b[1A\x1b[2K', end='')
 
                 f.seek(0)
-                head = f.read(header_length)
+                head = f.read(head_len)
             except KeyboardInterrupt:
                 sys.exit(1)
 

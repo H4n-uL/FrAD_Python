@@ -18,18 +18,16 @@ class decode:
             head = f.read(64)
 
             # File signature verification
-            methods.signature(head[0x0:0x4])
-
+            ftype = methods.signature(head[0x0:0x4])
             # Taking Stream info
             channels = int()
             smprate = int()
-            header_length = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
 
-            f.seek(header_length)
-
-            # Inverse Fourier Transform #
-            i = 0
-            frameNo = 0
+            if ftype == 'container':
+                head_len = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
+            elif ftype == 'stream': head_len = 0
+            f.seek(head_len)
+            i = frameNo = 0
 
             # Getting secure framed source length
             dlen = framescount = ecc_dsize = ecc_codesize = \
@@ -50,8 +48,8 @@ class decode:
                 srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0] # 0x0c-4B: Sample rate
                 fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
                 crc32 = fhead[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
-                frame = f.read(framelength)
-                if e and zlib.crc32(frame) != struct.unpack('>I', crc32)[0]:
+                data = f.read(framelength)
+                if e and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
                     error_dir.append(str(framescount))
                     if not warned:
                         warned = True
@@ -60,14 +58,14 @@ class decode:
                 duration += fsize / srate_frame
                 if profile in [1, 2]: duration -= fsize//16 / srate_frame
 
-                dlen += len(frame)
+                dlen += len(data)
                 framescount += 1
                 fhead = None
             if profile in [1, 2]: duration += fsize // 16 / srate_frame
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
             duration /= speed
+            f.seek(head_len)
 
-            f.seek(header_length)
             # if verbose: 
             #     meta, img = header.parse(file_path)
             #     if meta:
@@ -89,7 +87,7 @@ class decode:
                 else:
                     if verbose: print('\n\n')
                 bps, avgbps = 0, []
-                dlen = os.path.getsize(file_path) - header_length
+                dlen = os.path.getsize(file_path) - head_len
                 cli_width = 40
                 start_time = time.time()
                 fhead, prev, frame = None, None, np.array(0)
@@ -158,7 +156,7 @@ class decode:
                         i += len(frame) / (smprate*speed)
                         frameNo += 1
 
-                        bps = ((framelength * 8) * srate_frame / len(frame))
+                        bps = (((framelength+len(fhead)) * 8) * srate_frame / len(frame))
                         avgbps.extend([bps, i])
                         depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64],[8,12,16,24,32,48,64]][profile][float_bits]
                         lgs = int(math.log(srate_frame, 1000))

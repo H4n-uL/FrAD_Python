@@ -49,12 +49,13 @@ class variables:
 class methods:
     @staticmethod
     def signature(sign: bytes):
-        if sign != b'fRad':
-            raise Exception('This is not Fourier Analogue file.')
+        if sign == b'fRad': return 'container'
+        elif sign == b'\xff\xd0\xd2\x97': return 'stream'
+        else: raise Exception('This is not Fourier Analogue file.')
 
     @staticmethod
     def cantreencode(sign: bytes):
-        if sign == b'fRad':
+        if sign in [b'fRad', b'\xff\xd0\xd2\x97']:
             raise Exception('This is an already encoded Fourier Analogue file.')
 
     @staticmethod
