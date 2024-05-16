@@ -237,7 +237,8 @@ def main(action: str, file_path: str | None, kwargs: dict):
 
     elif action in update_opt:
         from FrAD.tools import update
-        update.fetch_git('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents/src', os.path.dirname(__file__))
+        if update.fetch_git('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents/src', os.path.dirname(__file__)) == False:
+            print('FrAD is already up-to-date.')
 
     elif action in ['help']:
         print(
