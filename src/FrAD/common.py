@@ -11,7 +11,6 @@ class variables:
 
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.swv').name
     temp2 =     tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.swv').name
-    temp_pcm =  tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name
     temp_dsd =  tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.bstr').name
     temp_flac = tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.flac').name
     meta =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.meta').name
@@ -77,7 +76,6 @@ class methods:
         temp_files = [
             variables.temp,
             variables.temp2,
-            variables.temp_pcm,
             variables.temp_dsd,
             variables.temp_flac,
             variables.meta]

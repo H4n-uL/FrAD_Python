@@ -101,14 +101,14 @@ class dsd:
         return bytes(HEAD)
 
     @staticmethod
-    def encode(srate, channels, out, ext, verbose: bool = False):
+    def encode(f, srate, channels, out, ext, verbose: bool = False):
         chb = dsd.channels_dict[channels]
 
         cli_width = 40
         i = 0
 
         dsd_srate = 2822400
-        pred_size = os.path.getsize(variables.temp_pcm) // srate * dsd_srate // 64
+        pred_size = os.path.getsize(f) // srate * dsd_srate // 64
         try:
             BUFFER_SIZE = 262144 * 8 * channels
 
@@ -119,7 +119,7 @@ class dsd:
                 '-f', 'f64be',
                 '-ar', str(srate),
                 '-ac', str(channels),
-                '-i', variables.temp_pcm,
+                '-i', f,
                 '-ar', str(dsd_srate),
                 '-f', 'f64be',
                 'pipe:1']

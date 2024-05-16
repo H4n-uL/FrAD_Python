@@ -1,10 +1,10 @@
 from .common import variables, methods
 from .fourier import fourier
 from .header import header
-import matplotlib.pyplot as plt
-from scipy.fft import dct
+# import matplotlib.pyplot as plt
+# from scipy.fft import dct
 import numpy as np
-import math, os, platform, shutil, struct, subprocess, sys, time, traceback, zlib
+import math, os, platform, shutil, struct, subprocess, sys, tempfile, time, traceback, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -13,6 +13,7 @@ from .tools.dsd import dsd
 class decode:
     @staticmethod
     def internal(file_path: str, play: bool = False, speed: float = 1, e: bool = False, gain: float | None = 1, verbose: bool = False):
+        rt = []
         with open(file_path, 'rb') as f:
             # Fixed Header
             head = f.read(64)
@@ -77,8 +78,7 @@ class decode:
             #             print(f'  {m[0].ljust(17, ' ')}: {m[1]}')
 
             stdoutstrm = sd.OutputStream()
-            if play: tempfstrm = open(os.devnull, 'wb')
-            else: tempfstrm = open(variables.temp_pcm, 'ab')
+            tempfstrm = open(os.devnull, 'wb')
             try:
                 # Starting stream
                 if play:
@@ -175,12 +175,10 @@ class decode:
                         while avgbps[::1][0] < i - 30: avgbps = avgbps[2:]
                     else:
                         if channels != channels_frame or smprate != srate_frame:
-                            if channels != int() or smprate != int():
-                                print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                                print('Warning: Fourier Analogue-in-Digital supports variable sample rates and channels, while other codecs do not.')
-                                print('The decoder has only decoded the first track. The decoding of two or more tracks with variable sample rates and channels is planned for an update.')
-                                return smprate, channels
                             channels, smprate = channels_frame, srate_frame
+                            tempfstrm.close()
+                            tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
+                            rt.append([tempfstrm.name, channels, smprate])
                         tempfstrm.write(frame.astype('>d').tobytes())
                         i += framelength + 32
                         if verbose:
@@ -202,7 +200,7 @@ class decode:
                 if play or verbose:
                     print('\x1b[1A\x1b[2K', end='')
                     if play and verbose: print('\x1b[1A\x1b[2K', end='')
-                return smprate, channels
+                return rt
             except KeyboardInterrupt:
                 stdoutstrm.abort()
                 stdoutstrm.close()
@@ -234,14 +232,14 @@ class decode:
     ffmpeg_lossless = ['wav', 'flac', 'wavpack', 'tta', 'truehd', 'alac', 'dts', 'mlp']
 
     @staticmethod
-    def directcmd(smprate, channels, ffmpeg_cmd):
+    def directcmd(temp_pcm, smprate, channels, ffmpeg_cmd):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
             '-f', 'f64be',
             '-ar', str(smprate),
             '-ac', str(channels),
-            '-i', variables.temp_pcm,
+            '-i', temp_pcm,
             '-i', variables.meta,
         ]
         command.extend(['-map_metadata', '1', '-map', '0:a'])
@@ -249,14 +247,14 @@ class decode:
         subprocess.run(command)
 
     @staticmethod
-    def ffmpeg(smprate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
+    def ffmpeg(temp_pcm, smprate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
             '-f', 'f64be',
             '-ar', str(smprate),
             '-ac', str(channels),
-            '-i', variables.temp_pcm,
+            '-i', temp_pcm,
             '-i', variables.meta,
         ]
         if os.path.exists(f'{variables.meta}.image'):
@@ -304,7 +302,7 @@ class decode:
         subprocess.run(command)
 
     @staticmethod
-    def AppleAAC_macOS(smprate, channels, out, quality, strategy):
+    def AppleAAC_macOS(temp_pcm, smprate, channels, out, quality, strategy):
         try:
             quality = str(quality)
             command = [
@@ -313,7 +311,7 @@ class decode:
                 '-f', 'f64be',
                 '-ar', str(smprate),
                 '-ac', str(channels),
-                '-i', variables.temp_pcm,
+                '-i', temp_pcm,
                 '-sample_fmt', 's32',
                 '-f', 'flac', variables.temp_flac
             ]
@@ -340,11 +338,11 @@ class decode:
             sys.exit(0)
 
     @staticmethod
-    def AppleAAC_Windows(smprate, channels, out, quality, new_srate):
+    def AppleAAC_Windows(temp_pcm, smprate, channels, out, quality, new_srate):
         try:
             command = [
                 variables.aac,
-                '--raw', variables.temp_pcm,
+                '--raw', temp_pcm,
                 '--raw-channels', str(channels),
                 '--raw-rate', str(smprate),
                 '--raw-format', 'f64l',
@@ -365,7 +363,7 @@ class decode:
     def dec(file_path, ffmpeg_cmd, out: str | None = None, bits: int = 32, codec: str | None = None,
             quality: str | None = None, e: bool = False, gain: float | None = None, new_srate: int | None = None, verbose: bool = False):
         # Decoding
-        smprate, channels = decode.internal(file_path, e=e, gain=gain, verbose=verbose)
+        rt = decode.internal(file_path, e=e, gain=gain, verbose=verbose)
         header.parse_to_ffmeta(file_path, variables.meta)
 
         try:
@@ -406,19 +404,22 @@ class decode:
                 f = s = 'u8'
             else: raise ValueError(f'Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.')
 
-            if ffmpeg_cmd is not None:
-                decode.directcmd(smprate, channels, ffmpeg_cmd)
-            else:
-                if (codec == 'aac' and smprate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
-                    if strategy in ['c', 'a']: q = decode.setaacq(q, channels)
-                    if platform.system() == 'Darwin': decode.AppleAAC_macOS(smprate, channels, out, q, strategy)
-                    elif platform.system() == 'Windows': decode.AppleAAC_Windows(smprate, channels, out, q, new_srate)
-                elif codec in ['dsd', 'dff']:
-                    dsd.encode(smprate, channels, out, ext, verbose)
-                elif codec not in ['pcm', 'raw']:
-                    decode.ffmpeg(smprate, channels, codec, f, s, out, ext, q, strategy, new_srate)
+            for z in range(len(rt)):
+                temp_pcm, channels, smprate = rt[z]
+                
+                if ffmpeg_cmd is not None:
+                    decode.directcmd(temp_pcm, smprate, channels, ffmpeg_cmd)
                 else:
-                    shutil.move(variables.temp_pcm, f'{out}.{ext}')
+                    if (codec == 'aac' and smprate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
+                        if strategy in ['c', 'a']: q = decode.setaacq(q, channels)
+                        if platform.system() == 'Darwin': decode.AppleAAC_macOS(temp_pcm, smprate, channels, (z==0 and out or f'{out}.{z}'), q, strategy)
+                        elif platform.system() == 'Windows': decode.AppleAAC_Windows(temp_pcm, smprate, channels, (z==0 and out or f'{out}.{z}'), q, new_srate)
+                    elif codec in ['dsd', 'dff']:
+                        dsd.encode(temp_pcm, smprate, channels, (z==0 and out or f'{out}.{z}'), ext, verbose)
+                    elif codec not in ['pcm', 'raw']:
+                        decode.ffmpeg(temp_pcm, smprate, channels, codec, f, s, (z==0 and out or f'{out}.{z}'), ext, q, strategy, new_srate)
+                    else:
+                        shutil.move(temp_pcm, (z==0 and f'{out}.{ext}' or f'{out}.{z}.{ext}'))
 
         except KeyboardInterrupt:
             print('Aborting...')
