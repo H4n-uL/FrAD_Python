@@ -2,13 +2,15 @@
 
 Archivist Licence - Fourier Analogue-in-Digital
 
-V1.3 - 2024. 4. 19., Original Repository
+V1.4 - 2024. 5. 16., Original Repository
 
 ## Definition of Terms
 
 "Work" means the entirety of the Fourier Analogue-in-Digital, including the Git repository, source code, documentation, and materials.
 
 "Original Author" means HaמuL, the original initiator and primary maintainer of the Fourier Analogue-in-Digital project.
+
+"Project Lead" means the person with final decision-making authority for the project, either the person appointed by the Original Author or the Project Lead.
 
 "Contributor" means any person or entity who has contributed to the Work in any form, including by raising issues or modifying the source code.
 
@@ -49,11 +51,17 @@ When redistributing or reimplementing FrAD, the following must be observed.
 
 ## About Contributions
 
-Contributors have moral rights to their contributions and have the same rights as the original author. Contributions automatically constitute acceptance of the rights and obligations under this licence.
+The Project Lead is the general manager of FrAD and sets the direction of the project and has final decision-making authority. Contributors provide suggestions and make technical contributions for the development of FrAD.
+
+Contributors have moral rights to their contributions, with the same effect as the original authors. Accordingly, an infringement of the moral rights of any one Contributor shall be deemed an infringement of the moral rights of all Contributors. Contributions automatically constitute acceptance of the rights and obligations under this licence.
+
+Disputes between Contributors shall be resolved by mutual agreement. If agreement cannot be reached, the Project Lead will arbitrate. If either party is dissatisfied with the outcome of the arbitration, they may take the matter to court.
+
+Disputes between the Project Lead and a Contributor may only arise from a breach of the Licence by the Contributor, in which case the Project Lead may take the sanctions set out in the Licence.
 
 ## Intellectual Property Rights
 
-FrAD is without intellectual property rights. However, if you develop and implement add-ons or plug-ins, you retain independent intellectual property rights in such implementations.
+FrAD is without intellectual property rights. All original repository code, technology, and ideas that make up FrAD cannot be claimed as intellectual property rights such as patents, trademarks, or design rights. However, if add-ons or plug-ins are developed and applied, independent intellectual property rights are guaranteed only for those features.
 
 ## Licence Violations
 
@@ -61,9 +69,9 @@ After confirming that one of the conditions below has been met, the original aut
 
 1. Standalone commercial use of this repository without any enhancements is prohibited. Honestly, even the craziest of crazies wouldn't buy some grotesque source that might have malware instead of the official public repository, but it's prohibited anyway. It's a death penalty.
 2. You are not required to credit the original author of the project. However, it is prohibited for third parties who have not contributed to the project to claim that they are the copyright holder of the project. If you have contributed, you may list the original author and the names of the contributors.
-3. You may not claim any patent or trademark rights on the core technology of this project, the discrete cosine transform.
+3. Claiming intellectual property rights over FrAD is prohibited.
 4. Commercial use of FrAD's official documents is strictly prohibited. All official documents must be distributed free of charge and made accessible to all consumers.
-5. The application of copyright protection to end-consumer products is strictly prohibited. It is unacceptable to apply technologies that infringe on the legitimate rights of consumers in the name of copyright protection to FrAD, a format that is open to all.
+5. Obfuscation of end-consumer products is strictly prohibited unless security is more important than preservation, such as for internet/voice communications or disk encryption. It is unacceptable to apply technologies that interfere with the legitimate rights of consumers to FrAD, a format that is open to all.
 
 If the violation is not resolved and the grace period has elapsed, the user will be immediately listed on FrAD's blacklist and the original author will notify them of the blacklisting.
 
@@ -77,7 +85,7 @@ Once you fix the licence violation and pass the unblacklisting review, you will 
 
 ## Disclaimer
 
-The original author and contributors are not liable for any direct, indirect, incidental, punitive, or consequential damages resulting from the use of this work. In fact, they cannot be liable even if they wanted to be.
+The original author and contributors are not liable for any direct, indirect, incidental, punitive, or consequential damages resulting from the use of this work except to the extent that liability is acknowledged.
 
 ## Priority between licence languages
 
