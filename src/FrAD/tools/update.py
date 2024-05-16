@@ -13,7 +13,7 @@ def fetch_git(url, dir, dref='/src', ref='main'):
         if content['type'] == 'dir':
             newdir = os.path.join(dir, content['name'])
             os.makedirs(newdir, exist_ok=True)
-            return fetch_git(content['url'], newdir, dref=newref)
+            fetch_git(content['url'], newdir, dref=newref)
         else:
             try:
                 data = open(os.path.join(dir, content['name']), 'rb').read()
@@ -22,5 +22,3 @@ def fetch_git(url, dir, dref='/src', ref='main'):
             if content['sha'] != sha:
                 print(f'Updating {newref} from {sha is not None and f"{sha[:8]}..." or "null"} to {content['sha'][:8]}...')
                 open(os.path.join(dir, content['name']), 'wb').write(requests.get(content['download_url']).content)
-                return True
-            return False
