@@ -4,16 +4,25 @@ from .header import header
 # import matplotlib.pyplot as plt
 # from scipy.fft import dct
 import numpy as np
-import math, os, platform, shutil, struct, subprocess, sys, tempfile, time, traceback, zlib
+import atexit, math, os, platform, shutil, struct, subprocess, sys, tempfile, time, traceback, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
 from .tools.dsd import dsd
 
+@atexit.register
+def cleanup():
+    for file, _, _ in filelist:
+        try:
+            if os.path.exists(file): os.remove(file)
+        except: pass
+
+filelist = []
+
 class decode:
     @staticmethod
     def internal(file_path: str, play: bool = False, speed: float = 1, e: bool = False, gain: float | None = 1, verbose: bool = False):
-        rt = []
+        global filelist
         with open(file_path, 'rb') as f:
             # Fixed Header
             head = f.read(64)
@@ -178,7 +187,7 @@ class decode:
                             channels, smprate = channels_frame, srate_frame
                             tempfstrm.close()
                             tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
-                            rt.append([tempfstrm.name, channels, smprate])
+                            filelist.append([tempfstrm.name, channels, smprate])
                         tempfstrm.write(frame.astype('>d').tobytes())
                         i += framelength + 32
                         if verbose:
@@ -195,12 +204,11 @@ class decode:
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
                     fhead = None
 
-                stdoutstrm.stop()
-                tempfstrm.close()
                 if play or verbose:
                     print('\x1b[1A\x1b[2K', end='')
                     if play and verbose: print('\x1b[1A\x1b[2K', end='')
-                return rt
+                stdoutstrm.stop()
+                tempfstrm.close()
             except KeyboardInterrupt:
                 stdoutstrm.abort()
                 stdoutstrm.close()
@@ -363,7 +371,7 @@ class decode:
     def dec(file_path, ffmpeg_cmd, out: str | None = None, bits: int = 32, codec: str | None = None,
             quality: str | None = None, e: bool = False, gain: float | None = None, new_srate: int | None = None, verbose: bool = False):
         # Decoding
-        rt = decode.internal(file_path, e=e, gain=gain, verbose=verbose)
+        decode.internal(file_path, e=e, gain=gain, verbose=verbose)
         header.parse_to_ffmeta(file_path, variables.meta)
 
         try:
@@ -404,9 +412,9 @@ class decode:
                 f = s = 'u8'
             else: raise ValueError(f'Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.')
 
-            for z in range(len(rt)):
-                temp_pcm, channels, smprate = rt[z]
-                
+            for z in range(len(filelist)):
+                temp_pcm, channels, smprate = filelist[z]
+
                 if ffmpeg_cmd is not None:
                     decode.directcmd(temp_pcm, smprate, channels, ffmpeg_cmd)
                 else:
@@ -420,10 +428,8 @@ class decode:
                         decode.ffmpeg(temp_pcm, smprate, channels, codec, f, s, (z==0 and out or f'{out}.{z}'), ext, q, strategy, new_srate)
                     else:
                         shutil.move(temp_pcm, (z==0 and f'{out}.{ext}' or f'{out}.{z}.{ext}'))
+                os.remove(temp_pcm)
 
-        except KeyboardInterrupt:
-            print('Aborting...')
-        except Exception as exc:
-            sys.exit(traceback.format_exc())
-        finally:
-            sys.exit(0)
+        except KeyboardInterrupt: print('Aborting...')
+        except Exception as exc: sys.exit(traceback.format_exc())
+        finally: sys.exit(0)
