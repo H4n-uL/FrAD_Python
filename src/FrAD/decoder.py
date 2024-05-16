@@ -127,13 +127,16 @@ class decode:
                     # Reading Block
                     data: bytes = f.read(framelength)
 
+                    # Decoding ECC
                     if is_ecc_on:
                         if e and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
                             data = ecc.decode(data, ecc_dsize, ecc_codesize)
                         else: data = ecc.unecc(data, ecc_dsize, ecc_codesize)
 
-                    frame: np.ndarray = fourier.digital(data, float_bits, channels_frame, endian, profile=profile, smprate=srate_frame, fsize=fsize) * gain # Inversing
+                    # Decoding
+                    frame: np.ndarray = fourier.digital(data, float_bits, channels_frame, endian, profile=profile, smprate=srate_frame, fsize=fsize) * gain
 
+                    # 1/16 Overlapping
                     if prev is not None:
                         fade_in = np.linspace(0, 1, len(prev))
                         fade_out = np.linspace(1, 0, len(prev))
@@ -150,6 +153,9 @@ class decode:
                             stdoutstrm = sd.OutputStream(samplerate=int(srate_frame*speed), channels=channels_frame)
                             stdoutstrm.start()
                             channels, smprate = channels_frame, srate_frame
+
+                        stdoutstrm.write(frame.astype(np.float32))
+                        while avgbps[::1][0] < i - 30: avgbps = avgbps[2:]
 
                         # for i in range(channels_frame):
                         #     plt.subplot(channels_frame, 1, i+1)
@@ -180,8 +186,6 @@ class decode:
                             cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(channels_frame, f'{channels_frame} ch')
                             print(f'{methods.tformat(i)} / {methods.tformat(duration)}, {profile==0 and f"{depth}b@"or f"{sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
 
-                        stdoutstrm.write(frame.astype(np.float32))
-                        while avgbps[::1][0] < i - 30: avgbps = avgbps[2:]
                     else:
                         if channels != channels_frame or smprate != srate_frame:
                             channels, smprate = channels_frame, srate_frame
