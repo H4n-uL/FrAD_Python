@@ -135,7 +135,7 @@ class dsd:
                     data = pipe.stdout.read(BUFFER_SIZE)
                     if not data or data == b'': break
                     # print(data)
-                    data_numpy = np.frombuffer(data, dtype='>d') / 2
+                    data_numpy = np.frombuffer(data, dtype='>f8') / 2
                     freq = [data_numpy[i::channels] for i in range(channels)]
                     block = np.column_stack([delta_sigma[c].modulator(freq[c]) for c in range(len(freq))]).ravel(order='C').tobytes()
 

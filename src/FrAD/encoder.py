@@ -177,7 +177,7 @@ class encode:
                     else: last = b''
 
                     # RAW PCM to Numpy
-                    frame = np.frombuffer(data, dtype='>d').reshape(-1, channels) * gain
+                    frame = np.frombuffer(data, dtype='>f8').reshape(-1, channels) * gain
                     flen = len(frame)
 
                     # DCT
