@@ -83,7 +83,7 @@ class decode:
             #         print('Metadata')
             #         for m in meta:
             #             if '\n' in m[1]:
-            #                 m[1] = m[1].replace('\n', '\n'+' '*max(meta_tlen+2, 20))
+            #                 m[1] = m[1].replace('\n', '\n'+' '*max(meta_tlen+2, 21))
             #             print(f'  {m[0].ljust(17, ' ')}: {m[1]}')
 
             stdoutstrm = sd.OutputStream()
