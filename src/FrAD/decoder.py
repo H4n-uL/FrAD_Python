@@ -21,7 +21,7 @@ filelist = []
 
 class decode:
     @staticmethod
-    def internal(file_path: str, play: bool = False, speed: float = 1, e: bool = False, gain: float | None = 1, verbose: bool = False):
+    def internal(file_path: str, play: bool = False, speed: float = 1, e: bool = False, gain: float | None = 1, ispipe: bool = False, verbose: bool = False):
         global filelist
         with open(file_path, 'rb') as f:
             # Fixed Header
@@ -83,7 +83,7 @@ class decode:
             #         print('Metadata')
             #         for m in meta:
             #             if '\n' in m[1]:
-            #                 m[1] = m[1].replace('\n', '\n'+' '*max(meta_tlen+2, 21))
+            #                 m[1] = m[1].replace('\n', f'\n{" "*max(meta_tlen+2, 19)}: ')
             #             print(f'  {m[0].ljust(17, ' ')}: {m[1]}')
 
             stdoutstrm = sd.OutputStream()
@@ -94,7 +94,7 @@ class decode:
                     print()
                     if verbose: print()
                 else:
-                    if verbose: print('\n\n')
+                    if verbose and not ispipe: print('\n\n')
                 bps, avgbps = 0, []
                 dlen = os.path.getsize(file_path) - head_len
                 cli_width = 40
@@ -109,7 +109,7 @@ class decode:
                         if not hq:
                             if prev is not None:
                                 if play: stdoutstrm.write(frame.astype(np.float32))
-                                else:    tempfstrm.write(frame.astype('>d').tobytes())
+                                else:    tempfstrm.write(frame.astype('>f8').tobytes())
                             break
                         fhead = fhead[1:]+hq
                         continue
@@ -192,9 +192,10 @@ class decode:
                             tempfstrm.close()
                             tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
                             filelist.append([tempfstrm.name, channels, smprate])
-                        tempfstrm.write(frame.astype('>d').tobytes())
+                        if ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
+                        else: tempfstrm.write(frame.astype('>f8').tobytes())
                         i += framelength + 32
-                        if verbose:
+                        if verbose and not ispipe:
                             elapsed_time = time.time() - start_time
                             bps = i / elapsed_time
                             lgb = int(math.log(bps, 1000))
@@ -375,7 +376,8 @@ class decode:
     def dec(file_path, ffmpeg_cmd, out: str | None = None, bits: int = 32, codec: str | None = None,
             quality: str | None = None, e: bool = False, gain: float | None = None, new_srate: int | None = None, verbose: bool = False):
         # Decoding
-        decode.internal(file_path, e=e, gain=gain, verbose=verbose)
+        decode.internal(file_path, e=e, gain=gain, ispipe=(out=='pipe'and True or False), verbose=verbose)
+        if out == 'pipe': sys.exit(0)
         header.parse_to_ffmeta(file_path, variables.meta)
 
         try:

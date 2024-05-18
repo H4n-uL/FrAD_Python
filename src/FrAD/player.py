@@ -7,4 +7,4 @@ class player:
         elif keys and not speed: speed = 2**(keys/12)
         elif not keys and speed: pass
         else: speed = 1
-        decode.internal(file_path, True, speed, e, gain, verbose)
+        decode.internal(file_path, True, speed=speed, e=e, gain=gain, ispipe=False, verbose=verbose)
