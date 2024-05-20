@@ -32,7 +32,9 @@ class recorder:
             if dev['max_input_channels'] != 0:
                 print(f'{ind} {dev['name']}')
                 print(f'    srate={dev['default_samplerate']}\t channels={dev['max_input_channels']}')
-        hw = int(input('> '))
+        while True:
+            hw = int(input('> '))
+            if hw in range(len(sd.query_devices())): break
 
         if channels is None: channels = sd.query_devices()[hw]['max_input_channels']
 
