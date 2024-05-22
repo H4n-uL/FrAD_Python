@@ -72,8 +72,9 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Enable ECC
             elif key in ['e', 'ecc', 'apply-ecc', 'enable-ecc']:
-                options['ecc'] = True
+                key, value = 'ecc', True
                 if len(args)!=0 and args[0].isdigit():
+                    options[key] = value
                     d = e = '<null>'
                     try:
                         d = args.pop(0)

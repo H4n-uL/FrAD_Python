@@ -153,6 +153,7 @@ def main(action: str, file_path: str | None, kwargs: dict):
 
     ecc_enabled = kwargs.get('ecc', False)
     data_ecc = kwargs.get('data-ecc', [96, 24])
+    if sum(data_ecc) > 255: print('Reed-Solomon supports up to 255 bytes for data and ecc code.'); sys.exit(1)
 
     gain = kwargs.get('gain', 1)
 
