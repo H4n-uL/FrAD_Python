@@ -72,18 +72,16 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             # Enable ECC
             elif key in ['e', 'ecc', 'apply-ecc', 'enable-ecc']:
-                key, value = 'ecc', True
-
-            # Data/ECC ratio
-            elif key in ['ds', 'data-ecc', 'data-ecc-size', 'data-ecc-ratio']:
-                d = e = '<null>'
-                try:
-                    d = args.pop(0)
-                    e = args.pop(0)
-                    key, value = 'data-ecc', [int(d), int(e)]
-                except:
-                    print(f'Value cannot be parsed as Integer: {arg} {d} {e}')
-                    sys.exit(1)
+                options['ecc'] = True
+                if args[0].isdigit():
+                    d = e = '<null>'
+                    try:
+                        d = args.pop(0)
+                        e = args.pop(0)
+                        key, value = 'data-ecc', [int(d), int(e)]
+                    except:
+                        print(f'Value cannot be parsed as Integer: {arg} {d} {e}')
+                        sys.exit(1)
 
             # Play speed
             elif key in ['spd', 'speed']:

@@ -21,30 +21,29 @@ fourier encode path/to/audio.file --bits [bit depth] {kwargs...}
 
 ------------------------------------options-------------------------------------
 
-    --bits            | Bit depth, REQUIRED (alias: b, bit)
-                      |
-    --ecc             | Enable ECC, recommended (alias: e, apply-ecc,
-                      |                                              enable-ecc)
-    --data-ecc        | ECC size ratio in [data size] [ecc code size],
-                      |  default: 128, 20 (alias: ds, ecc-ratio, data-ecc-ratio)
-                      |
-    --output          | Output file path (alias: o, out, output-file)
-    --sample-rate     | New sample rate (alias: sr, srate, nsr, new-srate,
-                      |                               new-sample-rate, resample)
-    --fsize           | Samples per frame, default: 2048 (alias: fr, frame-size,
-                      |                                       samples-per-frame)
-    --gain            | Gain level in both dBFS and amplitude (alias: g, gain)
-    --le              | Little Endian Toggle (alias: le, little-endian)
-                      |
-    --meta            | Metadata in [key] [value], default: pre-embedded meta
-                      |                                         (alias: m, meta)
-    --jsonmeta        | Metadata in JSON format (alias: jm)
-    --image           | Image to embed, default: pre-embedded image (alias: img)
-                      |
-    --profile         | FrAD Profile from 0 to 7, NOT RECOMMENDED (alias: prf)
-    --loss-level      | Lossy compression level, default: 0 (alias: lv, level)
-                      |
-    --verbose         | Verbose output (alias: v)'''
+    --bits        | Bit depth, REQUIRED (alias: b, bit)
+                  |
+    --ecc         | Enable ECC, recommended.
+                  | ECC size ratio in --ecc [data size] [ecc code size]
+                  | default: 96, 24 (alias: e, apply-ecc, enable-ecc)
+                  |
+    --output      | Output file path (alias: o, out, output-file)
+    --sample-rate | New sample rate (alias: sr, srate, nsr, new-srate,
+                  |                                   new-sample-rate, resample)
+    --fsize       | Samples per frame, default: 2048 
+                  |                   (alias: fr, frame-size, samples-per-frame)
+    --gain        | Gain level in both dBFS and amplitude (alias: g, gain)
+    --le          | Little Endian Toggle (alias: le, little-endian)
+                  |
+    --meta        | Metadata in [key] [value], default: pre-embedded meta
+                  |                                                   (alias: m)
+    --jsonmeta    | Metadata in JSON format (alias: jm)
+    --image       | Image to embed, default: pre-embedded image (alias: img)
+                  |
+    --profile     | FrAD Profile from 0 to 7, NOT RECOMMENDED (alias: prf)
+    --loss-level  | Lossy compression level, default: 0 (alias: lv, level)
+                  |
+    --verbose     | Verbose output (alias: v)'''
 decode_help =      '''----------------------------------description-----------------------------------
 
 Decode
@@ -57,24 +56,24 @@ fourier encode path/to/audio.file {kwargs...} {--ffmpeg {ffmpeg decode command}}
 
 ------------------------------------options-------------------------------------
 
-    --ecc             | Check errors and fix, recommended (alias: e, apply-ecc,
-                      |                                              enable-ecc)
-    --gain            | Gain level in both dBFS and amplitude (alias: g)
-    --verbose         | Verbose output (alias: v)
-                      |
-    --ffmpeg          | Pass a custom FFmpeg command for decoding.
-                      | recommended for advanced users. Any options specified
-                      |         after --ffmpeg will be passed directly to FFmpeg.
-                      |            Output file name auto-detection not supported.
-                      |         (alias: ff, directcmd, direct-cmd, direct-ffmpeg)
-                      |
-    --codec           | Codec for decoding, default: 24-bit FLAC (alias: c)
-    --quality         | Quality for decoding in [bitrate]{c|v|a},
-                      |                      default: maximum quality (alias: q)
-    --output          | Output file path (alias: o, out, output-file)
-    --bits            | Bit depth (alias: b, bit)
-    --sample-rate     | New sample rate (alias: sr, srate, nsr, new-srate,
-                      |                               new-sample-rate, resample)'''
+    --ecc         | Check errors and fix, recommended.
+                  |                            (alias: e, apply-ecc, enable-ecc)
+    --gain        | Gain level in both dBFS and amplitude (alias: g)
+    --verbose     | Verbose output (alias: v)
+                  |
+    --ffmpeg      | Pass a custom FFmpeg command for decoding.
+                  | recommended for advanced users. Any options specified after
+                  | --ffmpeg will be passed directly to FFmpeg.
+                  | Output file name auto-detection not supported.
+                  |         (alias: ff, directcmd, direct-cmd, direct-ffmpeg)
+                  |
+    --codec       | Codec for decoding, default: 24-bit FLAC (alias: c)
+    --quality     | Quality for decoding in [bitrate]{c|v|a},
+                  |                      default: maximum quality (alias: q)
+    --output      | Output file path (alias: o, out, output-file)
+    --bits        | Bit depth (alias: b, bit)
+    --sample-rate | New sample rate (alias: sr, srate, nsr, new-srate,
+                  |                               new-sample-rate, resample)'''
 play_help =        '''----------------------------------description-----------------------------------
 
 Play
@@ -82,12 +81,12 @@ This action will play FrAD files, not decoding to any other format.
 
 ------------------------------------options-------------------------------------
 
-    --gain            | Gain level in both dBFS and amplitude (alias: g)
-    --keys / --speed  | Keys for playback (alias: k, key) | Playback speed
-                      |                                             (alias: spd)
-    --ecc             | Check errors and fix while playback (alias: e,
-                      |                                   apply-ecc, enable-ecc)
-    --verbose         | Verbose output (alias: v)'''
+    --gain        | Gain level in both dBFS and amplitude (alias: g)
+    --keys        | Keys for playback, exclusive with --speed (alias: k, key)
+    --speed       | Playback speed, exclusive with --keys (alias: spd)
+    --ecc         | Check errors and fix while playback
+                  |                            (alias: e, apply-ecc, enable-ecc)
+    --verbose     | Verbose output (alias: v)'''
 record_help =      '''----------------------------------description-----------------------------------
 
 Record
@@ -95,17 +94,17 @@ This action will capture audio stream and write directly to FrAD file.
 
 ------------------------------------options-------------------------------------
 
-    --bits            | Bit depth, default: 24 (alias: b, bit)
-    --sample-rate     | Record srate, default: 48000 (alias: sr, srate, ...)
-                      |
-    --ecc             | Enable ECC (alias: e, apply-ecc, enable-ecc)
-    --data-ecc        | ECC size ratio in [data size] [ecc code size]
-                      |  default: 128, 20 (alias: ds, ecc-ratio, data-ecc-ratio)
-                      |
-    --le              | Little Endian Toggle (alias: le, little-endian)
-                      |
-    --profile         | FrAD Profile from 0 to 7, NOT RECOMMENDED (alias: prf)
-    --loss-level      | Lossy compression level (alias: lv, level)'''
+    --bits        | Bit depth, default: 24 (alias: b, bit)
+    --sample-rate | Record srate, default: 48000 (alias: sr, srate, ...)
+                  |
+    --ecc         | Enable ECC, recommended.
+                  | ECC size ratio in --ecc [data size] [ecc code size]
+                  | default: 96, 24 (alias: e, apply-ecc, enable-ecc)
+                  |
+    --le          | Little Endian Toggle (alias: le, little-endian)
+                  |
+    --profile     | FrAD Profile from 0 to 7, NOT RECOMMENDED (alias: prf)
+    --loss-level  | Lossy compression level (alias: lv, level)'''
 repack_ecc_help =  '''----------------------------------description-----------------------------------
 
 Repack
@@ -114,9 +113,9 @@ errors.
 
 ------------------------------------options-------------------------------------
 
-    --data-ecc        | ECC size ratio in [data size] [ecc code size]
-                      |  default: 128, 20 (alias: ds, ecc-ratio, data-ecc-ratio)
-    --verbose         | Verbose output (alias: v)'''
+    --ecc         | ECC size ratio in --ecc [data size] [ecc code size]
+                  | default: 96, 24 (alias: e, apply-ecc, enable-ecc)
+    --verbose     | Verbose output (alias: v)'''
 parse_help =       '''----------------------------------description-----------------------------------
 
 Parse
@@ -124,7 +123,7 @@ This action will parse metadata into JSON and extract embedded image.
 
 ------------------------------------options-------------------------------------
 
-    --output          | Output file path (alias: o, out, output-file)'''
+    --output      | Output file path (alias: o, out, output-file)'''
 meta_modify_help = '''----------------------------------description-----------------------------------
 
 Modify
@@ -135,9 +134,9 @@ running this action.
 
 ------------------------------------options-------------------------------------
 
-    --meta            | Metadata in [key] [value] (alias: m, meta)
-    --jsonmeta        | Metadata in JSON format (alias: jm)
-    --image           | Image to embed (alias: img)'''
+    --meta        | Metadata in [key] [value] (alias: m, meta)
+    --jsonmeta    | Metadata in JSON format (alias: jm)
+    --image       | Image to embed (alias: img)'''
 update_help = '''----------------------------------description-----------------------------------
 
 Update
@@ -153,7 +152,7 @@ def main(action: str, file_path: str | None, kwargs: dict):
     srate = kwargs.get('srate', None)
 
     ecc_enabled = kwargs.get('ecc', False)
-    data_ecc = kwargs.get('data-ecc', [128, 20])
+    data_ecc = kwargs.get('data-ecc', [96, 24])
 
     gain = kwargs.get('gain', 1)
 
