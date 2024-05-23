@@ -1,4 +1,5 @@
 from .fourier import fourier
+import numpy as np
 import os, struct, sys, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
@@ -53,7 +54,7 @@ class recorder:
         print('Recording...')
         open(file_path, 'wb').write(headb.uilder(meta, img))
 
-        record = sd.InputStream(samplerate=smprate, channels=channels, device=hw)
+        record = sd.InputStream(samplerate=smprate, channels=channels, device=hw, dtype=np.float32)
         record.start()
         with open(file_path, 'ab') as f:
             while True:
