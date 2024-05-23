@@ -97,7 +97,7 @@ This action will capture audio stream and write directly to FrAD file.
     --bits        | Bit depth, default: 24 (alias: b, bit)
     --sample-rate | Record srate, default: 48000 (alias: sr, srate, ...)
                   |
-    --ecc         | Enable ECC, recommended.
+    --ecc         | Enable ECC, NOT recommended for high bit depth and srate.
                   | ECC size ratio in --ecc [data size] [ecc code size]
                   | default: 96, 24 (alias: e, apply-ecc, enable-ecc)
                   |
