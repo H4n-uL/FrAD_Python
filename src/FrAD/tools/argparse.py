@@ -156,7 +156,9 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
                 key, value = 'directcmd', args
                 args = []
 
-            else: value = args.pop(0)
+            else:
+                try: value = args.pop(0)
+                except: value = True
 
             options[key] = value
 
