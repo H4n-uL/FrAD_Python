@@ -1,5 +1,15 @@
 import hashlib, os, requests, sys
 
+def getsha1(file):
+    sha = hashlib.sha1()
+    sha.update(f'blob {os.path.getsize(file)}\x00'.encode())
+    with open(file, 'rb') as f:
+        while True:
+            data = f.read(2**30)
+            if not data: break
+            sha.update(data)
+    return sha.hexdigest()
+
 def fetch_git(url, dir, dref='/src', ref='main'):
     res = requests.get(url, params={'ref': ref})
 
@@ -15,9 +25,7 @@ def fetch_git(url, dir, dref='/src', ref='main'):
             os.makedirs(newdir, exist_ok=True)
             fetch_git(content['url'], newdir, dref=newref)
         else:
-            try:
-                data = open(os.path.join(dir, content['name']), 'rb').read()
-                sha = hashlib.sha1((f'blob {len(data)}\x00').encode() + data).hexdigest()
+            try:    sha = getsha1(os.path.join(dir, content['name']))
             except: sha = None
             if content['sha'] != sha:
                 print(f'Updating {newref} from {sha is not None and f"{sha[:8]}..." or "null"} to {content['sha'][:8]}...')
