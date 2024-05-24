@@ -10,7 +10,7 @@ update_opt = ['update']
 
 def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
     try: action = args.pop(0)
-    except: return '', '', dict()
+    except: return '', '', '', dict()
     if action in meta_opt: metaoption = args.pop(0)
     else: metaoption = None
     file_path = None
@@ -51,6 +51,16 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     print(f'Value cannot be parsed as Integer: {arg} {nsr}')
                     sys.exit(1)
 
+            # Channels
+            elif key in ['c', 'chnl', 'channel', 'channels']:
+                chnl = '<null>'
+                try:
+                    chnl = args.pop(0)
+                    key, value = 'chnl', int(chnl)
+                except:
+                    print(f'Value cannot be parsed as Integer: {arg} {chnl}')
+                    sys.exit(1)
+
             # Samples per frame
             elif key in ['fr', 'fsize', 'frame-size', 'samples-per-frame']:
                 fsz = '<null>'
@@ -62,7 +72,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     sys.exit(1)
 
             # Codec type
-            elif key in ['c', 'codec']:
+            elif key in ['codec']:
                 key, value = 'codec', args.pop(0)
 
             # Gain
@@ -78,6 +88,13 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     if db: value = 10 ** (value / 20)
                 except ValueError:
                     print(f'Value cannot be parsed as Float: {arg} {g_b}')
+                    sys.exit(1)
+
+            # Raw
+            elif key in ['r', 'raw', 'pcm']:
+                try: key, value = 'raw', args.pop(0)
+                except ValueError:
+                    print(f'Value cannot be parsed as String: {arg}')
                     sys.exit(1)
 
             # Enable ECC

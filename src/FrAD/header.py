@@ -44,8 +44,12 @@ class header:
 
             # Making new header
             meta_old, img_old = headb.parser(file_path)
-            if add: meta = meta_old + meta; img = img_old
-            elif remove: meta = [mo for mo in meta_old if mo[0] not in meta]; img = img_old
+            if add:
+                img = img_old
+                if meta: meta = meta_old + meta
+            elif remove:
+                img = img_old
+                if meta: meta = [mo for mo in meta_old if mo[0] not in meta]
             elif write_img:
                 meta = meta_old
                 if img_old and not img: img = None

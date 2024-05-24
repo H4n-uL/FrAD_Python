@@ -7,6 +7,20 @@ from .tools.headb import headb
 
 class encode:
     @staticmethod
+    def get_dtype(raw: str | None) -> tuple[str, int]:
+        if not raw: return '>f8', 8
+        raw, endian = raw[:-2], raw[-2:]
+        endian = endian=='be' and '>' or endian=='le' and '<' or ''
+        raw, ty = raw[1:], raw[0]
+        match ty:
+            case 's': ty = 'i'
+            case 'u': ty = 'u'
+            case 'f': ty = 'f'
+            case _: print(f'Invalid raw PCM type: {ty}'); sys.exit(1)
+        depth = int(raw)//8
+        return f'{endian}{ty}{depth}', depth
+
+    @staticmethod
     def get_info(file_path) -> tuple[int, int, str, int]:
         command = [variables.ffprobe,
             '-v', 'quiet',
@@ -25,7 +39,7 @@ class encode:
         sys.exit(1)
 
     @staticmethod
-    def get_pcm_command(file_path: str, osr: int, new_srate: int | None) -> list[str]:
+    def get_pcm_command(file_path: str, osr: int, new_srate: int | None, chnl: int | None) -> list[str]:
         command = [
             variables.ffmpeg,
             '-v', 'quiet',
@@ -35,6 +49,8 @@ class encode:
         ]
         if new_srate is not None and new_srate != osr:
             command.extend(['-ar', str(new_srate)])
+        if chnl is not None:
+            command.extend(['-ac', str(chnl)])
         command.append('pipe:1')
         return command
 
@@ -88,7 +104,7 @@ class encode:
                 out: str | None = None, profile: int = 0, loss_level: int = 0,
                 fsize: int = 2048, gain: list | None = None,
                 apply_ecc: bool = False, ecc_sizes: list = [128, 20],
-                new_srate: int | None = None,
+                new_srate: int | None = None, chnl: int | None = None, raw: str | None = None,
                 meta = None, img: bytes | None = None,
                 verbose: bool = False):
         ecc_dsize = int(ecc_sizes[0])
@@ -96,6 +112,10 @@ class encode:
 
         methods.cantreencode(open(file_path, 'rb').read(4))
 
+        if raw:
+            if new_srate is None: print('Sample rate is required for raw PCM.'); sys.exit(1)
+            if chnl is None: print('Channel count is required for raw PCM.'); sys.exit(1)
+            channels, smprate = chnl, new_srate
         if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
         if profile in [1, 2]:
             print('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N)')
@@ -103,21 +123,21 @@ class encode:
                 x = input('> ').lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
-
         # Getting Audio info w. ffmpeg & ffprobe
-        channels, smprate, codec, duration = encode.get_info(file_path)
+        if not raw:
+            channels, smprate, codec, duration = encode.get_info(file_path)
+            if new_srate is not None: duration = int(duration / smprate * new_srate)
         segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
         if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
 
         # Getting command and new sample rate
-        cmd = encode.get_pcm_command(file_path, smprate, new_srate)
-        if new_srate is not None: duration = int(duration / smprate * new_srate)
+        if not raw: cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
         smprate = new_srate is not None and new_srate or smprate
 
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
 
-        if meta == None: meta = encode.get_metadata(file_path)
-        if img == None: img = encode.get_image(file_path)
+        if meta == None and not raw: meta = encode.get_metadata(file_path)
+        if img == None and not raw: img = encode.get_image(file_path)
 
         # Setting file extension
         if not out.lower().endswith(('.frad', '.dsin', '.fra', '.dsn')):
@@ -141,11 +161,15 @@ class encode:
             total_bytes, total_samples = 0, 0
             cli_width = 40
 
-            # Open FFmpeg
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-            if process.stdout == None: raise FileNotFoundError('Broken pipe.')
-
             last = b''
+            dtype, sample_bytes = encode.get_dtype(raw)
+            smpsize = sample_bytes * channels # Single sample size = bit depth * channels
+
+            # Open FFmpeg
+            if not raw: process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            else:
+                rfile = open(file_path, 'rb')
+                duration = os.path.getsize(file_path) / smpsize
 
             # Write file
             open(out, 'wb').write(headb.uilder(meta, img))
@@ -159,25 +183,30 @@ class encode:
                     # apply_ecc = random.choice([True, False]) # Random ECC test
                     # ecc_dsize, ecc_codesize = random.choice(list(range(64, 129))), random.choice(list(range(16, 64))) # Random ECC test
 
-                    rlen = fsize * 8 * channels
+                    rlen = fsize * smpsize
                     spf = fsize
                     while rlen < len(last):
                         spf += 128
-                        rlen = spf * 8 * channels
+                        rlen = spf * smpsize
                     if profile in [1, 2] and len(last) != 0:
                         rlen -= len(last)
 
-                    data = process.stdout.read(rlen) # Reading PCM
-                    if not data: break               # if no data, Break
+                    if not raw:
+                        if process.stdout is None: raise FileNotFoundError('Broken pipe.')
+                        data = process.stdout.read(rlen)   # Reading PCM
+                    else: data = rfile.read(rlen)          # Reading RAW PCM
+                    if not data: break                     # if no data, Break
 
-                    if len(last) != 0:
-                        data = last + data
-                    if profile in [1, 2]:
-                        last = data[-fsize//16*8*channels:]
+                    if len(last) != 0: data = last + data
+                    if profile in [1, 2]: last = data[-fsize//16*8*channels:]
                     else: last = b''
 
                     # RAW PCM to Numpy
-                    frame = np.frombuffer(data, dtype='>f8').reshape(-1, channels) * gain
+                    frame = np.frombuffer(data[:len(data)//smpsize * smpsize], dtype).astype(float).reshape(-1, channels) * gain
+                    if raw:
+                        if not raw.startswith('f'):
+                            frame /= 2**(sample_bytes*8-1)
+                            if raw.startswith('u'): frame-=1
                     flen = len(frame)
 
                     # DCT

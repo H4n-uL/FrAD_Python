@@ -19,8 +19,10 @@ fourier encode path/to/audio.file --bits [bit depth] {{kwargs...}}
                   | default: 96, 24 (alias: e, apply-ecc, enable-ecc)
                   |
     --output      | Output file path (alias: o, out, output-file)
-    --sample-rate | New sample rate (alias: sr, srate, nsr, new-srate,
-                  |                                   new-sample-rate, resample)
+    --sample-rate | Sample rate (alias: sr, srate)
+    --channels    | Channels (alias: c, chnl, channel)
+    --raw         | Raw PCM data flag with data type (alias: r, pcm)
+                  |
     --fsize       | Samples per frame, default: 2048 
                   |                   (alias: fr, frame-size, samples-per-frame)
     --gain        | Gain level in both dBFS and amplitude (alias: g, gain)
@@ -58,13 +60,12 @@ fourier encode path/to/audio.file {{kwargs...}} {{--ffmpeg {{ffmpeg decode comma
                   | Output file name auto-detection not supported.
                   |         (alias: ff, directcmd, direct-cmd, direct-ffmpeg)
                   |
-    --codec       | Codec for decoding, default: 24-bit FLAC (alias: c)
+    --codec       | Codec for decoding, default: 24-bit FLAC
     --quality     | Quality for decoding in [bitrate]{{c|v|a}},
                   |                      default: maximum quality (alias: q)
     --output      | Output file path (alias: o, out, output-file)
     --bits        | Bit depth (alias: b, bit)
-    --sample-rate | New sample rate (alias: sr, srate, nsr, new-srate,
-                  |                               new-sample-rate, resample)'''
+    --sample-rate | New sample rate (alias: sr, srate)'''
 play_help = f'''----------------------------------description-----------------------------------
 
 Play
@@ -86,7 +87,7 @@ This action will capture audio stream and write directly to FrAD file.
 ------------------------------------options-------------------------------------
 
     --bits        | Bit depth, default: 24 (alias: b, bit)
-    --sample-rate | Record srate, default: 48000 (alias: sr, srate, ...)
+    --sample-rate | Record srate, default: 48000 (alias: sr, srate)
                   |
     --ecc         | Enable ECC, NOT recommended for high bit depth and srate.
                   | ECC size ratio in --ecc [data size] [ecc code size]
@@ -147,7 +148,7 @@ This action will update Fourier Analogue-in-Digital from the repository.
 
     No option for this action.'''
 
-def main(action: str, file_path: str | None, metaopt: str, kwargs: dict):
+def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
     from FrAD.tools.argparse import encode_opt, decode_opt, play_opt, record_opt, meta_opt, repack_ecc_opt, update_opt
 
     le = kwargs.get('le', False)
@@ -191,9 +192,10 @@ def main(action: str, file_path: str | None, metaopt: str, kwargs: dict):
         encode.enc(
                 file_path, kwargs['bits'], le,
                 output, profile, loss_level,
-                fsize, gain,
-                ecc_enabled, data_ecc,
-                srate, meta, img, verbose)
+                fsize, gain, ecc_enabled, data_ecc,
+                srate, kwargs.get('chnl', None),
+                kwargs.get('raw', False),
+                meta, img, verbose)
 
     elif action in decode_opt:
         if file_path is None: print('File path is required.'); sys.exit(1)
