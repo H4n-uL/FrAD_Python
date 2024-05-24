@@ -1,5 +1,6 @@
 from .comment_block import cb
-import struct
+from ..common import methods
+import base64, struct
 
 class headb:
     @staticmethod
@@ -19,17 +20,39 @@ class headb:
 
     @staticmethod
     def uilder(meta: list[list[str]] | None = None, img: bytes | None = None):
-
         signature = b'fRad'
-
         blocks = bytes()
 
         if meta:
-            for i in range(len(meta)):
-                blocks += cb.comment(meta[i][0], meta[i][1])
+            for i in range(len(meta)): blocks += cb.comment(meta[i][0], meta[i][1])
         if img: blocks += cb.image(img)
 
         length = struct.pack('>Q', (64 + len(blocks)))
 
         header = signature + (b'\x00'*4) + length + (b'\x00'*48) + blocks
         return header
+    
+    @staticmethod
+    def parser(file_path: str) -> tuple[list[str, str], bytes | None]:
+        meta, img = [], None
+        with open(file_path, 'rb') as f:
+            head = f.read(64)
+            ftype = methods.signature(head[0x0:0x4])
+            if ftype == 'container':
+                while True:
+                    block_type = f.read(2)
+                    if not block_type: break
+                    if block_type == b'\xfa\xaa':
+                        block_length = int.from_bytes(f.read(6), 'big')
+                        title_length = int(struct.unpack('>I', f.read(4))[0])
+                        title = f.read(title_length).decode('utf-8')
+                        data = f.read(block_length-title_length-12)
+                        try: d = [title, data.decode('utf-8'), 'string']
+                        except UnicodeDecodeError: d = [title, base64.b64encode(data).decode('utf-8'), 'base64']
+                        meta.append(d)
+                    elif block_type[0] == 0xf5:
+                        block_length = int(struct.unpack('>Q', f.read(8))[0])
+                        img = f.read(block_length-10)
+                    elif block_type == b'\xff\xd0': break
+            elif ftype == 'stream': return None, None
+        return meta, img

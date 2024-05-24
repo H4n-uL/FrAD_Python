@@ -4,84 +4,29 @@ from .tools.headb import headb
 
 class header:
     @staticmethod
-    def parse(file_path):
-        meta, img = [], None
-        with open(file_path, 'rb') as f:
-            head = f.read(64)
-
-            ftype = methods.signature(head[0x0:0x4])
-            if ftype == 'container':
-                while True:
-                    block_type = f.read(2)
-                    if not block_type: break
-                    if block_type == b'\xfa\xaa':
-                        block_length = int.from_bytes(f.read(6), 'big')
-                        title_length = int(struct.unpack('>I', f.read(4))[0])
-                        title = f.read(title_length).decode('utf-8')
-                        data = f.read(block_length-title_length-12)
-                        try: d = [title, data.decode('utf-8')]
-                        except UnicodeDecodeError: d = [title, base64.b64encode(data).decode('utf-8')]
-                        meta.append(d)
-                    elif block_type[0] == 0xf5:
-                        block_length = int(struct.unpack('>Q', f.read(8))[0])
-                        img = f.read(block_length-10)
-                    elif block_type == b'\xff\xd0': break
-            elif ftype == 'stream': return None, None
-        return meta, img
-
-    @staticmethod
-    def parse_file(file_path, output):
+    def parse(file_path, output):
+        meta, img = headb.parser(file_path)
+        open(f'{output}.meta.json', 'w', encoding='utf-8').write('[')
+        for m in meta: open(f'{output}.meta.json', 'a', encoding='utf-8').write(f'{json.dumps({'key': m[0], 'type': m[2], 'value': m[1]}, ensure_ascii=False)}')
+        if img: open(f'{output}.meta.image', 'wb').write(img)
         try:
-            open(output+'.meta.json', 'w', encoding='utf-8').write('[')
-            with open(file_path, 'rb') as f:
-                head = f.read(64)
-
-                if methods.signature(head[0x0:0x4]) == 'container':
-                    while True:
-                        block_type = f.read(2)
-                        if not block_type: break
-                        if block_type == b'\xfa\xaa':
-                            block_length = int.from_bytes(f.read(6), 'big')
-                            title_length = int(struct.unpack('>I', f.read(4))[0])
-                            title = f.read(title_length).decode('utf-8')
-                            data = f.read(block_length-title_length-12)
-                            try: d = {'key': title, 'type': 'string', 'value': data.decode('utf-8')}
-                            except UnicodeDecodeError: d = {'key': title, 'type': 'base64', 'value': base64.b64encode(data).decode('utf-8')}
-                            open(output+'.meta.json', 'a', encoding='utf-8').write(f'{json.dumps(d, ensure_ascii=False)}, ')
-                        elif block_type[0] == 0xf5:
-                            block_length = int(struct.unpack('>Q', f.read(8))[0])
-                            open(output+'.meta.image', 'wb').write(f.read(block_length-10))
-                        elif block_type == b'\xff\xd0': break
-        finally:
-            try:
-                with open(output+'.meta.json', 'rb+') as m: m.seek(-2, 2); m.truncate(); m.write(b']')
-            except: open(output+'.meta.json', 'a').write(']')
+            with open(f'{output}.meta.json', 'rb+') as m: m.seek(-2, 2); m.truncate(); m.write(b']')
+        except: open(f'{output}.meta.json', 'a').write(']')
 
     @staticmethod
     def parse_to_ffmeta(file_path, output):
         open(output, 'w', encoding='utf-8').write(';FFMETADATA1\n')
-        with open(file_path, 'rb') as f:
-            head = f.read(64)
-
-            if methods.signature(head[0x0:0x4]) == 'container':
-                while True:
-                    block_type = f.read(2)
-                    if not block_type: break
-                    if block_type == b'\xfa\xaa':
-                        block_length = int.from_bytes(f.read(6), 'big')
-                        title_length = int(struct.unpack('>I', f.read(4))[0])
-                        title = f.read(title_length).decode('utf-8')
-                        data = f.read(block_length-title_length-12)
-                        try: d = f'{title}={data.decode('utf-8').replace('\n', '\\\n')}\n'
-                        except UnicodeDecodeError: d = f'{title}={base64.b64encode(data).decode('utf-8')}\n'
-                        open(output, 'a', encoding='utf-8').write(d)
-                    elif block_type[0] == 0xf5:
-                        block_length = int(struct.unpack('>Q', f.read(8))[0])
-                        open(f'{output}.image', 'wb').write(f.read(block_length-10))
-                    elif block_type == b'\xff\xd0': break
+        meta, img = headb.parser(file_path)
+        for m in meta: open(output, 'a', encoding='utf-8').write(f'{m[0]}={m[1].replace('\n', '\\\n')}\n')
+        if img: open(f'{output}.image', 'wb').write(img)
 
     @staticmethod
-    def modify(file_path, meta = None, img: bytes | None = None):
+    def modify(file_path, meta: list | None = None, img: bytes | None = None, **kwargs):
+        if file_path is None: print('File path is required.'); sys.exit(1)
+        add = kwargs.get('add', False)
+        remove = kwargs.get('remove', False)
+        write_img = kwargs.get('write_img', False)
+        remove_img = kwargs.get('remove_img', False)
         try:
             shutil.copy2(file_path, variables.temp)
             with open(variables.temp, 'rb') as f:
@@ -98,6 +43,13 @@ class header:
                     temp.write(f.read())
 
             # Making new header
+            meta_old, img_old = headb.parser(file_path)
+            if add: meta = meta_old + meta; img = img_old
+            elif remove: meta = [mo for mo in meta_old if mo[0] not in meta]; img = img_old
+            elif write_img:
+                meta = meta_old
+                if img_old and not img: img = None
+            elif remove_img: img = None; meta = meta_old
             head_new = headb.uilder(meta, img)
 
             # Overwriting Fourier Analogue-in-Digital file

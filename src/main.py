@@ -1,15 +1,6 @@
 import base64, json, os, sys, traceback
 
-encode_opt = ['encode']
-decode_opt = ['decode']
-parse_opt = ['parse']
-meta_modify_opt = ['modify', 'meta-modify']
-repack_ecc_opt = ['ecc', 'repack']
-play_opt = ['play']
-record_opt = ['record']
-update_opt = ['update']
-
-encode_help =      '''----------------------------------description-----------------------------------
+encode_help = f'''----------------------------------description-----------------------------------
 
 Encode
 This action will encode your audio file to FrAD, Preserving all metadata, image,
@@ -17,7 +8,7 @@ and original audio file.
 
 -------------------------------------usage--------------------------------------
 
-fourier encode path/to/audio.file --bits [bit depth] {kwargs...}
+fourier encode path/to/audio.file --bits [bit depth] {{kwargs...}}
 
 ------------------------------------options-------------------------------------
 
@@ -44,7 +35,7 @@ fourier encode path/to/audio.file --bits [bit depth] {kwargs...}
     --loss-level  | Lossy compression level, default: 0 (alias: lv, level)
                   |
     --verbose     | Verbose output (alias: v)'''
-decode_help =      '''----------------------------------description-----------------------------------
+decode_help = f'''----------------------------------description-----------------------------------
 
 Decode
 This action will encode any supporting FrAD files to another format. It highly
@@ -52,7 +43,7 @@ leans on ffmpeg for re-encoding.
 
 -------------------------------------usage--------------------------------------
 
-fourier encode path/to/audio.file {kwargs...} {--ffmpeg {ffmpeg decode command}}
+fourier encode path/to/audio.file {{kwargs...}} {{--ffmpeg {{ffmpeg decode command}}}}
 
 ------------------------------------options-------------------------------------
 
@@ -68,13 +59,13 @@ fourier encode path/to/audio.file {kwargs...} {--ffmpeg {ffmpeg decode command}}
                   |         (alias: ff, directcmd, direct-cmd, direct-ffmpeg)
                   |
     --codec       | Codec for decoding, default: 24-bit FLAC (alias: c)
-    --quality     | Quality for decoding in [bitrate]{c|v|a},
+    --quality     | Quality for decoding in [bitrate]{{c|v|a}},
                   |                      default: maximum quality (alias: q)
     --output      | Output file path (alias: o, out, output-file)
     --bits        | Bit depth (alias: b, bit)
     --sample-rate | New sample rate (alias: sr, srate, nsr, new-srate,
                   |                               new-sample-rate, resample)'''
-play_help =        '''----------------------------------description-----------------------------------
+play_help = f'''----------------------------------description-----------------------------------
 
 Play
 This action will play FrAD files, not decoding to any other format.
@@ -87,7 +78,7 @@ This action will play FrAD files, not decoding to any other format.
     --ecc         | Check errors and fix while playback
                   |                            (alias: e, apply-ecc, enable-ecc)
     --verbose     | Verbose output (alias: v)'''
-record_help =      '''----------------------------------description-----------------------------------
+record_help = f'''----------------------------------description-----------------------------------
 
 Record
 This action will capture audio stream and write directly to FrAD file.
@@ -105,7 +96,7 @@ This action will capture audio stream and write directly to FrAD file.
                   |
     --profile     | FrAD Profile from 0 to 7, NOT RECOMMENDED (alias: prf)
     --loss-level  | Lossy compression level (alias: lv, level)'''
-repack_ecc_help =  '''----------------------------------description-----------------------------------
+repack_ecc_help = f'''----------------------------------description-----------------------------------
 
 Repack
 This action will protect FrAD files via Reed-Solomon algorithm or check and fix
@@ -116,28 +107,38 @@ errors.
     --ecc         | ECC size ratio in --ecc [data size] [ecc code size]
                   | default: 96, 24 (alias: e, apply-ecc, enable-ecc)
     --verbose     | Verbose output (alias: v)'''
-parse_help =       '''----------------------------------description-----------------------------------
+meta_help = f'''----------------------------------description-----------------------------------
 
-Parse
-This action will parse metadata into JSON and extract embedded image.
+Edit Metadata
+This action will do actions on metadata.
 
-------------------------------------options-------------------------------------
+-------------------------------------usage--------------------------------------
 
-    --output      | Output file path (alias: o, out, output-file)'''
-meta_modify_help = '''----------------------------------description-----------------------------------
-
-Modify
-This action will overwrite any metadata.
-WARNING: This option will delete all metadata if no option provided.
-It is HIGHLY recommended to preserve your metadata via `fourier parse` before
-running this action.
+fourier meta {{action}} path/to/audio.file {{kwargs...}}
 
 ------------------------------------options-------------------------------------
 
+    add
     --meta        | Metadata in [key] [value] (alias: m, meta)
     --jsonmeta    | Metadata in JSON format (alias: jm)
-    --image       | Image to embed (alias: img)'''
-update_help = '''----------------------------------description-----------------------------------
+
+    rm
+    --meta-key    | Metadata key (alias: mk)
+
+    write-img
+    --image       | Image to embed (alias: img)
+
+    rm-img
+    No option for this action.
+
+    overwrite
+    --meta        | Metadata in [key] [value] (alias: m, meta)
+    --jsonmeta    | Metadata in JSON format (alias: jm)
+    --image       | Image to embed (alias: img)
+
+    parse
+    --output      | Output file path (alias: o, out, output-file)'''
+update_help = f'''----------------------------------description-----------------------------------
 
 Update
 This action will update Fourier Analogue-in-Digital from the repository.
@@ -146,7 +147,9 @@ This action will update Fourier Analogue-in-Digital from the repository.
 
     No option for this action.'''
 
-def main(action: str, file_path: str | None, kwargs: dict):
+def main(action: str, file_path: str | None, metaopt: str, kwargs: dict):
+    from FrAD.tools.argparse import encode_opt, decode_opt, play_opt, record_opt, meta_opt, repack_ecc_opt, update_opt
+
     le = kwargs.get('le', False)
     fsize = kwargs.get('fsize', 2048)
     srate = kwargs.get('srate', None)
@@ -203,21 +206,6 @@ def main(action: str, file_path: str | None, kwargs: dict):
                 ecc_enabled, gain, srate,
                 verbose)
 
-    elif action in parse_opt:
-        if file_path is None: print('File path is required.'); sys.exit(1)
-        from FrAD import header
-        header.parse_file(file_path, kwargs.get('output', 'metadata'))
-
-    elif action in meta_modify_opt:
-        if file_path is None: print('File path is required.'); sys.exit(1)
-        from FrAD import header
-        header.modify(file_path, meta=meta, img=img)
-
-    elif action in repack_ecc_opt:
-        if file_path is None: print('File path is required.'); sys.exit(1)
-        from FrAD import repack
-        repack.ecc(file_path, data_ecc, kwargs['verbose'])
-
     elif action in play_opt:
         if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import player
@@ -235,6 +223,28 @@ def main(action: str, file_path: str | None, kwargs: dict):
             ecc_enabled, data_ecc,
             profile, loss_level, le)
 
+    elif action in meta_opt:
+        from FrAD import header
+        if metaopt=='add': header.modify(file_path, meta=meta, img=img, add=True)
+        elif metaopt=='rm': header.modify(file_path, meta=kwargs.get('meta-key', None), remove=True)
+        elif metaopt=='write-img': header.modify(file_path, img=img, write_img=True)
+        elif metaopt=='rm-img': header.modify(file_path, remove_img=True)
+
+        elif metaopt=='overwrite':
+            print('This action will overwrite all metadata and image. if nothing provided, it will be removed. Proceed? (Y/N)')
+            while True:
+                x = input('> ').lower()
+                if x == 'y': break
+                if x == 'n': sys.exit('Aborted.')
+            header.modify(file_path, meta=meta, img=img)
+        elif metaopt=='parse': header.parse(file_path, kwargs.get('output', 'metadata'))
+        else: print('Invalid meta option.'); sys.exit(1)
+
+    elif action in repack_ecc_opt:
+        if file_path is None: print('File path is required.'); sys.exit(1)
+        from FrAD import repack
+        repack.ecc(file_path, data_ecc, kwargs['verbose'])
+
     elif action in update_opt:
         from FrAD.tools import update
         update.fetch_git('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents/src', os.path.dirname(__file__))
@@ -244,34 +254,24 @@ def main(action: str, file_path: str | None, kwargs: dict):
 '''               Fourier Analogue-in-Digital Master encoder/decoder
                              Original Author - HaמuL
 ''')
-        if file_path in encode_opt:
-            print(encode_help)
-        elif file_path in decode_opt:
-            print(decode_help)
-        elif file_path in parse_opt:
-            print(parse_help)
-        elif file_path in meta_modify_opt:
-            print(meta_modify_help)
-        elif file_path in repack_ecc_opt:
-            print(repack_ecc_help)
-        elif file_path in play_opt:
-            print(play_help)
-        elif file_path in record_opt:
-            print(record_help)
-        elif file_path in update_opt:
-            print(update_help)
+        if file_path in encode_opt: print(encode_help)
+        elif file_path in decode_opt: print(decode_help)
+        elif file_path in play_opt: print(play_help)
+        elif file_path in record_opt: print(record_help)
+        elif file_path in meta_opt: print(meta_help)
+        elif file_path in repack_ecc_opt: print(repack_ecc_help)
+        elif file_path in update_opt: print(update_help)
         else:
             print(
 '''--------------------------------available actions-------------------------------
 
-    encode      | Encode any audio formats to FrAD
-    decode      | Encode FrAD to any audio formats
-    play        | Direct FrAD playback
-    record      | Direct Software FrAD recording
-    parse       | Parse metadata from FrAD
-    ecc         | Enable/Repack ECC protection (alias: repack)
-    meta-modify | Overwrite all metadata of FrAD (alias: modify)
-    update      | Update FrAD codec from Github''')
+    encode | Encode any audio formats to FrAD (alias: enc)
+    decode | Encode FrAD to any audio formats (alias: dec)
+    play   | Direct FrAD playback
+    record | Direct Software FrAD recording   (alias: rec)
+    repack | Enable/Repack ECC protection     (alias: ecc)
+    meta   | Edit metadata on FrAD            (alias: metadata)
+    update | Update FrAD codec from Github''')
         print()
     else:
         print(f'Invalid action: {{{action}}} type `fourier help` to get help.')
@@ -284,8 +284,8 @@ if __name__ == '__main__':
             print('Please type `fourier help` to get help.')
             sys.exit(0)
         from FrAD.tools.argparse import parse_args
-        action, file_path, kwargs = parse_args(sys.argv[1:])
-        main(action, file_path, kwargs)
+        action, file_path, metaopt, kwargs = parse_args(sys.argv[1:])
+        main(action, file_path, metaopt, kwargs)
     except Exception as e:
         if type(e) == KeyboardInterrupt:
             sys.exit(0)

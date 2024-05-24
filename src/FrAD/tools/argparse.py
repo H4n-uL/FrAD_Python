@@ -1,8 +1,18 @@
 import sys
 
-def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
+encode_opt = ['encode', 'enc']
+decode_opt = ['decode', 'dec']
+meta_opt = ['meta', 'metadata']
+repack_ecc_opt = ['ecc', 'repack']
+play_opt = ['play']
+record_opt = ['record', 'rec']
+update_opt = ['update']
+
+def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
     try: action = args.pop(0)
     except: return '', '', dict()
+    if action in meta_opt: metaoption = args.pop(0)
+    else: metaoption = None
     file_path = None
     try: file_path = str(args.pop(0))
     except: pass
@@ -119,6 +129,12 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
                 except IndexError:
                     print(f'Metadata requires key and value: {arg} {mk} {mv}')
                     sys.exit(1)
+            
+            # Metadata Key
+            elif key in ['meta-key', 'mk']:
+                try: key, value = 'meta-key', options['meta-key']+[args.pop(0)]
+                except KeyError: key, value = 'meta-key', [args.pop(0)]
+                except: value = None
 
             # JSON metadata
             elif key in ['jm', 'jsonmeta']:
@@ -162,4 +178,4 @@ def parse_args(args: list[str]) -> tuple[str, str|None, dict]:
 
             options[key] = value
 
-    return action, file_path, options
+    return action, file_path, metaoption, options
