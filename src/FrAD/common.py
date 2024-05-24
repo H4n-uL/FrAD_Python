@@ -71,6 +71,21 @@ class methods:
         if n < ys: return f'{int(n//86400)%yd}:{int(n//3600)%24:02d}:{int(n//60)%60:02d}:{n%60:06.3f}'
         return f'J{int(n//ys)}.{int((n%ys//86400)%yd):03d}:{int(n%ys//3600)%24:02d}:{int(n%ys//60)%60:02d}:{n%ys%60:06.3f}'
 
+    @staticmethod
+    def get_dtype(raw: str | None) -> tuple[str, int]:
+        if not raw: return '>f8', 8
+        if raw[-2:] in ['be', 'le']:
+            raw, endian = raw[:-2], raw[-2:]
+            endian = endian=='be' and '>' or endian=='le' and '<' or ''
+        else: endian = ''
+        raw, ty = raw[1:], raw[0]
+        if ty=='s': ty = 'i'
+        elif ty=='u': ty = 'u'
+        elif ty=='f': ty = 'f'
+        else: print(f'Invalid raw PCM type: {ty}'); sys.exit(1)
+        depth = int(raw)//8
+        return f'{endian}{ty}{depth}', depth
+
     @atexit.register
     def cleanup():
         temp_files = [

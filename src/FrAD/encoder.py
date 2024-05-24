@@ -7,22 +7,6 @@ from .tools.headb import headb
 
 class encode:
     @staticmethod
-    def get_dtype(raw: str | None) -> tuple[str, int]:
-        if not raw: return '>f8', 8
-        if raw[-2:] in ['be', 'le']:
-            raw, endian = raw[:-2], raw[-2:]
-            endian = endian=='be' and '>' or endian=='le' and '<' or ''
-        else: endian = ''
-        raw, ty = raw[1:], raw[0]
-        match ty:
-            case 's': ty = 'i'
-            case 'u': ty = 'u'
-            case 'f': ty = 'f'
-            case _: print(f'Invalid raw PCM type: {ty}'); sys.exit(1)
-        depth = int(raw)//8
-        return f'{endian}{ty}{depth}', depth
-
-    @staticmethod
     def get_info(file_path) -> tuple[int, int, str, int]:
         command = [variables.ffprobe,
             '-v', 'quiet',
@@ -102,18 +86,38 @@ class encode:
         return image
 
     @staticmethod
-    def enc(file_path: str, bits: int, little_endian: bool = False,
-                out: str | None = None, profile: int = 0, loss_level: int = 0,
-                fsize: int = 2048, gain: list | None = None,
-                apply_ecc: bool = False, ecc_sizes: list = [128, 20],
-                new_srate: int | None = None, chnl: int | None = None, raw: str | None = None,
-                meta = None, img: bytes | None = None,
-                verbose: bool = False):
-        ecc_dsize = int(ecc_sizes[0])
-        ecc_codesize = int(ecc_sizes[1])
+    def enc(file_path: str, bits: int, **kwargs):
+        # FrAD data specification
+        fsize: int = kwargs.get('fsize', 2048)
+        little_endian: bool = kwargs.get('le', False)
+        profile: int = kwargs.get('prf', 0)
+        loss_level: int = kwargs.get('lv', 0)
+        gain: float = kwargs.get('gain', None)
+
+        # ECC settings
+        apply_ecc: bool = kwargs.get('ecc', False)
+        ecc_sizes: tuple[int, int] = kwargs.get('ecc_sizes', [128, 20])
+        ecc_dsize: int = ecc_sizes[0]
+        ecc_codesize: int = ecc_sizes[1]
+
+        # Audio settings
+        new_srate: int = kwargs.get('srate', None)
+        chnl: int = kwargs.get('chnl', None)
+
+        # Raw PCM
+        raw: str = kwargs.get('raw', None)
+
+        # Metadata
+        meta: list[list[str]] = kwargs.get('meta', None)
+        img: bytes = kwargs.get('img', None)
+
+        # CLI
+        verbose: bool = kwargs.get('verbose', False)
+        out: str = kwargs.get('out', None)
 
         methods.cantreencode(open(file_path, 'rb').read(4))
 
+        # Forcing sample rate and channel count for raw PCM
         if raw:
             if new_srate is None: print('Sample rate is required for raw PCM.'); sys.exit(1)
             if chnl is None: print('Channel count is required for raw PCM.'); sys.exit(1)
@@ -164,7 +168,7 @@ class encode:
             cli_width = 40
 
             last = b''
-            dtype, sample_bytes = encode.get_dtype(raw)
+            dtype, sample_bytes = methods.get_dtype(raw)
             smpsize = sample_bytes * channels # Single sample size = bit depth * channels
 
             # Open FFmpeg
@@ -185,13 +189,14 @@ class encode:
                     # apply_ecc = random.choice([True, False]) # Random ECC test
                     # ecc_dsize, ecc_codesize = random.choice(list(range(64, 129))), random.choice(list(range(16, 64))) # Random ECC test
 
+                    # Getting required read length
                     rlen = fsize * smpsize
                     spf = fsize
                     while rlen < len(last):
                         spf += 128
                         rlen = spf * smpsize
-                    if profile in [1, 2] and len(last) != 0:
-                        rlen -= len(last)
+                    # Overlap
+                    if profile in [1, 2] and len(last) != 0: rlen -= len(last)
 
                     if not raw:
                         if process.stdout is None: raise FileNotFoundError('Broken pipe.')
@@ -199,6 +204,7 @@ class encode:
                     else: data = rfile.read(rlen)          # Reading RAW PCM
                     if not data: break                     # if no data, Break
 
+                    # 1/16 linear Overlap
                     if len(last) != 0: data = last + data
                     if profile in [1, 2]: last = data[-fsize//16*8*channels:]
                     else: last = b''
@@ -215,8 +221,10 @@ class encode:
                     frame, bit_depth_frame, channels_frame, bits_efb = \
                         fourier.analogue(frame, bits, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
 
+                    # Applying ECC
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
+                    # EFloat Byte
                     efb = headb.encode_efb(profile, apply_ecc, little_endian, bits_efb)
 
                     data = bytes(

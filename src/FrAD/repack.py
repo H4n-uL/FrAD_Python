@@ -19,12 +19,20 @@ class repack:
                 start_time = time.time()
                 total_bytes = 0
                 cli_width = 40
+                fhead = None
                 with open(variables.temp, 'wb') as t:
                     if verbose: print('\n\n')
                     while True:
-                        # Reading Frame Header
-                        fhead = f.read(32)
-                        if not fhead: break
+                        # Finding Audio Stream Frame Header
+                        if fhead is None: fhead = f.read(4)
+                        if fhead != b'\xff\xd0\xd2\x97':
+                            hq = f.read(1)
+                            if not hq: break
+                            fhead = fhead[1:]+hq
+                            continue
+
+                        # Parsing ASFH
+                        fhead = fhead + f.read(28)
                         framelength = struct.unpack('>I', fhead[0x4:0x8])[0]      # 0x04-4B: Audio Stream Frame length
                         efb = struct.unpack('>B', fhead[0x8:0x9])[0]              # 0x08:    Cosine-Float Bit
                         lossy, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
@@ -39,6 +47,7 @@ class repack:
                         # Reading Frame
                         frame = f.read(framelength)
 
+                        # Fixing errors and repacking
                         if is_ecc_on:
                             frame = ecc.decode(frame, ed, ec)
                             ecc_dsize = int(ecc_sizes[0])
@@ -48,6 +57,7 @@ class repack:
                             ecc_codesize = 20
                         frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
+                        # EFloat Byte
                         efb = headb.encode_efb(lossy, True, endian, ssize_dict[float_bits])
 
                         data = bytes(
@@ -93,6 +103,8 @@ class repack:
                             print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
                             print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+
+                        fhead = None
                     if verbose: print('\x1b[1A\x1b[2K', end='')
 
                 f.seek(0)

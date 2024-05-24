@@ -7,13 +7,28 @@ from .tools.headb import headb
 
 class recorder:
     @staticmethod
-    def record_audio(file_path, smprate = 48000, channels = None,
-            bit_depth = 24,
-            fsize: int = 2048,
-            apply_ecc: bool = False, ecc_sizes: list = [128, 20],
-            profile = 0, loss_level: int = 0, little_endian = False,
-            meta = None, img: bytes | None = None):
-        ecc_dsize, ecc_codesize = ecc_sizes
+    def record_audio(file_path, **kwargs):
+        
+        # Audio settings
+        smprate = kwargs.get('srate', 48000)
+        channels = kwargs.get('chnl', None)
+
+        # FrAD specifications
+        bit_depth = kwargs.get('bits', 24)
+        fsize: int = kwargs.get('fsize', 2048)
+        little_endian: bool = kwargs.get('le', False)
+        profile: int = kwargs.get('prf', 0)
+        loss_level: int = kwargs.get('lv', 0)
+
+        # ECC settings
+        apply_ecc = kwargs.get('ecc', False)
+        ecc_sizes = kwargs.get('ecc_sizes', [128, 20])
+        ecc_dsize = ecc_sizes[0]
+        ecc_codesize = ecc_sizes[1]
+
+        # Metadata
+        meta = kwargs.get('meta', None)
+        img = kwargs.get('img', None)
 
         segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * 256 * 16)//16)
         if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit()

@@ -21,7 +21,7 @@ filelist = []
 
 class decode:
     @staticmethod
-    def internal(file_path: str, play: bool = False, speed: float = 1, e: bool = False, gain: float | None = 1, ispipe: bool = False, verbose: bool = False):
+    def internal(file_path: str, play: bool = False, speed: float = 1, fix_error: bool = False, gain: float | None = 1, ispipe: bool = False, verbose: bool = False):
         global filelist
         with open(file_path, 'rb') as f:
             # Fixed Header
@@ -33,19 +33,21 @@ class decode:
             channels = int()
             smprate = int()
 
+            # Container starts with 'fRad', and Stream starts with 0xffd0d297
             if ftype == 'container':
                 head_len = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
             elif ftype == 'stream': head_len = 0
             f.seek(head_len)
             i = frameNo = 0
 
-            # Getting secure framed source length
+            # Getting source length
             dlen = framescount = ecc_dsize = ecc_codesize = \
                 profile = fsize = srate_frame = duration = 0
             warned = False
             error_dir = []
             fhead = None
             while True:
+                # Finding Audio Stream Frame Header(AFSH)
                 if fhead is None: fhead = f.read(4)
                 if fhead != b'\xff\xd0\xd2\x97':
                     hq = f.read(1)
@@ -59,7 +61,7 @@ class decode:
                 fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
                 crc32 = fhead[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
                 data = f.read(framelength)
-                if e and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
+                if fix_error and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
                     error_dir.append(str(framescount))
                     if not warned:
                         warned = True
@@ -72,6 +74,8 @@ class decode:
                 framescount += 1
                 fhead = None
             if profile in [1, 2]: duration += fsize // 16 / srate_frame
+
+            # show error frames
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
             duration /= speed
             f.seek(head_len)
@@ -86,6 +90,7 @@ class decode:
             #                 m[1] = m[1].replace('\n', f'\n{" "*max(meta_tlen+2, 19)}: ')
             #             print(f'  {m[0].ljust(17, ' ')}: {m[1]}')
 
+            # Decoding
             stdoutstrm = sd.OutputStream()
             tempfstrm = open(os.devnull, 'wb')
             try:
@@ -102,7 +107,7 @@ class decode:
                 fhead, prev, frame = None, None, np.array(0)
 
                 while True:
-                    # Reading Frame Header
+                    # Finding Audio Stream Frame Header(AFSH)
                     if fhead is None: fhead = f.read(4)
                     if fhead != b'\xff\xd0\xd2\x97':
                         hq = f.read(1)
@@ -114,6 +119,8 @@ class decode:
                         fhead = fhead[1:]+hq
                         continue
                     t_frame = time.time()
+
+                    # Parsing ASFH
                     fhead += f.read(28)
                     framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
                     efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
@@ -129,7 +136,7 @@ class decode:
 
                     # Decoding ECC
                     if is_ecc_on:
-                        if e and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
+                        if fix_error and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
                             data = ecc.decode(data, ecc_dsize, ecc_codesize)
                         else: data = ecc.unecc(data, ecc_dsize, ecc_codesize)
 
@@ -149,11 +156,14 @@ class decode:
                         prev = None
 
                     if play:
+                        # if channels and sample rate changed
                         if channels != channels_frame or smprate != srate_frame:
+                            # recreate stream
                             stdoutstrm = sd.OutputStream(samplerate=int(srate_frame*speed), channels=channels_frame)
                             stdoutstrm.start()
                             channels, smprate = channels_frame, srate_frame
 
+                        # Play block
                         stdoutstrm.write(frame.astype(np.float32))
 
                         # for i in range(channels_frame):
@@ -187,13 +197,18 @@ class decode:
                         while avgbps[1::2][0] < i - 30: avgbps = avgbps[2:]
 
                     else:
+                        # if channels and sample rate changed
                         if channels != channels_frame or smprate != srate_frame:
+                            # add a new file
                             channels, smprate = channels_frame, srate_frame
                             tempfstrm.close()
                             tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
                             filelist.append([tempfstrm.name, channels, smprate])
+
+                        # Write block
                         if ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
                         else: tempfstrm.write(frame.astype('>f8').tobytes())
+
                         i += framelength + 32
                         if verbose and not ispipe:
                             elapsed_time = time.time() - start_time
@@ -373,10 +388,30 @@ class decode:
             sys.exit(0)
 
     @staticmethod
-    def dec(file_path, ffmpeg_cmd, out: str | None = None, bits: int = 32, codec: str | None = None,
-            quality: str | None = None, e: bool = False, gain: float | None = None, new_srate: int | None = None, verbose: bool = False):
+    def dec(file_path, **kwargs):
+        # FFmpeg Command
+        ffmpeg_cmd = kwargs.get('directcmd', None)
+
+        # Output file
+        out: str = kwargs.get('out', None)
+
+        # Output file specifications
+        bits: int = kwargs.get('bits', 32)
+        codec: str = kwargs.get('codec', None)
+        quality: str = kwargs.get('quality', None)
+
+        # Error correction
+        ecc: bool = kwargs.get('ecc', False)
+
+        # Audio settings
+        gain: float = kwargs.get('gain', 1)
+        new_srate: int = kwargs.get('srate', None)
+
+        # CLI
+        verbose: bool = kwargs.get('verbose', False)
+
         # Decoding
-        decode.internal(file_path, e=e, gain=gain, ispipe=(out=='pipe'and True or False), verbose=verbose)
+        decode.internal(file_path, fix_error=ecc, gain=gain, ispipe=(out=='pipe'and True or False), verbose=verbose)
         if out == 'pipe': sys.exit(0)
         header.parse_to_ffmeta(file_path, variables.meta)
 

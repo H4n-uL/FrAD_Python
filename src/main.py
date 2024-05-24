@@ -190,23 +190,24 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
             sys.exit(1)
         from FrAD import encode
         encode.enc(
-                file_path, kwargs['bits'], le,
-                output, profile, loss_level,
-                fsize, gain, ecc_enabled, data_ecc,
-                srate, kwargs.get('chnl', None),
-                kwargs.get('raw', False),
-                meta, img, verbose)
+                file_path, kwargs['bits'], le=le,
+                out=output, prf=profile, lv=loss_level,
+                fsize=fsize, gain=gain, ecc=ecc_enabled, ecc_sizes=data_ecc,
+                srate=srate, chnl=kwargs.get('chnl', None),
+                raw=kwargs.get('raw', False),
+                meta=meta, img=img, verbose=verbose)
 
     elif action in decode_opt:
         if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import decode
         bits = kwargs.get('bits', 32)
         decode.dec(
-                file_path, kwargs.get('directcmd', None), output, bits,
-                kwargs.get('codec', 'flac'),
-                kwargs.get('quality', None),
-                ecc_enabled, gain, srate,
-                verbose)
+                file_path, directcmd=kwargs.get('directcmd', None),
+                out=output, bits=bits,
+                codec=kwargs.get('codec', 'flac'),
+                quality=kwargs.get('quality', None),
+                ecc=ecc_enabled, gain=gain, srate=srate,
+                verbose=verbose)
 
     elif action in play_opt:
         if file_path is None: print('File path is required.'); sys.exit(1)
@@ -220,10 +221,11 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
         if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import recorder
         bits = kwargs.get('bits', 24)
-        recorder.record_audio(file_path, kwargs.get('srate', 48000), None, bits,
-            fsize,
-            ecc_enabled, data_ecc,
-            profile, loss_level, le)
+        recorder.record_audio(file_path, 
+            srate=kwargs.get('srate', 48000),
+            bits=bits, fsize=fsize,
+            ecc=ecc_enabled, ecc_sizes=data_ecc,
+            prf=profile, lv=loss_level, le=le)
 
     elif action in meta_opt:
         from FrAD import header
