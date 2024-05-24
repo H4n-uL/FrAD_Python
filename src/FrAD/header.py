@@ -6,12 +6,12 @@ class header:
     @staticmethod
     def parse(file_path, output):
         meta, img = headb.parser(file_path)
-        open(f'{output}.meta.json', 'w', encoding='utf-8').write('[')
-        for m in meta: open(f'{output}.meta.json', 'a', encoding='utf-8').write(f'{json.dumps({'key': m[0], 'type': m[2], 'value': m[1]}, ensure_ascii=False)}')
+        if meta:
+            open(f'{output}.meta.json', 'w', encoding='utf-8').write('[\n    ')
+            meta = ', \n    '.join([json.dumps({'key': m[0], 'type': m[2], 'value': m[1]}, ensure_ascii=False) for m in meta])
+            open(f'{output}.meta.json', 'a', encoding='utf-8').write(meta)
+            open(f'{output}.meta.json', 'a').write('\n]')
         if img: open(f'{output}.meta.image', 'wb').write(img)
-        try:
-            with open(f'{output}.meta.json', 'rb+') as m: m.seek(-2, 2); m.truncate(); m.write(b']')
-        except: open(f'{output}.meta.json', 'a').write(']')
 
     @staticmethod
     def parse_to_ffmeta(file_path, output):
