@@ -9,7 +9,9 @@ class encode:
     @staticmethod
     def get_dtype(raw: str | None) -> tuple[str, int]:
         if not raw: return '>f8', 8
-        if raw[-2:] in ['be', 'le']: endian = endian=='be' and '>' or endian=='le' and '<' or ''
+        if raw[-2:] in ['be', 'le']:
+            raw, endian = raw[:-2], raw[-2:]
+            endian = endian=='be' and '>' or endian=='le' and '<' or ''
         else: endian = ''
         raw, ty = raw[1:], raw[0]
         match ty:
