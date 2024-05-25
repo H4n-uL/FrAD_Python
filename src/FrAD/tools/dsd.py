@@ -127,6 +127,7 @@ class dsd:
             pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             if pipe.stdout is None: raise Exception('Broken pipe.')
 
+            h = b''
             with open(variables.temp_dsd, 'wb') as bstr:
                 if verbose: print('\n\n')
                 start_time = time.time()
