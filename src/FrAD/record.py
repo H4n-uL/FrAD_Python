@@ -22,7 +22,7 @@ class recorder:
 
         # ECC settings
         apply_ecc = kwargs.get('ecc', False)
-        ecc_sizes = kwargs.get('ecc_sizes', [128, 20])
+        ecc_sizes = kwargs.get('ecc_sizes', [96, 24])
         ecc_dsize = ecc_sizes[0]
         ecc_codesize = ecc_sizes[1]
 
