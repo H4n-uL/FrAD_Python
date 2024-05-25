@@ -42,23 +42,20 @@ class repack:
                         srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]     # 0x0c-4B: Sample rate
                         samples_p_chnl = struct.unpack('>I', fhead[0x18:0x1c])[0] # 0x18-4B: Samples in a frame per channel
                         crc32 = fhead[0x1c:0x20]                                  # 0x1c-4B: ISO 3309 CRC32 of Audio Data
-                        ssize_dict = {0b110: 128, 0b101: 64, 0b100: 48, 0b011: 32, 0b010: 24, 0b001: 16}
 
                         # Reading Frame
                         frame = f.read(framelength)
 
                         # Fixing errors and repacking
-                        if is_ecc_on:
-                            frame = ecc.decode(frame, ed, ec)
-                            ecc_dsize = int(ecc_sizes[0])
-                            ecc_codesize = int(ecc_sizes[1])
-                        else:
-                            ecc_dsize = 128
-                            ecc_codesize = 20
+                        if is_ecc_on: frame = ecc.decode(frame, ed, ec)
+                        
+                        if ed != 0 and ec != 0: ecc_dsize, ecc_codesize = ed, ec
+                        else: ecc_dsize, ecc_codesize = int(ecc_sizes[0]), int(ecc_sizes[1])
+
                         frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
                         # EFloat Byte
-                        efb = headb.encode_efb(lossy, True, endian, ssize_dict[float_bits])
+                        efb = headb.encode_efb(lossy, True, endian, float_bits)
 
                         data = bytes(
                             #-- 0x00 ~ 0x0f --#
