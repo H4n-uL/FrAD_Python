@@ -1,5 +1,5 @@
 from .common import variables, methods
-import os, struct, sys, time, zlib
+import os, shutil, struct, sys, time, zlib
 from .tools.ecc import ecc
 from .tools.headb import headb
 
@@ -112,6 +112,5 @@ class repack:
             except KeyboardInterrupt:
                 sys.exit(1)
 
-            with open(file_path, 'wb') as f, open(variables.temp, 'rb') as t:
-                f.write(head)
-                f.write(t.read())
+            open(variables.temp2, 'wb').write(head+open(variables.temp, 'rb').read())
+            shutil.move(variables.temp2, file_path)
