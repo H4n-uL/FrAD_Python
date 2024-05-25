@@ -63,6 +63,7 @@ class decode:
             elif ftype == 'stream': head_len = 0
             f.seek(head_len)
             t_accr = bytes_accr = frameNo = 0
+            dlen = framescount = duration = 0
             asfh = ASFH()
 
 # ----------------------------- Getting source length ---------------------------- #
@@ -70,7 +71,6 @@ class decode:
 # This is for the progress bar and playback duration.
 # OPTIONAL: for minimal implementation, you can skip this block but recommended.
 
-            dlen = framescount = duration = 0
             warned = False
             error_dir = []
             fhead = None
@@ -220,7 +220,7 @@ class decode:
                         lgv = int(math.log(sum(avgbps[::2])/(len(avgbps)//2), 1000))
                         if verbose:
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and "B" or "L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
+                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"}); {depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and "B" or "L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
                             print(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}, {len(frame)} sample{len(frame)!=1 and"s"or""}/fr {asfh.frmlen} B/fr {bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps/fr, {sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps avg')
                         else:
