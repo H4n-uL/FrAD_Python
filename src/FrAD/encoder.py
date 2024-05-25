@@ -115,6 +115,9 @@ class encode:
         verbose: bool = kwargs.get('verbose', False)
         out: str = kwargs.get('out', None)
 
+        channels: int = 0
+        smprate: int = 0
+
 # --------------------------- Pre-Encode error checks ---------------------------- #
         methods.cantreencode(open(file_path, 'rb').read(4))
 
@@ -130,16 +133,17 @@ class encode:
                 x = input('> ').lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
-        segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
-        if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
         # Getting Audio info w. ffmpeg & ffprobe
+        duration = 0
+        cmd = []
         if not raw:
             channels, smprate, codec, duration = encode.get_info(file_path)
-            if new_srate is not None: duration = int(duration / smprate * new_srate)
-            # Getting command and new sample rate
             cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
+            segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
+            if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+            if new_srate is not None: duration = int(duration / smprate * new_srate)
             if meta == None: meta = encode.get_metadata(file_path)
             if img  == None: img  = encode.get_image(   file_path)
 
