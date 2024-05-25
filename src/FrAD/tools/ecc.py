@@ -2,7 +2,7 @@ from reedsolo import RSCodec, ReedSolomonError
 
 class ecc:
     @staticmethod
-    def unecc(data, ecc_dsize, ecc_codesize):
+    def unecc(data: bytes, ecc_dsize: int, ecc_codesize: int) -> bytes:
         blocksize = ecc_dsize + ecc_codesize
 
         block = bytearray()
@@ -11,27 +11,25 @@ class ecc:
         return bytes(block)
 
     @staticmethod
-    def split_data(data, chunk_size):
+    def split_data(data: bytes, chunk_size: int):
         for i in range(0, len(data), chunk_size): yield data[i:i+chunk_size]
 
     @staticmethod
-    def encode(data, ecc_dsize, ecc_codesize):
+    def encode(data: bytes, ecc_dsize: int, ecc_codesize: int) -> bytes:
         blocksize = ecc_dsize + ecc_codesize
         rs = RSCodec(ecc_codesize, blocksize)
 
-        chunks = ecc.split_data(data, ecc_dsize)
-        encoded_chunks = [bytes(rs.encode(chunk)) for chunk in chunks]
+        encoded_chunks = [bytes(rs.encode(chunk)) for chunk in ecc.split_data(data, ecc_dsize)]
         data = b''.join(encoded_chunks)
         return data
 
     @staticmethod
-    def decode(data, ecc_dsize, ecc_codesize):
+    def decode(data: bytes, ecc_dsize: int, ecc_codesize: int) -> bytes:
         blocksize = ecc_dsize + ecc_codesize
         rs = RSCodec(ecc_codesize, blocksize)
 
-        chunks = ecc.split_data(data, blocksize)
         decoded_chunk = []
-        for chunk in chunks:
+        for chunk in ecc.split_data(data, blocksize):
             try:
                 decoded_chunk.append(bytes(rs.decode(chunk)[0]))
             except ReedSolomonError as e:

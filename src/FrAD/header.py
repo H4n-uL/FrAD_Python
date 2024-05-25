@@ -4,7 +4,7 @@ from .tools.headb import headb
 
 class header:
     @staticmethod
-    def parse(file_path, output):
+    def parse(file_path, output) -> None:
         meta, img = headb.parser(file_path)
         if meta:
             open(f'{output}.meta.json', 'w', encoding='utf-8').write('[\n    ')
@@ -14,14 +14,14 @@ class header:
         if img: open(f'{output}.meta.image', 'wb').write(img)
 
     @staticmethod
-    def parse_to_ffmeta(file_path, output):
+    def parse_to_ffmeta(file_path, output) -> None:
         open(output, 'w', encoding='utf-8').write(';FFMETADATA1\n')
         meta, img = headb.parser(file_path)
         for m in meta: open(output, 'a', encoding='utf-8').write(f'{m[0]}={m[1].replace('\n', '\\\n')}\n')
         if img: open(f'{output}.image', 'wb').write(img)
 
     @staticmethod
-    def modify(file_path, meta: list | None = None, img: bytes | None = None, **kwargs):
+    def modify(file_path, meta: list | None = None, img: bytes | None = None, **kwargs) -> None:
         if file_path is None: print('File path is required.'); sys.exit(1)
         add = kwargs.get('add', False)
         remove = kwargs.get('remove', False)

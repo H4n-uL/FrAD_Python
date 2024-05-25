@@ -4,18 +4,19 @@ import base64, struct
 
 class headb:
     @staticmethod
-    def encode_efb(profile, isecc, little_endian, bits):
+    def encode_efb(profile: int, isecc: bool, little_endian: bool, bits: int) -> bytes:
         profile = profile << 5
         ecc = (isecc and 0b1 or 0b0) << 4
         endian = (little_endian and 0b1 or 0b0) << 3
         return struct.pack('<B', profile | ecc | endian | bits)
 
     @staticmethod
-    def decode_efb(efb):
-        profile = efb>>5                                  # 0x08@0b111-3b: ECC Toggle(Enabled if 1)
-        ecc = efb>>4&0b1==0b1 and True or False           # 0x08@0b100:    ECC Toggle(Enabled if 1)
-        little_endian = efb>>3&0b1==0b1 and True or False # 0x08@0b011:    Endian
-        float_bits = efb & 0b111                          # 0x08@0b010-3b: Stream bit depth
+    def decode_efb(efb: bytes) -> tuple[int, bool, bool, int]:
+        efbint = int.from_bytes(efb, 'big')
+        profile = efbint>>5                                  # 0x08@0b111-3b: ECC Toggle(Enabled if 1)
+        ecc = efbint>>4&0b1==0b1 and True or False           # 0x08@0b100:    ECC Toggle(Enabled if 1)
+        little_endian = efbint>>3&0b1==0b1 and True or False # 0x08@0b011:    Endian
+        float_bits = efbint & 0b111                          # 0x08@0b010-3b: Stream bit depth
         return profile, ecc, little_endian, float_bits
 
     @staticmethod
@@ -33,7 +34,7 @@ class headb:
         return header
     
     @staticmethod
-    def parser(file_path: str) -> tuple[list[str, str], bytes | None]:
+    def parser(file_path: str) -> tuple[list[str], bytes | None]:
         meta, img = [], None
         with open(file_path, 'rb') as f:
             head = f.read(64)
@@ -54,5 +55,5 @@ class headb:
                         block_length = int(struct.unpack('>Q', f.read(8))[0])
                         img = f.read(block_length-10)
                     elif block_type == b'\xff\xd0': break
-            elif ftype == 'stream': return None, None
+            elif ftype == 'stream': return [], None
         return meta, img
