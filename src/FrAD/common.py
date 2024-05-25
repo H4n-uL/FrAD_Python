@@ -7,20 +7,24 @@ directory = os.path.dirname(os.path.realpath(__file__))
 res = os.path.join(directory, 'res')
 
 class variables:
-    hash_block_size = 2**20
-
-    temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.swv').name
-    temp2 =     tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.swv').name
+    # Temporary files for metadata processing / stream repairing
+    temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frw').name
+    temp2 =     tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frw').name
+    # PCM to DSD conversion
     temp_dsd =  tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.bstr').name
+    # PCM -> FLAC -> AAC conversion for afconvert AppleAAC
     temp_flac = tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.flac').name
+    # ffmeta
     meta =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.meta').name
 
+    # Finding ffmpeg and ffprobe from src/FrAD/res
     resfiles = lambda x: [f for f in os.listdir(res) if x in f]
     if resfiles('ffmpeg'):  ffmpeg  = os.path.join(res, resfiles('ffmpeg')[0])
     else:                   ffmpeg  = 'ffmpeg'
     if resfiles('ffprobe'): ffprobe = os.path.join(res, resfiles('ffprobe')[0])
     else:                   ffprobe = 'ffprobe'
 
+    # Setting up AppleAAC encoder for each platforms
     oper = platform.uname()
     arch = platform.machine().lower()
     if oper.system == 'Windows':
@@ -30,6 +34,7 @@ class variables:
     elif oper.system == 'Darwin':  aac = 'afconvert'
     else:                          aac = None
 
+    # ffmpeg and ffprobe installation verification
     try:
         subprocess.run([ffmpeg,  '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run([ffprobe, '-version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -47,18 +52,18 @@ class variables:
 
 class methods:
     @staticmethod
-    def signature(sign: bytes):
+    def signature(sign: bytes): # Verifying FrAD signature
         if sign == b'fRad': return 'container'
         elif sign == b'\xff\xd0\xd2\x97': return 'stream'
-        else: raise Exception('This is not Fourier Analogue file.')
+        else: raise Exception('This is not Fourier Analogue-in-Digital.')
 
     @staticmethod
-    def cantreencode(sign: bytes):
+    def cantreencode(sign: bytes): # Anti-re-encode
         if sign in [b'fRad', b'\xff\xd0\xd2\x97']:
             raise Exception('This is an already encoded Fourier Analogue file.')
 
     @staticmethod
-    def tformat(n: float | str) -> str:
+    def tformat(n: float | str) -> str: # i'm dying help
         if type(n) != float: return str(n)
         if n < 0: return f'-{methods.tformat(-n)}'
         if n == 0: return '0'
@@ -73,6 +78,8 @@ class methods:
 
     @staticmethod
     def get_dtype(raw: str | None) -> tuple[str, int]:
+        # in [s,u,f]{bit depth}[be,le], e.g. s16be, u32le, f64be
+        # This is only for Numpy dtype, and should be implemented differently for each implementations
         if not raw: return '>f8', 8
         if raw[-2:] in ['be', 'le']:
             raw, endian = raw[:-2], raw[-2:]

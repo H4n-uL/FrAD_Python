@@ -115,6 +115,7 @@ class encode:
         verbose: bool = kwargs.get('verbose', False)
         out: str = kwargs.get('out', None)
 
+# --------------------------- Pre-Encode error checks ---------------------------- #
         methods.cantreencode(open(file_path, 'rb').read(4))
 
         # Forcing sample rate and channel count for raw PCM
@@ -129,23 +130,23 @@ class encode:
                 x = input('> ').lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
+        segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
+        if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+
+# ------------------------------ Pre-Encode settings ----------------------------- #
         # Getting Audio info w. ffmpeg & ffprobe
         if not raw:
             channels, smprate, codec, duration = encode.get_info(file_path)
             if new_srate is not None: duration = int(duration / smprate * new_srate)
-        segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
-        if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+            # Getting command and new sample rate
+            cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
+            if meta == None: meta = encode.get_metadata(file_path)
+            if img  == None: img  = encode.get_image(   file_path)
 
-        # Getting command and new sample rate
-        if not raw: cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
         smprate = new_srate is not None and new_srate or smprate
 
-        if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
-
-        if meta == None and not raw: meta = encode.get_metadata(file_path)
-        if img == None and not raw: img = encode.get_image(file_path)
-
         # Setting file extension
+        if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
         if not out.lower().endswith(('.frad', '.dsin', '.fra', '.dsn')):
             if profile == 0:
                 if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.fra'
@@ -161,7 +162,7 @@ class encode:
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
 
-        # Fourier Transform
+# ----------------------------------- Encoding ----------------------------------- #
         try:
             start_time = time.time()
             total_bytes, total_samples = 0, 0
@@ -217,7 +218,7 @@ class encode:
                             if raw.startswith('u'): frame-=1
                     flen = len(frame)
 
-                    # DCT
+                    # Encoding
                     frame, bit_depth_frame, channels_frame, bits_efb = \
                         fourier.analogue(frame, bits, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
 
@@ -252,13 +253,14 @@ class encode:
                             # ISO 3309 CRC32
                             struct.pack('>I', zlib.crc32(frame)) +
 
-                        #-- Data --#
+                        #-- 0x20 ~      --#
                         frame
                     )
 
                     # WRITE
                     file.write(data)
 
+                    # Verbose block
                     if verbose:
                         sample_size = bit_depth_frame // 8 * channels
                         total_bytes += flen * sample_size
