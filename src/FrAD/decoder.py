@@ -10,6 +10,21 @@ from .tools.ecc import ecc
 from .tools.headb import headb
 from .tools.dsd import dsd
 
+class ASFH:
+    def __init__(self): pass
+
+    def update(self, header: bytes):
+        self.frmlen = struct.unpack('>I', header[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
+        self.profile, self.ecc, self.endian, self.float_bits = headb.decode_efb(struct.unpack('>B', header[0x8:0x9])[0]) # 0x08: EFloat Byte
+        self.chnl = struct.unpack('>B', header[0x9:0xa])[0] + 1     # 0x09:    Channels
+        self.ecc_dsize = struct.unpack('>B', header[0xa:0xb])[0]    # 0x0a:    ECC Data block size
+        self.ecc_codesize = struct.unpack('>B', header[0xb:0xc])[0] # 0x0b:    ECC Code size
+        self.srate = struct.unpack('>I', header[0xc:0x10])[0]       # 0x0c-4B: Sample rate
+        self.fsize = struct.unpack('>I', header[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
+        self.crc32 = header[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+
+filelist = []
+
 @atexit.register
 def cleanup():
     for file, _, _ in filelist:
@@ -17,13 +32,22 @@ def cleanup():
             if os.path.exists(file): os.remove(file)
         except: pass
 
-filelist = []
-
 class decode:
     @staticmethod
-    def internal(file_path: str, play: bool = False, speed: float = 1, fix_error: bool = False, gain: float | None = 1, ispipe: bool = False, verbose: bool = False):
+    def internal(file_path: str, **kwargs):
+        speed = kwargs.get('speed', 1)
+        play = kwargs.get('play', False)
+        ispipe = kwargs.get('pipe', False)
+        fix_error = kwargs.get('ecc', False)
+        gain = kwargs.get('gain', 1)
+        verbose = kwargs.get('verbose', False)
         global filelist
         with open(file_path, 'rb') as f:
+
+# ------------------------------ Header verification ----------------------------- #
+# This block verifies the file signature and gets the total header size.
+# ESSENTIAL
+
             # Fixed Header
             head = f.read(64)
 
@@ -38,11 +62,15 @@ class decode:
                 head_len = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
             elif ftype == 'stream': head_len = 0
             f.seek(head_len)
-            i = frameNo = 0
+            t_accr = bytes_accr = frameNo = 0
+            asfh = ASFH()
 
-            # Getting source length
-            dlen = framescount = ecc_dsize = ecc_codesize = \
-                profile = fsize = srate_frame = duration = 0
+# ----------------------------- Getting source length ---------------------------- #
+# This block gets the total length of the stream and the number of frames included.
+# This is for the progress bar and playback duration.
+# OPTIONAL: for minimal implementation, you can skip this block but recommended.
+
+            dlen = framescount = duration = 0
             warned = False
             error_dir = []
             fhead = None
@@ -51,34 +79,32 @@ class decode:
                 if fhead is None: fhead = f.read(4)
                 if fhead != b'\xff\xd0\xd2\x97':
                     hq = f.read(1)
-                    if not hq: break
+                    if not hq:
+                        if asfh.profile in [1, 2]: duration += asfh.fsize // 16 / asfh.srate
+                        break
                     fhead = fhead[1:]+hq
                     continue
-                fhead += f.read(28)
-                framelength = struct.unpack('>I', fhead[0x4:0x8])[0]  # 0x04-4B: Audio Stream Frame length
-                profile = struct.unpack('>B', fhead[0x8:0x9])[0]>>5
-                srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0] # 0x0c-4B: Sample rate
-                fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
-                crc32 = fhead[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
-                data = f.read(framelength)
-                if fix_error and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
+                asfh.update(fhead+f.read(28))
+                data = f.read(asfh.frmlen)
+                if fix_error and zlib.crc32(data) != struct.unpack('>I', asfh.crc32)[0]:
                     error_dir.append(str(framescount))
-                    if not warned:
-                        warned = True
-                        print('This file may had been corrupted. Please repack your file via \'ecc\' option for the best music experience.')
+                    if not warned: warned = True; print("This file may had been corrupted. Please repack your file via 'ecc' option for the best music experience.")
 
-                duration += fsize / srate_frame
-                if profile in [1, 2]: duration -= fsize//16 / srate_frame
+                duration += asfh.fsize / asfh.srate
+                if asfh.profile in [1, 2]: duration -= asfh.fsize//16 / asfh.srate
 
-                dlen += len(data)
+                dlen += asfh.frmlen
                 framescount += 1
                 fhead = None
-            if profile in [1, 2]: duration += fsize // 16 / srate_frame
 
             # show error frames
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
             duration /= speed
             f.seek(head_len)
+
+# ----------------------------------- Metadata ----------------------------------- #
+# This block parses and shows the metadata and image data from the header.
+# OPTIONAL: i don't even activate this block cuz it makes cli becomes messy
 
             # if verbose: 
             #     meta, img = header.parse(file_path)
@@ -90,7 +116,10 @@ class decode:
             #                 m[1] = m[1].replace('\n', f'\n{" "*max(meta_tlen+2, 19)}: ')
             #             print(f'  {m[0].ljust(17, ' ')}: {m[1]}')
 
-            # Decoding
+# ----------------------------------- Decoding ----------------------------------- #
+# This block decodes FrAD stream to PCM stream and writes it on stdout or a file.
+# ESSENTIAL
+
             stdoutstrm = sd.OutputStream()
             tempfstrm = open(os.devnull, 'wb')
             try:
@@ -106,6 +135,7 @@ class decode:
                 start_time = time.time()
                 fhead, prev, frame = None, None, np.array(0)
 
+    # ----------------------------- Main decode loop ----------------------------- #
                 while True:
                     # Finding Audio Stream Frame Header(AFSH)
                     if fhead is None: fhead = f.read(4)
@@ -118,56 +148,62 @@ class decode:
                             break
                         fhead = fhead[1:]+hq
                         continue
-                    t_frame = time.time()
 
                     # Parsing ASFH
-                    fhead += f.read(28)
-                    framelength = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
-                    efb = struct.unpack('>B', fhead[0x8:0x9])[0]                # 0x08:    Cosine-Float Bit
-                    profile, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
-                    channels_frame = struct.unpack('>B', fhead[0x9:0xa])[0] + 1 # 0x09:    Channels
-                    ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]          # 0x0a:    ECC Data block size
-                    ecc_codesize = struct.unpack('>B', fhead[0xb:0xc])[0]       # 0x0b:    ECC Code size
-                    srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
-                    crc32 = fhead[0x1c:0x20]                                    # 0x1c-4B: ISO 3309 CRC32 of Audio Data
-
+                    asfh.update(fhead+f.read(28))
                     # Reading Block
-                    data: bytes = f.read(framelength)
+                    data: bytes = f.read(asfh.frmlen)
 
                     # Decoding ECC
-                    if is_ecc_on:
-                        if fix_error and zlib.crc32(data) != struct.unpack('>I', crc32)[0]:
-                            data = ecc.decode(data, ecc_dsize, ecc_codesize)
-                        else: data = ecc.unecc(data, ecc_dsize, ecc_codesize)
+                    if asfh.ecc:
+                        if fix_error and zlib.crc32(data) != struct.unpack('>I', asfh.crc32)[0]:
+                            data = ecc.decode(data, asfh.ecc_dsize, asfh.ecc_codesize)
+                        else: data = ecc.unecc(data, asfh.ecc_dsize, asfh.ecc_codesize)
 
                     # Decoding
-                    frame: np.ndarray = fourier.digital(data, float_bits, channels_frame, endian, profile=profile, smprate=srate_frame, fsize=fsize) * gain
+                    frame: np.ndarray = fourier.digital(data, asfh.float_bits, asfh.chnl, asfh.endian, profile=asfh.profile, smprate=asfh.srate, fsize=asfh.fsize) * gain
 
                     # 1/16 Overlapping
                     if prev is not None:
                         fade_in = np.linspace(0, 1, len(prev))
                         fade_out = np.linspace(1, 0, len(prev))
-                        for c in range(channels_frame):
+                        for c in range(asfh.chnl):
                             frame[:len(prev), c] = (frame[:len(prev), c] * fade_in) + (prev[:, c] * fade_out)
-                    if profile in [1, 2]:
+                    if asfh.profile in [1, 2]:
                         prev = frame[-len(frame)//16:]
                         frame = frame[:-len(prev)]
                     else:
                         prev = None
 
-                    if play:
-                        # if channels and sample rate changed
-                        if channels != channels_frame or smprate != srate_frame:
-                            # recreate stream
-                            stdoutstrm = sd.OutputStream(samplerate=int(srate_frame*speed), channels=channels_frame)
+                    # if channels and sample rate changed
+                    if channels != asfh.chnl or smprate != asfh.srate:
+                        if play: # recreate stream
+                            stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl)
                             stdoutstrm.start()
-                            channels, smprate = channels_frame, srate_frame
+                            channels, smprate = asfh.chnl, asfh.srate
+                        else: # add a new file
+                            channels, smprate = asfh.chnl, asfh.srate
+                            tempfstrm.close()
+                            tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
+                            filelist.append([tempfstrm.name, channels, smprate])
 
+                    # Write PCM Stream
+                    if play:
                         # Play block
                         stdoutstrm.write(frame.astype(np.float32))
+                    else:
+                        # Write block
+                        if ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
+                        else: tempfstrm.write(frame.astype('>f8').tobytes())
 
-                        # for i in range(channels_frame):
-                        #     plt.subplot(channels_frame, 1, i+1)
+                    # Verbose block
+
+                    frameNo += 1
+                    t_accr += len(frame) / (smprate*speed)
+                    bytes_accr += asfh.frmlen + 32
+                    if play:
+                        # for i in range(asfh.chnl):
+                        #     plt.subplot(asfh.chnl, 1, i+1)
                         #     # plt.plot(frame[:, i], alpha=0.5)
                         #     y = np.abs(dct(frame[:, i]) / len(frame))
                         #     plt.fill_between(range(1, len(y)+1), y, -y, edgecolor='none')
@@ -177,45 +213,29 @@ class decode:
                         # plt.pause(0.000001)
                         # plt.clf()
 
-                        i += len(frame) / (smprate*speed)
-                        frameNo += 1
-
-                        bps = (((framelength+len(fhead)) * 8) * srate_frame / len(frame))
-                        avgbps.extend([bps, i])
-                        depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64],[8,12,16,24,32,48,64]][profile][float_bits]
-                        lgs = int(math.log(srate_frame, 1000))
+                        bps = (((asfh.frmlen+len(fhead)) * 8) * asfh.srate / len(frame))
+                        avgbps.extend([bps, t_accr])
+                        depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64],[8,12,16,24,32,48,64]][asfh.profile][asfh.float_bits]
+                        lgs = int(math.log(asfh.srate, 1000))
                         lgv = int(math.log(sum(avgbps[::2])/(len(avgbps)//2), 1000))
                         if verbose:
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            print(f'{methods.tformat(i)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not endian and "B" or "L"}E {channels_frame} channel{(channels_frame!=1)*"s"}')
+                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frames); {depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and "B" or "L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
-                            print(f'Profile {profile}, ECC{is_ecc_on and f": {ecc_dsize}/{ecc_codesize}" or " disabled"}, {len(frame)} sample{len(frame)!=1 and"s"or""}/fr {framelength} B/fr {bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps/fr, {sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps avg')
+                            print(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}, {len(frame)} sample{len(frame)!=1 and"s"or""}/fr {asfh.frmlen} B/fr {bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps/fr, {sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps avg')
                         else:
                             print('\x1b[1A\x1b[2K', end='')
-                            cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(channels_frame, f'{channels_frame} ch')
-                            print(f'{methods.tformat(i)} / {methods.tformat(duration)}, {profile==0 and f"{depth}b@"or f"{sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{srate_frame/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
-                        while avgbps[1::2][0] < i - 30: avgbps = avgbps[2:]
+                            cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(asfh.chnl, f'{asfh.chnl} ch')
+                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
+                        while avgbps[1::2][0] < t_accr - 30: avgbps = avgbps[2:]
 
                     else:
-                        # if channels and sample rate changed
-                        if channels != channels_frame or smprate != srate_frame:
-                            # add a new file
-                            channels, smprate = channels_frame, srate_frame
-                            tempfstrm.close()
-                            tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
-                            filelist.append([tempfstrm.name, channels, smprate])
-
-                        # Write block
-                        if ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
-                        else: tempfstrm.write(frame.astype('>f8').tobytes())
-
-                        i += framelength + 32
                         if verbose and not ispipe:
                             elapsed_time = time.time() - start_time
-                            bps = i / elapsed_time
+                            bps = bytes_accr / elapsed_time
                             lgb = int(math.log(bps, 1000))
-                            mult = (fsize / srate_frame) / (time.time() - t_frame)
-                            percent = i*100 / dlen
+                            mult = t_accr / (time.time() - start_time)
+                            percent = bytes_accr*100 / dlen
                             b = int(percent / 100 * cli_width)
                             eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
                             print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
@@ -411,7 +431,7 @@ class decode:
         verbose: bool = kwargs.get('verbose', False)
 
         # Decoding
-        decode.internal(file_path, fix_error=ecc, gain=gain, ispipe=(out=='pipe'and True or False), verbose=verbose)
+        decode.internal(file_path, ecc=ecc, gain=gain, pipe=(out=='pipe'and True or False), verbose=verbose)
         if out == 'pipe': sys.exit(0)
         header.parse_to_ffmeta(file_path, variables.meta)
 
