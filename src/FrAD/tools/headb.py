@@ -11,12 +11,11 @@ class headb:
         return struct.pack('<B', profile | ecc | endian | bits)
 
     @staticmethod
-    def decode_efb(efb: bytes) -> tuple[int, bool, bool, int]:
-        efbint = int.from_bytes(efb, 'big')
-        profile = efbint>>5                                  # 0x08@0b111-3b: ECC Toggle(Enabled if 1)
-        ecc = efbint>>4&0b1==0b1 and True or False           # 0x08@0b100:    ECC Toggle(Enabled if 1)
-        little_endian = efbint>>3&0b1==0b1 and True or False # 0x08@0b011:    Endian
-        float_bits = efbint & 0b111                          # 0x08@0b010-3b: Stream bit depth
+    def decode_efb(efb: int) -> tuple[int, bool, bool, int]:
+        profile = efb>>5                                  # 0x08@0b111-3b: ECC Toggle(Enabled if 1)
+        ecc = efb>>4&0b1==0b1 and True or False           # 0x08@0b100:    ECC Toggle(Enabled if 1)
+        little_endian = efb>>3&0b1==0b1 and True or False # 0x08@0b011:    Endian
+        float_bits = efb & 0b111                          # 0x08@0b010-3b: Stream bit depth
         return profile, ecc, little_endian, float_bits
 
     @staticmethod
