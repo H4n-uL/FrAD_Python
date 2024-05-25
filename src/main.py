@@ -1,16 +1,16 @@
 import base64, json, os, sys, traceback
 
-encode_help = f'''----------------------------------description-----------------------------------
+encode_help = f'''--------------------------------- Description ----------------------------------
 
 Encode
 This action will encode your audio file to FrAD, Preserving all metadata, image,
 and original audio file.
 
--------------------------------------usage--------------------------------------
+------------------------------------ Usage -------------------------------------
 
 fourier encode path/to/audio.file --bits [bit depth] {{kwargs...}}
 
-------------------------------------options-------------------------------------
+----------------------------------- Options ------------------------------------
 
     --bits        | Bit depth, REQUIRED (alias: b, bit)
                   |
@@ -37,17 +37,17 @@ fourier encode path/to/audio.file --bits [bit depth] {{kwargs...}}
     --loss-level  | Lossy compression level, default: 0 (alias: lv, level)
                   |
     --verbose     | Verbose output (alias: v)'''
-decode_help = f'''----------------------------------description-----------------------------------
+decode_help = f'''--------------------------------- Description ----------------------------------
 
 Decode
 This action will encode any supporting FrAD files to another format. It highly
 leans on ffmpeg for re-encoding.
 
--------------------------------------usage--------------------------------------
+------------------------------------ Usage -------------------------------------
 
 fourier encode path/to/audio.file {{kwargs...}} {{--ffmpeg {{ffmpeg decode command}}}}
 
-------------------------------------options-------------------------------------
+----------------------------------- Options ------------------------------------
 
     --ecc         | Check errors and fix, recommended.
                   |                            (alias: e, apply-ecc, enable-ecc)
@@ -66,12 +66,12 @@ fourier encode path/to/audio.file {{kwargs...}} {{--ffmpeg {{ffmpeg decode comma
     --output      | Output file path (alias: o, out, output-file)
     --bits        | Bit depth (alias: b, bit)
     --sample-rate | New sample rate (alias: sr, srate)'''
-play_help = f'''----------------------------------description-----------------------------------
+play_help = f'''--------------------------------- Description ----------------------------------
 
 Play
 This action will play FrAD files, not decoding to any other format.
 
-------------------------------------options-------------------------------------
+----------------------------------- Options ------------------------------------
 
     --gain        | Gain level in both dBFS and amplitude (alias: g)
     --keys        | Keys for playback, exclusive with --speed (alias: k, key)
@@ -79,12 +79,12 @@ This action will play FrAD files, not decoding to any other format.
     --ecc         | Check errors and fix while playback
                   |                            (alias: e, apply-ecc, enable-ecc)
     --verbose     | Verbose output (alias: v)'''
-record_help = f'''----------------------------------description-----------------------------------
+record_help = f'''--------------------------------- Description ----------------------------------
 
 Record
 This action will capture audio stream and write directly to FrAD file.
 
-------------------------------------options-------------------------------------
+----------------------------------- Options ------------------------------------
 
     --bits        | Bit depth, default: 24 (alias: b, bit)
     --sample-rate | Record srate, default: 48000 (alias: sr, srate)
@@ -97,27 +97,27 @@ This action will capture audio stream and write directly to FrAD file.
                   |
     --profile     | FrAD Profile from 0 to 7, NOT RECOMMENDED (alias: prf)
     --loss-level  | Lossy compression level (alias: lv, level)'''
-repack_ecc_help = f'''----------------------------------description-----------------------------------
+repack_ecc_help = f'''--------------------------------- Description ----------------------------------
 
 Repack
 This action will protect FrAD files via Reed-Solomon algorithm or check and fix
 errors.
 
-------------------------------------options-------------------------------------
+----------------------------------- Options ------------------------------------
 
     --ecc         | ECC size ratio in --ecc [data size] [ecc code size]
                   | default: 96, 24 (alias: e, apply-ecc, enable-ecc)
     --verbose     | Verbose output (alias: v)'''
-meta_help = f'''----------------------------------description-----------------------------------
+meta_help = f'''--------------------------------- Description ----------------------------------
 
 Edit Metadata
 This action will do actions on metadata.
 
--------------------------------------usage--------------------------------------
+------------------------------------ Usage -------------------------------------
 
 fourier meta {{action}} path/to/audio.file {{kwargs...}}
 
-------------------------------------options-------------------------------------
+----------------------------------- Options ------------------------------------
 
     add
     --meta        | Metadata in [key] [value] (alias: m, meta)
@@ -139,12 +139,12 @@ fourier meta {{action}} path/to/audio.file {{kwargs...}}
 
     parse
     --output      | Output file path (alias: o, out, output-file)'''
-update_help = f'''----------------------------------description-----------------------------------
+update_help = f'''--------------------------------- Description ----------------------------------
 
 Update
 This action will update Fourier Analogue-in-Digital from the repository.
 
-------------------------------------options-------------------------------------
+----------------------------------- Options ------------------------------------
 
     No option for this action.'''
 
@@ -267,7 +267,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
         elif file_path in update_opt: print(update_help)
         else:
             print(
-'''--------------------------------available actions-------------------------------
+'''------------------------------- Available actions ------------------------------
 
     encode | Encode any audio formats to FrAD (alias: enc)
     decode | Encode FrAD to any audio formats (alias: dec)
