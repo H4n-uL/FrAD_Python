@@ -1,6 +1,25 @@
-from .comment_block import cb
 from ..common import methods
 import base64, struct
+
+IMAGE =   b'\xf5'
+COMMENT = b'\xfa\xaa'
+
+class metablock:
+    @staticmethod
+    def comment(title: str, data: str | bytes) -> bytes:
+        if type(data) == bytes: dbytes = data
+        elif type(data) == str: dbytes = data.encode('utf-8')
+        title_length = struct.pack('>I', len(title))
+        data_comb = title.encode('utf-8') + dbytes
+        block_length = (len(data_comb) + 12).to_bytes(6, 'big')
+        return bytes(COMMENT + block_length + title_length + data_comb)
+
+    @staticmethod
+    def image(data: bytes, pictype: int = 3) -> bytes:
+        if pictype not in range(0, 21): pictype = 3
+        apictype = struct.pack('<B', 0b01000000 | pictype)
+        block_length = struct.pack('>Q', len(data) + 10)
+        return bytes(IMAGE + apictype + block_length + data)
 
 class headb:
     @staticmethod
@@ -24,8 +43,8 @@ class headb:
         blocks = bytes()
 
         if meta:
-            for i in range(len(meta)): blocks += cb.comment(meta[i][0], meta[i][1])
-        if img: blocks += cb.image(img)
+            for i in range(len(meta)): blocks += metablock.comment(meta[i][0], meta[i][1])
+        if img: blocks += metablock.image(img)
 
         length = struct.pack('>Q', (64 + len(blocks)))
 
