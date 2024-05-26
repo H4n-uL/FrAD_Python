@@ -43,6 +43,43 @@
 
 레포지토리에서 새 브랜치를 만들고, 수정하고, 저에게 Merge 요청으로 심사를 받으시면 됩니다. 사실 FrAD 포맷 표준과 호환되기만 하면 웬만하면 다 통과됩니다.
 
+## 구현 요구 사항
+
+1. 필수 구현
+
+    ```markdown
+    FrAD/
+        fourier
+        profiles/
+            profile1
+            tools/
+                p1tools
+        decoder
+        encoder
+        header
+        common
+        tools/
+            headb
+            ecc
+        repack
+    ```
+
+2. 선택 구현
+
+    ```markdown
+    main
+    FrAD/
+        player
+        record
+        tools/
+            update
+            dsd
+            argparse
+        res/
+            AppleAAC.Win.tar.gz -> AppleAAC
+    ...과 온갖 잡다한 기능들
+    ```
+
 ## 개발자 정보
 
 한울, <jun061119@proton.me>

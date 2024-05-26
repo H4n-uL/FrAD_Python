@@ -43,6 +43,43 @@
 
 リポジトリで新しいブランチを作成し、修正して、私にMergeリクエストで審査を受けてください。実はこいつはザコなので、大抵は全部通ります。
 
+## 実施要件
+
+1. 必須実装
+
+    ```markdown
+    FrAD/
+        fourier
+        profiles/
+            profile1
+            tools/
+                p1tools
+        decoder
+        encoder
+        header
+        common
+        tools/
+            headb
+            ecc
+        repack
+    ```
+
+2. 選択実装
+
+    ```markdown
+    main
+    FrAD/
+        player
+        record
+        tools/
+            update
+            dsd
+            argparse
+        res/
+            AppleAAC.Win.tar.gz -> AppleAAC
+    ...と色々な雑多な機能たち
+    ```
+
 ## 開発者情報
 
 ハンウル, <jun061119@proton.me>

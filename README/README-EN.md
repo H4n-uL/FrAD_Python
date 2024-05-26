@@ -45,6 +45,43 @@ Metadata JSON
 
 Simply create a new branch in the repository, make your changes, and submit a merge request to me for approval. Pretty much anything will pass if it conforms to the FrAD format standard.
 
+## Implementation requirements
+
+1. Essential
+
+    ```markdown
+    FrAD/
+        fourier
+        profiles/
+            profile1
+            tools/
+                p1tools
+        decoder
+        encoder
+        header
+        common
+        tools/
+            headb
+            ecc
+        repack
+    ```
+
+2. Optional
+
+    ```markdown
+    main
+    FrAD/
+        player
+        record
+        tools/
+            update
+            dsd
+            argparse
+        res/
+            AppleAAC.Win.tar.gz -> AppleAAC
+    ...and all the other stuff
+    ```
+
 ## Developer information
 
 HaמuL, <jun061119@proton.me>
