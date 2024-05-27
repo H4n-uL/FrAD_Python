@@ -247,7 +247,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
     elif action in repack_ecc_opt:
         if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import repack
-        repack.ecc(file_path, data_ecc, kwargs['verbose'])
+        repack.ecc(file_path, data_ecc, verbose)
 
     elif action in update_opt:
         from FrAD.tools import update
