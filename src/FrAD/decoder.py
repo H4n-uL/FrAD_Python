@@ -10,6 +10,8 @@ from .tools.ecc import ecc
 from .tools.headb import headb
 from .tools.dsd import dsd
 
+RM_CLI = '\x1b[1A\x1b[2K'
+
 class ASFH:
     def __init__(self): pass
 
@@ -124,12 +126,8 @@ class decode:
             tempfstrm = open(os.devnull, 'wb')
             try:
                 # Starting stream
-                if play:
-                    print()
-                    if verbose: print()
-                else:
-                    if verbose and not ispipe: print('\n\n')
-                bps, avgbps = 0, []
+                printed = False
+                bps, bpstot = 0, 0
                 dlen = os.path.getsize(file_path) - head_len
                 cli_width = 40
                 start_time = time.time()
@@ -168,21 +166,21 @@ class decode:
                         fade_in = np.linspace(0, 1, len(prev))
                         fade_out = np.linspace(1, 0, len(prev))
                         for c in range(asfh.chnl):
-                            frame[:len(prev), c] = (frame[:len(prev), c] * fade_in) + (prev[:, c] * fade_out)
+                            frame[:len(prev), c] = \
+                            (frame[:len(prev), c] * fade_in) +\
+                            (prev[:, c]           * fade_out)
                     if asfh.profile in [1, 2]:
                         prev = frame[-len(frame)//16:]
                         frame = frame[:-len(prev)]
-                    else:
-                        prev = None
+                    else: prev = None
 
                     # if channels and sample rate changed
                     if channels != asfh.chnl or smprate != asfh.srate:
+                        channels, smprate = asfh.chnl, asfh.srate
                         if play: # recreate stream
                             stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl)
                             stdoutstrm.start()
-                            channels, smprate = asfh.chnl, asfh.srate
                         else: # add a new file
-                            channels, smprate = asfh.chnl, asfh.srate
                             tempfstrm.close()
                             tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
                             filelist.append([tempfstrm.name, channels, smprate])
@@ -214,20 +212,23 @@ class decode:
                         # plt.clf()
 
                         bps = (((asfh.frmlen+len(fhead)) * 8) * asfh.srate / len(frame))
-                        avgbps.extend([bps, t_accr])
+                        bpstot += bps
                         depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64],[8,12,16,24,32,48,64]][asfh.profile][asfh.float_bits]
                         lgs = int(math.log(asfh.srate, 1000))
-                        lgv = int(math.log(sum(avgbps[::2])/(len(avgbps)//2), 1000))
+                        lgv = int(math.log(bpstot/frameNo, 1000))
                         if verbose:
-                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"}); {depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and "B" or "L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
+                            if printed: print(RM_CLI*5, end='')
+                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"})')
+                            print(f'{depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and"B"or"L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
-                            print(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}, {len(frame)} sample{len(frame)!=1 and"s"or""}/fr {asfh.frmlen} B/fr {bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps/fr, {sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps avg')
+                            print(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}')
+                            print(f'{len(frame)} sample{len(frame)!=1 and"s"or""}, {asfh.frmlen} Byte{(asfh.frmlen!=1)*"s"} per frame')
+                            print(f'{bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps per-frame, {bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps average')
                         else:
-                            print('\x1b[1A\x1b[2K', end='')
+                            if printed: print(RM_CLI, end='')
                             cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(asfh.chnl, f'{asfh.chnl} ch')
-                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{sum(avgbps[::2])/(len(avgbps)//2)/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
-                        while avgbps[1::2][0] < t_accr - 30: avgbps = avgbps[2:]
+                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
+                        printed = True
 
                     else:
                         if verbose and not ispipe:
@@ -238,15 +239,16 @@ class decode:
                             percent = bytes_accr*100 / dlen
                             b = int(percent / 100 * cli_width)
                             eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
-                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+                            if printed: print(RM_CLI*3, end='')
                             print(f'Decode Speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s, X{mult:.3f}')
                             print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
+                            printed = True
                     fhead = None
 
-                if play or verbose:
-                    print('\x1b[1A\x1b[2K', end='')
-                    if play and verbose: print('\x1b[1A\x1b[2K', end='')
+                if printed and (play or verbose):
+                    print(RM_CLI, end='')
+                    if play and verbose: print(RM_CLI*4, end='')
                 stdoutstrm.stop()
                 tempfstrm.close()
             except KeyboardInterrupt:
