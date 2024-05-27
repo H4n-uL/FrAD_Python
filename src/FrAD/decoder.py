@@ -64,7 +64,7 @@ class decode:
                 head_len = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
             elif ftype == 'stream': head_len = 0
             f.seek(head_len)
-            t_accr = dict()
+            t_accr, ddict = dict()
             bytes_accr = frameNo = 0
             dlen = framescount = duration = 0
             asfh = ASFH()
@@ -83,7 +83,7 @@ class decode:
                 if fhead != b'\xff\xd0\xd2\x97':
                     hq = f.read(1)
                     if not hq:
-                        if asfh.profile in [1, 2]: duration += asfh.fsize // 16 / asfh.srate
+                        if asfh.profile in [1, 2]: ddict[asfh.srate] += asfh.fsize//16
                         break
                     fhead = fhead[1:]+hq
                     continue
@@ -93,8 +93,9 @@ class decode:
                     error_dir.append(str(framescount))
                     if not warned: warned = True; print("This file may had been corrupted. Please repack your file via 'ecc' option for the best music experience.")
 
-                duration += asfh.fsize / asfh.srate
-                if asfh.profile in [1, 2]: duration -= asfh.fsize//16 / asfh.srate
+                try: ddict[asfh.srate] += asfh.fsize
+                except: ddict[asfh.srate] = asfh.fsize
+                if asfh.profile in [1, 2]: ddict[asfh.srate] -= asfh.fsize//16
 
                 dlen += asfh.frmlen
                 framescount += 1
@@ -102,7 +103,7 @@ class decode:
 
             # show error frames
             if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
-            duration /= speed
+            duration = sum([ddict[k] / k for k in ddict]) / speed
             f.seek(head_len)
 
 # ----------------------------------- Metadata ----------------------------------- #
