@@ -64,7 +64,8 @@ class decode:
                 head_len = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
             elif ftype == 'stream': head_len = 0
             f.seek(head_len)
-            t_accr = bytes_accr = frameNo = 0
+            t_accr = dict()
+            bytes_accr = frameNo = 0
             dlen = framescount = duration = 0
             asfh = ASFH()
 
@@ -197,7 +198,9 @@ class decode:
                     # Verbose block
 
                     frameNo += 1
-                    t_accr += len(frame) / (smprate*speed)
+                    try: t_accr[smprate*speed] += len(frame)
+                    except: t_accr[smprate*speed] = len(frame)
+                    t_sec = sum([t_accr[k] / k for k in t_accr])
                     bytes_accr += asfh.frmlen + 32
                     if play:
                         # for i in range(asfh.chnl):
@@ -218,7 +221,7 @@ class decode:
                         lgv = int(math.log(bpstot/frameNo, 1000))
                         if verbose:
                             if printed: print(RM_CLI*5, end='')
-                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"})')
+                            print(f'{methods.tformat(t_sec)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"})')
                             print(f'{depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and"B"or"L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
                             print(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}')
@@ -227,7 +230,7 @@ class decode:
                         else:
                             if printed: print(RM_CLI, end='')
                             cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(asfh.chnl, f'{asfh.chnl} ch')
-                            print(f'{methods.tformat(t_accr)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
+                            print(f'{methods.tformat(t_sec)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
                         printed = True
 
                     else:
