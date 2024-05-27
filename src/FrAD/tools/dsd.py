@@ -18,7 +18,7 @@ class DeltaSigma:
             self.quant = 1 if self.intg[-1] > 0 else -1
             bitstream[i] = 1 if self.quant==1 else 0
 
-        return np.packbits([int(b) for b in bitstream.astype(np.uint8)])
+        return np.packbits(bitstream.astype(np.uint8))
 
     def demodulator(self, bitstream):
         bitstream = np.unpackbits(bitstream)
