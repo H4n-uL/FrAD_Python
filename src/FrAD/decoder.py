@@ -238,7 +238,7 @@ class decode:
                             elapsed_time = time.time() - start_time
                             bps = bytes_accr / elapsed_time
                             lgb = int(math.log(bps, 1000))
-                            mult = t_accr / (time.time() - start_time)
+                            mult = t_sec / (time.time() - start_time)
                             percent = bytes_accr*100 / dlen
                             b = int(percent / 100 * cli_width)
                             eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
