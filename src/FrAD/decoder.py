@@ -64,7 +64,7 @@ class decode:
                 head_len = struct.unpack('>Q', head[0x8:0x10])[0] # 0x08-8B: Total header size
             elif ftype == 'stream': head_len = 0
             f.seek(head_len)
-            t_accr, ddict = dict()
+            t_accr, ddict = dict(), dict()
             bytes_accr = frameNo = 0
             dlen = framescount = duration = 0
             asfh = ASFH()
