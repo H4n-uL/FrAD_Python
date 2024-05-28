@@ -73,7 +73,6 @@
         record
         tools/
             update
-            dsd
             argparse
         res/
             AppleAAC.Win.tar.gz -> AppleAAC

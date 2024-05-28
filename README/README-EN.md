@@ -75,7 +75,6 @@ Simply create a new branch in the repository, make your changes, and submit a me
         record
         tools/
             update
-            dsd
             argparse
         res/
             AppleAAC.Win.tar.gz -> AppleAAC
