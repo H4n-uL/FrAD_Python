@@ -220,7 +220,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
     elif action in record_opt:
         if file_path is None: print('File path is required.'); sys.exit(1)
         from FrAD import recorder
-        bits = kwargs.get('bits', 24)
+        bits = kwargs.get('bits', 16)
         recorder.record_audio(file_path, 
             srate=kwargs.get('srate', 48000),
             bits=bits, fsize=fsize,
