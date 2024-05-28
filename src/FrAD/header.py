@@ -28,6 +28,7 @@ class header:
         write_img = kwargs.get('write_img', False)
         remove_img = kwargs.get('remove_img', False)
         try:
+            # Backup file
             shutil.copy2(file_path, variables.temp)
             with open(variables.temp, 'rb') as f:
                 # Fixed Header
@@ -52,15 +53,12 @@ class header:
                 if meta: meta = [mo for mo in meta_old if mo[0] not in meta]
             elif write_img:
                 meta = meta_old
-                if img_old and not img: img = None
-            elif remove_img: img = None; meta = meta_old
+                if img_old and not img: img = img_old
+            elif remove_img: meta = meta_old; img = None
             head_new = headb.uilder(meta, img)
 
             # Overwriting Fourier Analogue-in-Digital file
-            with open(variables.temp, 'wb') as f: # DO NEVER DELETE THIS
-                f.write(head_new)
-                with open(variables.temp2, 'rb') as temp:
-                    f.write(temp.read())
+            open(variables.temp, 'wb').write(head_new+open(variables.temp2, 'rb').read())
             shutil.move(variables.temp, file_path)
         except KeyboardInterrupt:
             print('Aborting...')
