@@ -50,7 +50,7 @@ class headb:
 
         header = signature + (b'\x00'*4) + length + (b'\x00'*48) + blocks
         return header
-    
+
     @staticmethod
     def parser(file_path: str) -> tuple[list[str], bytes | None]:
         meta, img = [], None

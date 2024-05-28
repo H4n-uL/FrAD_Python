@@ -146,7 +146,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                 except IndexError:
                     print(f'Metadata requires key and value: {arg} {mk} {mv}')
                     sys.exit(1)
-            
+
             # Metadata Key
             elif key in ['meta-key', 'mk']:
                 try: key, value = 'meta-key', options['meta-key']+[args.pop(0)]

@@ -9,7 +9,6 @@ from .tools.headb import headb
 class recorder:
     @staticmethod
     def record_audio(file_path, **kwargs):
-        
         # Audio settings
         smprate = kwargs.get('srate', 48000)
         channels = kwargs.get('chnl', None)
