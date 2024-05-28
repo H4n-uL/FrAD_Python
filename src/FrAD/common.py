@@ -7,6 +7,8 @@ directory = os.path.dirname(os.path.realpath(__file__))
 res = os.path.join(directory, 'res')
 
 class variables:
+    overlap_rate = 16
+
     # Temporary files for metadata processing / stream repairing
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frad').name
     temp2 =     tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frad').name

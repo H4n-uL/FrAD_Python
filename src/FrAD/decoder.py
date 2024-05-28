@@ -1,14 +1,11 @@
 from .common import variables, methods
 from .fourier import fourier
 from .header import header
-# import matplotlib.pyplot as plt
-# from scipy.fft import dct
 import numpy as np
 import atexit, math, os, platform, shutil, struct, subprocess, sys, tempfile, time, traceback, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
-from .tools.dsd import dsd
 
 RM_CLI = '\x1b[1A\x1b[2K'
 
@@ -35,6 +32,23 @@ def cleanup():
         except: pass
 
 class decode:
+    @staticmethod
+    def overlap(frame: np.ndarray, prev: np.ndarray, asfh: ASFH) -> tuple[np.ndarray, np.ndarray]:
+        olap = variables.overlap_rate
+        # 1/16 Overlapping
+        if len(prev)>0:
+            fade_in = np.linspace(0, 1, len(prev))
+            fade_out = np.linspace(1, 0, len(prev))
+            for c in range(asfh.chnl):
+                frame[:len(prev), c] = \
+                (frame[:len(prev), c] * fade_in) +\
+                (prev[:, c]           * fade_out)
+        if asfh.profile in [1, 2]:
+            prev = frame[-len(frame)//olap:]
+            frame = frame[:-len(prev)]
+        else: prev = np.array([])
+        return frame, prev
+
     @staticmethod
     def internal(file_path: str, **kwargs):
         speed = kwargs.get('speed', 1)
@@ -133,7 +147,7 @@ class decode:
                 dlen = os.path.getsize(file_path) - head_len
                 cli_width = 40
                 start_time = time.time()
-                fhead, prev, frame = None, None, np.array(0)
+                fhead, prev, frame = None, np.array([]), np.array([])
 
     # ----------------------------- Main decode loop ----------------------------- #
                 while True:
@@ -144,7 +158,8 @@ class decode:
                         if not hq:
                             if prev is not None:
                                 if play: stdoutstrm.write(frame.astype(np.float32))
-                                else:    tempfstrm.write(frame.astype('>f8').tobytes())
+                                elif ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
+                                else: tempfstrm.write(frame.astype('>f8').tobytes())
                             break
                         fhead = fhead[1:]+hq
                         continue
@@ -162,59 +177,27 @@ class decode:
 
                     # Decoding
                     frame: np.ndarray = fourier.digital(data, asfh.float_bits, asfh.chnl, asfh.endian, profile=asfh.profile, smprate=asfh.srate, fsize=asfh.fsize) * gain
-
-                    # 1/16 Overlapping
-                    if prev is not None:
-                        fade_in = np.linspace(0, 1, len(prev))
-                        fade_out = np.linspace(1, 0, len(prev))
-                        for c in range(asfh.chnl):
-                            frame[:len(prev), c] = \
-                            (frame[:len(prev), c] * fade_in) +\
-                            (prev[:, c]           * fade_out)
-                    if asfh.profile in [1, 2]:
-                        prev = frame[-len(frame)//16:]
-                        frame = frame[:-len(prev)]
-                    else: prev = None
+                    frame, prev = decode.overlap(frame, prev, asfh)
 
                     # if channels and sample rate changed
                     if channels != asfh.chnl or smprate != asfh.srate:
                         channels, smprate = asfh.chnl, asfh.srate
-                        if play: # recreate stream
-                            stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl)
-                            stdoutstrm.start()
-                        else: # add a new file
-                            tempfstrm.close()
-                            tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
-                            filelist.append([tempfstrm.name, channels, smprate])
+                        if play: stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl); stdoutstrm.start()
+                        else: tempfstrm.close(); tempfstrm, filelist = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb'), filelist+[[tempfstrm.name, channels, smprate]]
 
                     # Write PCM Stream
-                    if play:
-                        # Play block
-                        stdoutstrm.write(frame.astype(np.float32))
-                    else:
-                        # Write block
-                        if ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
-                        else: tempfstrm.write(frame.astype('>f8').tobytes())
+                    if play: stdoutstrm.write(frame.astype(np.float32))
+                    elif ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
+                    else: tempfstrm.write(frame.astype('>f8').tobytes())
 
-                    # Verbose block
-
+# --------------------------- Verbose block, Optional ---------------------------- #
+#
                     frameNo += 1
                     try: t_accr[smprate*speed] += len(frame)
                     except: t_accr[smprate*speed] = len(frame)
                     t_sec = sum([t_accr[k] / k for k in t_accr])
                     bytes_accr += asfh.frmlen + 32
                     if play:
-                        # for i in range(asfh.chnl):
-                        #     plt.subplot(asfh.chnl, 1, i+1)
-                        #     # plt.plot(frame[:, i], alpha=0.5)
-                        #     y = np.abs(dct(frame[:, i]) / len(frame))
-                        #     plt.fill_between(range(1, len(y)+1), y, -y, edgecolor='none')
-                        #     plt.xscale('log', base=2)
-                        #     plt.ylim(-1, 1)
-                        # plt.draw()
-                        # plt.pause(0.000001)
-                        # plt.clf()
-
                         bps = (((asfh.frmlen+len(fhead)) * 8) * asfh.srate / len(frame))
                         bpstot += bps
                         depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64],[8,12,16,24,32,48,64]][asfh.profile][asfh.float_bits]
@@ -232,7 +215,6 @@ class decode:
                             if printed: print(RM_CLI, end='')
                             cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(asfh.chnl, f'{asfh.chnl} ch')
                             print(f'{methods.tformat(t_sec)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
-                        printed = True
 
                     else:
                         if verbose and not ispipe:
@@ -247,7 +229,9 @@ class decode:
                             print(f'Decode Speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s, X{mult:.3f}')
                             print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
                             print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-                            printed = True
+                    printed = True
+#
+# ------------------------------- End verbose block ------------------------------ #
                     fhead = None
 
                 if printed and (play or verbose):
@@ -264,11 +248,8 @@ class decode:
 
     @staticmethod
     def split_q(s) -> tuple[int|None, str]:
-        if s == None:
-            return None, 'c'
-        if not s[0].isdigit():
-            print('Quality format should be [{Positive integer}{c/v/a}]')
-            sys.exit(1)
+        if s == None: return None, 'c'
+        if not s[0].isdigit(): print('Quality format should be [{Positive integer}{c/v/a}]'); return None, 'c'
         number = int(''.join(filter(str.isdigit, s)))
         strategy = ''.join(filter(str.isalpha, s))
         return number, strategy
@@ -276,10 +257,8 @@ class decode:
     @staticmethod
     def setaacq(quality: int | None, channels: int):
         if quality == None:
-            if channels == 1:
-                return 256000
-            elif channels == 2:
-                return 320000
+            if channels == 1: return 256000
+            elif channels == 2: return 320000
             else: return 160000 * channels
         return quality
 
@@ -324,8 +303,7 @@ class decode:
         command.append('-c:a')
         if codec in ['wav', 'riff']:
             command.append(f'pcm_{f}')
-        else:
-            command.append(codec)
+        else: command.append(codec)
 
         # Lossy VS Lossless
         if codec in decode.ffmpeg_lossless:
@@ -489,8 +467,6 @@ class decode:
                         if strategy in ['c', 'a']: q = decode.setaacq(q, channels)
                         if platform.system() == 'Darwin': decode.AppleAAC_macOS(temp_pcm, smprate, channels, (z==0 and out or f'{out}.{z}'), q, strategy)
                         elif platform.system() == 'Windows': decode.AppleAAC_Windows(temp_pcm, smprate, channels, (z==0 and out or f'{out}.{z}'), q, new_srate)
-                    elif codec in ['dsd', 'dff']:
-                        dsd.encode(temp_pcm, smprate, channels, (z==0 and out or f'{out}.{z}'), ext, verbose)
                     elif codec not in ['pcm', 'raw']:
                         decode.ffmpeg(temp_pcm, smprate, channels, codec, f, s, (z==0 and out or f'{out}.{z}'), ext, q, strategy, new_srate)
                     else:

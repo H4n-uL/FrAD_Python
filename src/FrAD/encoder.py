@@ -1,11 +1,38 @@
 from .common import variables, methods
 from .fourier import fourier
-import json, os, math, random, struct, subprocess, sys, time, traceback, zlib
+import json, os, math, random, struct, subprocess, sys, time, traceback, typing, zlib
 import numpy as np
 from .tools.ecc import ecc
 from .tools.headb import headb
 
 class encode:
+    @staticmethod
+    def overlap(data: np.ndarray, prev: np.ndarray, **kwargs) -> tuple[np.ndarray, np.ndarray]:
+        olap = variables.overlap_rate
+        if len(prev) != 0: data = np.concatenate([prev, data])
+        if kwargs.get('profile') in [1, 2]: prev = data[-kwargs.get('fsize', None)//olap:]
+        else: prev = np.array([])
+        return data, prev
+
+    @staticmethod
+    def write_frame(file: typing.BinaryIO, frame: bytes, channels: int, srate: int, efb: bytes, ecc_list: tuple[int, int], fsize: int) -> None:
+        if not struct.unpack('>B', efb)[0]&0b00010000: ecc_list = (0, 0)
+        data = bytes(
+            b'\xff\xd0\xd2\x97' +
+            struct.pack('>I', len(frame)) +
+            efb +
+            struct.pack('>B', channels - 1) +
+            struct.pack('>B', ecc_list[0]) +
+            struct.pack('>B', ecc_list[1]) +
+            struct.pack('>I', srate) +
+            b'\x00'*8 +
+            struct.pack('>I', fsize) +
+            struct.pack('>I', zlib.crc32(frame)) +
+            frame
+        )
+        file.write(data)
+        return None
+
     @staticmethod
     def get_info(file_path) -> tuple[int, int, str, int]:
         command = [variables.ffprobe,
@@ -127,12 +154,6 @@ class encode:
             if chnl is None: print('Channel count is required for raw PCM.'); sys.exit(1)
             channels, smprate = chnl, new_srate
         if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
-        if profile in [1, 2]:
-            print('\033[1m!!!Warning!!!\033[0m\nFourier Analogue-in-Digital is designed to be an uncompressed archival codec. Compression increases the difficulty of decoding and makes data very fragile, making any minor damage likely to destroy the entire frame. Proceed? (Y/N)')
-            while True:
-                x = input('> ').lower()
-                if x == 'y': break
-                if x == 'n': sys.exit('Aborted.')
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
         # Getting Audio info w. ffmpeg & ffprobe
@@ -140,6 +161,7 @@ class encode:
         cmd = []
         if not raw:
             channels, smprate, codec, duration = encode.get_info(file_path)
+            if profile in [1, 2]: new_srate = min(smprate, 96000)
             cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
             segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
             if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
@@ -172,7 +194,7 @@ class encode:
             total_bytes, total_samples = 0, 0
             cli_width = 40
 
-            last = b''
+            prev = np.array([])
             dtype, sample_bytes = methods.get_dtype(raw)
             smpsize = sample_bytes * channels # Single sample size = bit depth * channels
 
@@ -195,27 +217,20 @@ class encode:
                     # ecc_dsize, ecc_codesize = random.choice(list(range(64, 129))), random.choice(list(range(16, 64))) # Random ECC test
 
                     # Getting required read length
-                    rlen = fsize * smpsize
-                    spf = fsize
-                    while rlen < len(last):
-                        spf += 128
-                        rlen = spf * smpsize
+                    rlen = fsize
+                    while rlen < len(prev): rlen += 128
                     # Overlap
-                    if profile in [1, 2] and len(last) != 0: rlen -= len(last)
+                    if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
 
                     if not raw:
                         if process.stdout is None: raise FileNotFoundError('Broken pipe.')
-                        data = process.stdout.read(rlen)   # Reading PCM
-                    else: data = rfile.read(rlen)          # Reading RAW PCM
-                    if not data: break                     # if no data, Break
-
-                    # 1/16 linear Overlap
-                    if len(last) != 0: data = last + data
-                    if profile in [1, 2]: last = data[-fsize//16*8*channels:]
-                    else: last = b''
+                        data = process.stdout.read(rlen * smpsize) # Reading PCM
+                    else: data = rfile.read(rlen * smpsize)        # Reading RAW PCM
+                    if not data: break                             # if no data, Break
 
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data[:len(data)//smpsize * smpsize], dtype).astype(float).reshape(-1, channels) * gain
+                    frame, prev = encode.overlap(frame, prev, fsize=fsize, chnl=channels, profile=profile)
                     if raw:
                         if not raw.startswith('f'):
                             frame /= 2**(sample_bytes*8-1)
@@ -231,38 +246,7 @@ class encode:
 
                     # EFloat Byte
                     efb = headb.encode_efb(profile, apply_ecc, little_endian, bits_efb)
-
-                    data = bytes(
-                        #-- 0x00 ~ 0x0f --#
-                            # Frame Signature
-                            b'\xff\xd0\xd2\x97' +
-
-                            # Frame length(Processed)
-                            struct.pack('>I', len(frame)) +
-
-                            efb + # ECC-Float Byte
-                            struct.pack('>B', channels_frame - 1) +              # Channels
-                            struct.pack('>B', apply_ecc and ecc_dsize or 0) +    # ECC DSize
-                            struct.pack('>B', apply_ecc and ecc_codesize or 0) + # ECC Code Size
-
-                            # Sample Rate
-                            struct.pack('>I', smprate) +
-
-                        #-- 0x10 ~ 0x1f --#
-                            b'\x00'*8 +
-
-                            # Samples in a frame per channel
-                            struct.pack('>I', flen) +
-
-                            # ISO 3309 CRC32
-                            struct.pack('>I', zlib.crc32(frame)) +
-
-                        #-- 0x20 ~      --#
-                        frame
-                    )
-
-                    # WRITE
-                    file.write(data)
+                    encode.write_frame(file, frame, channels_frame, smprate, efb, (ecc_dsize, ecc_codesize), flen)
 
                     # Verbose block
                     if verbose:
