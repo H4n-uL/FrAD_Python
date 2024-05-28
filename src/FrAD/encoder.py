@@ -254,8 +254,8 @@ class encode:
                         total_bytes += flen * sample_size
                         total_samples += flen
                         if profile in [1, 2]:
-                            total_bytes -= flen//16 * sample_size
-                            total_samples -= flen//16
+                            total_bytes -= len(prev) * sample_size
+                            total_samples -= len(prev)
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / smprate / sample_size
