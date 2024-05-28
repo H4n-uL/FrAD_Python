@@ -1,11 +1,13 @@
 from .common import variables, methods
+from .decoder import ASFH
+from .encoder import encode
 import os, shutil, struct, sys, time, zlib
 from .tools.ecc import ecc
 from .tools.headb import headb
 
 class repack:
     @staticmethod
-    def ecc(file_path, ecc_sizes: list, verbose: bool = False):
+    def ecc(file_path, ecc_sizes: list | None = None, verbose: bool = False):
         with open(file_path, 'rb') as f:
             head = f.read(64)
 
@@ -20,6 +22,7 @@ class repack:
                 total_bytes = 0
                 cli_width = 40
                 fhead = None
+                asfh = ASFH()
                 with open(variables.temp, 'wb') as t:
                     if verbose: print('\n\n')
                     while True:
@@ -32,65 +35,25 @@ class repack:
                             continue
 
                         # Parsing ASFH
-                        fhead = fhead + f.read(28)
-                        framelength = struct.unpack('>I', fhead[0x4:0x8])[0]      # 0x04-4B: Audio Stream Frame length
-                        efb = struct.unpack('>B', fhead[0x8:0x9])[0]              # 0x08:    Cosine-Float Bit
-                        lossy, is_ecc_on, endian, float_bits = headb.decode_efb(efb)
-                        channels = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
-                        ed = struct.unpack('>B', fhead[0xa:0xb])[0]               # 0x0a:    ECC Data block size
-                        ec = struct.unpack('>B', fhead[0xb:0xc])[0]               # 0x0b:    ECC Code size
-                        srate_frame = struct.unpack('>I', fhead[0xc:0x10])[0]     # 0x0c-4B: Sample rate
-                        samples_p_chnl = struct.unpack('>I', fhead[0x18:0x1c])[0] # 0x18-4B: Samples in a frame per channel
-                        crc32 = fhead[0x1c:0x20]                                  # 0x1c-4B: ISO 3309 CRC32 of Audio Data
-
+                        asfh.update(fhead+f.read(28))
                         # Reading Frame
-                        frame = f.read(framelength)
+                        frame = f.read(asfh.frmlen)
 
                         # Fixing errors and repacking
-                        if is_ecc_on: frame = ecc.decode(frame, ed, ec)
-                        
-                        if ed != 0 and ec != 0: ecc_dsize, ecc_codesize = ed, ec
-                        else: ecc_dsize, ecc_codesize = int(ecc_sizes[0]), int(ecc_sizes[1])
+                        if asfh.ecc: frame = ecc.decode(frame, asfh.ecc_dsize, asfh.ecc_codesize)
+
+                        if ecc_sizes is not None: ecc_dsize, ecc_codesize = ecc_sizes
+                        elif asfh.ecc_dsize != 0 and asfh.ecc_codesize != 0: ecc_dsize, ecc_codesize = asfh.ecc_dsize, asfh.ecc_codesize
+                        else: ecc_dsize, ecc_codesize = 96, 24
 
                         frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
                         # EFloat Byte
-                        efb = headb.encode_efb(lossy, True, endian, float_bits)
-
-                        data = bytes(
-                            #-- 0x00 ~ 0x0f --#
-                                # Frame Signature
-                                b'\xff\xd0\xd2\x97' +
-
-                                # Frame length(Processed)
-                                struct.pack('>I', len(frame)) +
-
-                                efb + # ECC-Float Byte
-                                struct.pack('>B', channels - 1) + # Channels
-                                struct.pack('>B', ecc_dsize) +    # ECC DSize
-                                struct.pack('>B', ecc_codesize) + # ECC Code Size
-
-                                # Sample Rate
-                                struct.pack('>I', srate_frame) +
-
-                            #-- 0x10 ~ 0x1f --#
-                                b'\x00'*8 +
-
-                                # Samples in a frame per channel
-                                struct.pack('>I', samples_p_chnl) +
-
-                                # ISO 3309 CRC32
-                                struct.pack('>I', zlib.crc32(frame)) +
-
-                            #-- Data --#
-                            frame
-                        )
-
-                        # WRITE
-                        t.write(data)
+                        efb = headb.encode_efb(asfh.profile, True, asfh.endian, asfh.float_bits)
+                        encode.write_frame(t, frame, asfh.chnl, asfh.srate, efb, (ecc_dsize, ecc_codesize), asfh.fsize)
 
                         if verbose:
-                            total_bytes += framelength+12
+                            total_bytes += asfh.frmlen+32
                             elapsed_time = time.time() - start_time
                             bps = total_bytes / elapsed_time
                             percent = total_bytes * 100 / dlen
