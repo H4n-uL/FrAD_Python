@@ -183,7 +183,7 @@ class decode:
                     if channels != asfh.chnl or smprate != asfh.srate:
                         channels, smprate = asfh.chnl, asfh.srate
                         if play: stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl); stdoutstrm.start()
-                        else: tempfstrm.close(); tempfstrm, filelist = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb'), filelist+[[tempfstrm.name, channels, smprate]]
+                        else: tempfstrm.close(); tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb'); filelist.append([tempfstrm.name, channels, smprate])
 
                     # Write PCM Stream
                     if play: stdoutstrm.write(frame.astype(np.float32))
@@ -377,7 +377,7 @@ class decode:
                 '--raw', temp_pcm,
                 '--raw-channels', str(channels),
                 '--raw-rate', str(smprate),
-                '--raw-format', 'f64l',
+                '--raw-format', 'f64b',
                 '--adts',
                 '-c', str(quality),
             ]
