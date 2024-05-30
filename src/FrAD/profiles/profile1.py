@@ -23,13 +23,6 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
     freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
     freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
-    # Inter-channel prediction
-    if channels == 1: pass
-    elif channels == 2:
-        freqs = np.array([(freqs[0] + freqs[1]) / 2, (freqs[0] - freqs[1]) / 2])
-    else:
-        mid = np.mean(freqs, axis=0)
-        freqs = np.vstack([mid, freqs-mid])
 
     # Overflow check & Increasing bit depth
     while not (2**(bits-1)-1 >= freqs.any() >= -(2**(bits-1))):
@@ -87,12 +80,6 @@ def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) ->
 
     # Removing potential Infinities and Non-numbers
     freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
-
-    # Inter-channel reconstruction
-    if channels == 1: pass
-    elif channels == 2:
-        freqs = np.array([freqs[0] + freqs[1], freqs[0] - freqs[1]])
-    else: freqs = freqs[1:] + freqs[0]
     freqs = p1tools.dequant(freqs, channels, thres, kwargs)
 
     # Inverse DCT and stacking
