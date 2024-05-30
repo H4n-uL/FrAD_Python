@@ -55,7 +55,7 @@ class repack:
                             elapsed_time = time.time() - start_time
                             bps = total_bytes / elapsed_time
                             percent = total_bytes * 100 / dlen
-                            printed = methods.logging(2, 'ECC Encoding', printed, percent=percent, bps=bps, time=elapsed_time)
+                            printed = methods.logging(3, 'ECC Encoding', printed, percent=percent, bps=bps, time=elapsed_time)
                         fhead = None
 
                 f.seek(0)

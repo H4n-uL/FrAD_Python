@@ -221,7 +221,7 @@ class decode:
                             elapsed_time = time.time() - start_time
                             bps = bytes_accr / elapsed_time
                             mult = t_sec / elapsed_time
-                            printed = methods.logging(2, 'Decode', printed, percent=(bytes_accr*100/dlen), bps=bps, mult=mult, time=elapsed_time)
+                            printed = methods.logging(3, 'Decode', printed, percent=(bytes_accr*100/dlen), bps=bps, mult=mult, time=elapsed_time)
 #
 # ------------------------------- End verbose block ------------------------------ #
                     fhead = None

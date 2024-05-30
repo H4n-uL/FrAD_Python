@@ -114,10 +114,12 @@ class methods:
     def logging(loglevel: int, method: str, printed: bool, **kwargs) -> bool:
         if loglevel == 1:
             percent = kwargs.get('percent', 0)
-            prgbar = int(percent / 100 * variables.cli_width)
+            elapsed_time = kwargs.get('time', 0)
+
+            eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
             if printed: print('\x1b[1A\x1b[2K', end='')
-            print(f"[{'█'*prgbar}{' '*(variables.cli_width-prgbar)}] {percent:.3f}% completed")
-        elif loglevel == 2:
+            print(f'{method}: {percent:.3f}% | Elapsed {methods.tformat(elapsed_time)} | ETA {methods.tformat(eta)}')
+        elif loglevel == 3:
             percent = kwargs.get('percent', 0)
             bps = kwargs.get('bps', 0)
             elapsed_time = kwargs.get('time', 0)

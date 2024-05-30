@@ -257,7 +257,7 @@ class encode:
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / smprate / sample_size
-                        printed = methods.logging(2, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
+                        printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
 
         except KeyboardInterrupt:
             print('Aborting...')
