@@ -1,4 +1,4 @@
-import atexit, os, platform, subprocess, sys, tempfile, tarfile
+import atexit, math, os, platform, subprocess, sys, tempfile, tarfile
 
 yd = 365.25
 ys = yd * 86400
@@ -7,6 +7,7 @@ directory = os.path.dirname(os.path.realpath(__file__))
 res = os.path.join(directory, 'res')
 
 class variables:
+    cli_width = 40
     overlap_rate = 16
 
     # Temporary files for metadata processing / stream repairing
@@ -108,3 +109,25 @@ class methods:
             if os.path.exists(file):
                 try:os.remove(file)
                 except:pass
+    
+    @staticmethod
+    def logging(loglevel: int, method: str, printed: bool, **kwargs) -> bool:
+        if loglevel == 1:
+            percent = kwargs.get('percent', 0)
+            prgbar = int(percent / 100 * variables.cli_width)
+            if printed: print('\x1b[1A\x1b[2K', end='')
+            print(f"[{'█'*prgbar}{' '*(variables.cli_width-prgbar)}] {percent:.3f}% completed")
+        elif loglevel == 2:
+            percent = kwargs.get('percent', 0)
+            bps = kwargs.get('bps', 0)
+            elapsed_time = kwargs.get('time', 0)
+            mult = kwargs.get('mult', None)
+
+            lgb = int(math.log(bps, 1000))
+            prgbar = int(percent / 100 * variables.cli_width)
+            eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
+            if printed: print('\x1b[1A\x1b[2K'*3, end='')
+            print(f'{method} speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s{mult and f", X{mult:.3f}" or ""}')
+            print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
+            print(f"[{'█'*prgbar}{' '*(variables.cli_width-prgbar)}] {percent:.3f}% completed")
+        return True

@@ -220,23 +220,13 @@ class decode:
                         if verbose and not ispipe:
                             elapsed_time = time.time() - start_time
                             bps = bytes_accr / elapsed_time
-                            lgb = int(math.log(bps, 1000))
-                            mult = t_sec / (time.time() - start_time)
-                            percent = bytes_accr*100 / dlen
-                            b = int(percent / 100 * cli_width)
-                            eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
-                            if printed: print(RM_CLI*3, end='')
-                            print(f'Decode Speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s, X{mult:.3f}')
-                            print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
-                            print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-                    printed = True
+                            mult = t_sec / elapsed_time
+                            printed = methods.logging(2, 'Decode', printed, percent=(bytes_accr*100/dlen), bps=bps, mult=mult, time=elapsed_time)
 #
 # ------------------------------- End verbose block ------------------------------ #
                     fhead = None
 
-                if printed and (play or verbose):
-                    print(RM_CLI, end='')
-                    if play and verbose: print(RM_CLI*4, end='')
+                if printed and play and verbose: print(RM_CLI*4, end='')
                 stdoutstrm.stop()
                 tempfstrm.close()
             except KeyboardInterrupt:

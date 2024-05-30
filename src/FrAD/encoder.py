@@ -205,10 +205,10 @@ class encode:
                 rfile = open(file_path, 'rb')
                 duration = os.path.getsize(file_path) / smpsize
 
+            printed = False
             # Write file
             open(out, 'wb').write(headb.uilder(meta, img))
             with open(out, 'ab') as file:
-                if verbose: print('\n\n')
                 while True:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
                     # fsize = random.choice(list(range(32, 8193))) # Random spf test
@@ -231,12 +231,12 @@ class encode:
 
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data[:len(data)//smpsize * smpsize], dtype).astype(float).reshape(-1, channels) * gain
+                    flen = len(frame)
                     frame, prev = encode.overlap(frame, prev, fsize=fsize, chnl=channels, profile=profile)
                     if raw:
                         if not raw.startswith('f'):
                             frame /= 2**(sample_bytes*8-1)
                             if raw.startswith('u'): frame-=1
-                    flen = len(frame)
 
                     # Encoding
                     frame, bit_depth_frame, channels_frame, bits_efb = \
@@ -254,21 +254,11 @@ class encode:
                         sample_size = bit_depth_frame // 8 * channels
                         total_bytes += flen * sample_size
                         total_samples += flen
-                        if profile in [1, 2]:
-                            total_bytes -= len(prev) * sample_size
-                            total_samples -= len(prev)
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / smprate / sample_size
-                        percent = total_samples / duration * 100
-                        prgbar = int(percent / 100 * cli_width)
-                        eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
-                        print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                        print(f'Encode Speed: {(bps / 10**6):.3f} MB/s, X{mult:.3f}')
-                        print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
-                        print(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
+                        printed = methods.logging(2, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
 
-                if verbose: print('\x1b[1A\x1b[2K', end='')
         except KeyboardInterrupt:
             print('Aborting...')
             sys.exit(0)

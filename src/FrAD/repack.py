@@ -1,7 +1,7 @@
 from .common import variables, methods
 from .decoder import ASFH
 from .encoder import encode
-import os, shutil, struct, sys, time, zlib
+import os, shutil, struct, sys, time
 from .tools.ecc import ecc
 from .tools.headb import headb
 
@@ -20,11 +20,9 @@ class repack:
                 dlen = os.path.getsize(file_path) - head_len
                 start_time = time.time()
                 total_bytes = 0
-                cli_width = 40
-                fhead = None
+                fhead, printed = None, False
                 asfh = ASFH()
                 with open(variables.temp, 'wb') as t:
-                    if verbose: print('\n\n')
                     while True:
                         # Finding Audio Stream Frame Header
                         if fhead is None: fhead = f.read(4)
@@ -57,15 +55,8 @@ class repack:
                             elapsed_time = time.time() - start_time
                             bps = total_bytes / elapsed_time
                             percent = total_bytes * 100 / dlen
-                            b = int(percent / 100 * cli_width)
-                            eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
-                            print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
-                            print(f'ECC Encode Speed: {(bps / 10**6):.3f} MB/s')
-                            print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
-                            print(f"[{'█'*b}{' '*(cli_width-b)}] {percent:.3f}% completed")
-
+                            printed = methods.logging(2, 'ECC Encoding', printed, percent=percent, bps=bps, time=elapsed_time)
                         fhead = None
-                    if verbose: print('\x1b[1A\x1b[2K', end='')
 
                 f.seek(0)
                 head = f.read(head_len)
