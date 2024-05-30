@@ -1,4 +1,4 @@
-import base64, json, os, shutil, struct, sys
+import json, shutil, struct, sys
 from .common import variables, methods
 from .tools.headb import headb
 
