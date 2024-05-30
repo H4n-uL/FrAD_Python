@@ -161,7 +161,7 @@ class encode:
         cmd = []
         if not raw:
             channels, smprate, codec, duration = encode.get_info(file_path)
-            if profile in [1, 2] and new_srate: new_srate = min(new_srate, 96000)
+            if profile in [1, 2]: new_srate = min(new_srate and new_srate or smprate, 96000)
             cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
             if chnl is not None: channels = chnl
             segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
