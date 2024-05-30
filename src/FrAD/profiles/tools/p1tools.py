@@ -16,33 +16,33 @@ class pns:
             None if MOS[subband_index+1] is None else rndint(dlen/(smprate/2)*MOS[subband_index+1]))
 
     @staticmethod
-    def maskingThresholdOpus(mX: np.ndarray, alpha: float, smprate: int) -> np.ndarray:
-        mT = np.zeros_like(mX)
+    def mask_thres_MOS(freqs: np.ndarray, alpha: float, smprate: int) -> np.ndarray:
+        thres = np.zeros_like(freqs)
         for i in range(subbands):
-            subband_mX = mX[pns.getbinrng(len(mX), smprate, i)]
-            if len(subband_mX) > 0:
-                if MOS[i+1] == None: mT[pns.getbinrng(len(mX), smprate, i)] = np.inf; continue
+            subfreqs = freqs[pns.getbinrng(len(freqs), smprate, i)]
+            if len(subfreqs) > 0:
+                if MOS[i+1] == None: thres[pns.getbinrng(len(freqs), smprate, i)] = np.inf; continue
                 f = (MOS[i] + MOS[i+1]) / 2
                 ABS = (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))
                 ABS = np.clip(ABS, None, 96)
-                mT[pns.getbinrng(len(mX), smprate, i)] = np.maximum(np.max(subband_mX)**alpha, 10.0**((ABS-96)/20))
-        return mT
+                thres[pns.getbinrng(len(freqs), smprate, i)] = np.maximum(np.max(subfreqs)**alpha, 10.0**((ABS-96)/20))
+        return thres
 
     @staticmethod
-    def mapping2opus(mX: np.ndarray, smprate):
-        mapped_mX = np.zeros(subbands)
+    def mapping2opus(freqs: np.ndarray, smprate):
+        mapped_freqs = np.zeros(subbands)
         for i in range(subbands):
-            subband_mX = mX[pns.getbinrng(len(mX), smprate, i)]
-            if len(subband_mX) > 0:
-                mapped_mX[i] = np.sqrt(np.mean(subband_mX**2))
-        return mapped_mX
+            subfreqs = freqs[pns.getbinrng(len(freqs), smprate, i)]
+            if len(subfreqs) > 0:
+                mapped_freqs[i] = np.sqrt(np.mean(subfreqs**2))
+        return mapped_freqs
 
     @staticmethod
-    def mappingfromopus(mapped_mX, mX_shape, smprate):
-        mX = np.zeros(mX_shape)
+    def mappingfromopus(mapped_freqs, freqs_shape, smprate):
+        freqs = np.zeros(freqs_shape)
         for i in range(subbands):
-            mX[pns.getbinrng(mX_shape, smprate, i)] = mapped_mX[i]
-        return mX
+            freqs[pns.getbinrng(freqs_shape, smprate, i)] = mapped_freqs[i]
+        return freqs
 
 def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np.ndarray, np.ndarray]:
     alpha = 0.8
@@ -54,10 +54,10 @@ def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np
     pns_sgnl = []
     mask = []
     for c in range(channels):
-        mT = pns.maskingThresholdOpus(
+        thres = pns.mask_thres_MOS(
             pns.mapping2opus(np.abs(freqs[c]),kwargs['smprate']),alpha,kwargs['smprate']) * const_factor
-        mask.append(mT)
-        pns_sgnl.append(np.around(freqs[c] / pns.mappingfromopus(mT,dlen,kwargs['smprate'])))
+        mask.append(thres)
+        pns_sgnl.append(np.around(freqs[c] / pns.mappingfromopus(thres,dlen,kwargs['smprate'])))
 
     return np.array(pns_sgnl), np.array(mask)
 
