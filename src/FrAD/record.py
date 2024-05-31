@@ -80,8 +80,8 @@ class recorder:
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
-                    efb = headb.encode_efb(profile, apply_ecc, little_endian, bf)
-                    encode.write_frame(f, frame, chnl, smprate, efb, (ecc_dsize, ecc_codesize), len(data))
+                    pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bf)
+                    encode.write_frame(f, frame, chnl, smprate, pfb, (ecc_dsize, ecc_codesize), len(data))
 
                 except KeyboardInterrupt:
                     break

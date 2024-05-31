@@ -16,7 +16,7 @@ class ASFH:
     def update(self, file: typing.BinaryIO):
         header = variables.FRM_SIGN + file.read(28)
         self.frmlen = struct.unpack('>I', header[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
-        self.profile, self.ecc, self.endian, self.float_bits = headb.decode_efb(struct.unpack('>B', header[0x8:0x9])[0]) # 0x08: EFloat Byte
+        self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(struct.unpack('>B', header[0x8:0x9])[0]) # 0x08: EFloat Byte
         self.chnl = struct.unpack('>B', header[0x9:0xa])[0] + 1     # 0x09:    Channels
         self.ecc_dsize = struct.unpack('>B', header[0xa:0xb])[0]    # 0x0a:    ECC Data block size
         self.ecc_codesize = struct.unpack('>B', header[0xb:0xc])[0] # 0x0b:    ECC Code size

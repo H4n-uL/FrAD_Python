@@ -47,8 +47,8 @@ class repack:
                         frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
                         # EFloat Byte
-                        efb = headb.encode_efb(asfh.profile, True, asfh.endian, asfh.float_bits)
-                        encode.write_frame(t, frame, asfh.chnl, asfh.srate, efb, (ecc_dsize, ecc_codesize), asfh.fsize)
+                        pfb = headb.encode_pfb(asfh.profile, True, asfh.endian, asfh.float_bits)
+                        encode.write_frame(t, frame, asfh.chnl, asfh.srate, pfb, (ecc_dsize, ecc_codesize), asfh.fsize)
 
                         if verbose:
                             total_bytes += asfh.frmlen+32

@@ -15,12 +15,12 @@ class encode:
         return data, prev
 
     @staticmethod
-    def write_frame(file: typing.BinaryIO, frame: bytes, channels: int, srate: int, efb: bytes, ecc_list: tuple[int, int], fsize: int) -> None:
-        if not struct.unpack('>B', efb)[0]&0b00010000: ecc_list = (0, 0)
+    def write_frame(file: typing.BinaryIO, frame: bytes, channels: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int) -> None:
+        if not struct.unpack('>B', pfb)[0]&0b00010000: ecc_list = (0, 0)
         data = bytes(
             variables.FRM_SIGN +
             struct.pack('>I', len(frame)) +
-            efb +
+            pfb +
             struct.pack('>B', channels - 1) +
             struct.pack('>B', ecc_list[0]) +
             struct.pack('>B', ecc_list[1]) +
@@ -240,15 +240,15 @@ class encode:
                     flen = len(frame)
 
                     # Encoding
-                    frame, bit_depth_frame, channels_frame, bits_efb = \
+                    frame, bit_depth_frame, channels_frame, bits_pfb = \
                         fourier.analogue(frame, bits, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
 
                     # Applying ECC
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
                     # EFloat Byte
-                    efb = headb.encode_efb(profile, apply_ecc, little_endian, bits_efb)
-                    encode.write_frame(file, frame, channels_frame, smprate, efb, (ecc_dsize, ecc_codesize), flen)
+                    pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bits_pfb)
+                    encode.write_frame(file, frame, channels_frame, smprate, pfb, (ecc_dsize, ecc_codesize), flen)
 
                     # Verbose block
                     if verbose:
