@@ -43,6 +43,7 @@ class recorder:
 
         if overlap < 1: overlap = 1/overlap
         if overlap%1!=0: overlap = int(overlap)
+        if overlap > 255: overlap = 255
         print('Please enter your recording device ID from below.')
         for ind, dev in enumerate(sd.query_devices()):
             if dev['max_input_channels'] != 0:
