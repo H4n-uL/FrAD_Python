@@ -43,8 +43,8 @@ class headb:
         srate = variables.prf1_srates.index(srate) << 6
         for mult in [128, 144, 192, None]:
             if mult is None: return struct.pack('>H', chnl | srate )
-            smp_mult = int(math.log2(fsize / mult))
-            if fsize == mult * (2**smp_mult): break
+            smp_mult = math.ceil(math.log2(fsize / mult))
+            if fsize <= mult * (2**smp_mult): break
         px = [128, 144, 192].index(mult) << 4
         fsize = int(math.log2(fsize / mult)) << 1
         return struct.pack('>H', chnl | srate | px | fsize)

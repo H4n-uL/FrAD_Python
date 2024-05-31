@@ -172,7 +172,7 @@ class encode:
         if profile in [1]:
             if fsize > 24576: fsize = 2048
             for mult in [128, 144, 192, None]:
-                pfix = 2**int(math.log2(fsize / mult))
+                pfix = 2**math.ceil(math.log2(fsize / mult))
                 if fsize <= mult * pfix: fsize = mult * pfix; break
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
