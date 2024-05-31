@@ -10,6 +10,7 @@ class variables:
     FRM_SIGN = b'\xff\xd0\xd2\x97'
     cli_width = 80
     overlap_rate = 16
+    prf1_srates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000]
 
     # Temporary files for metadata processing / stream repairing
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frad').name
@@ -65,6 +66,18 @@ class methods:
     def cantreencode(sign: bytes): # Anti-re-encode
         if sign in [b'fRad', b'\xff\xd0\xd2\x97']:
             raise Exception('This is an already encoded Fourier Analogue file.')
+
+    @staticmethod
+    def crc16_ansi(data: bytes) -> int:
+        crc = 0xFFFF
+        for byte in data:
+            crc ^= byte << 8
+            for _ in range(8):
+                if crc & 0x8000:
+                    crc = (crc << 1) ^ 0x8005
+                else:
+                    crc <<= 1
+        return crc & 0xFFFF
 
     @staticmethod
     def tformat(n: float | str) -> str: # i'm dying help

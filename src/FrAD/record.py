@@ -1,7 +1,7 @@
 from .fourier import fourier
 from .encoder import encode
 import numpy as np
-import os, struct, sys, zlib
+import math, os, sys
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -36,7 +36,13 @@ class recorder:
         if fsize % 2 != 0: print('Sample size must be multiple of 2.'); sys.exit()
         if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
         if profile == 2 and fsize%8!=0: print(f'Invalid frame size {fsize} Frame size should be multiple of 8 for Profile 2.'); sys.exit()
+        if profile in [1]:
+            for mult in [128, 144, 192, None]:
+                if mult == None: print(f'Invalid frame size: {fsize}, Frame size should be [128, 144, 192] * 2^({{0~7}}).'); sys.exit(1)
+                if fsize == mult * (2**int(math.log2(fsize / mult))): break
 
+        if overlap < 1: overlap = 1/overlap
+        if overlap%1!=0: overlap = int(overlap)
         print('Please enter your recording device ID from below.')
         for ind, dev in enumerate(sd.query_devices()):
             if dev['max_input_channels'] != 0:
@@ -74,7 +80,7 @@ class recorder:
                     # Overlap
                     if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
                     data = record.read(rlen)[0]
-                    data, prev = encode.overlap(data, prev, fsize=fsize, chnl=channels, profile=profile)
+                    data, prev = encode.overlap(data, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
                     frame, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
 
                     # Applying ECC (This will make encoding hundreds of times slower)

@@ -1,5 +1,5 @@
-from ..common import methods
-import base64, struct
+from ..common import variables, methods
+import base64, math, struct
 
 IMAGE =   b'\xf5'
 COMMENT = b'\xfa\xaa'
@@ -24,7 +24,7 @@ class metablock:
 class headb:
     @staticmethod
     def encode_pfb(profile: int, isecc: bool, little_endian: bool, bits: int) -> bytes:
-        profile = profile << 5
+        profile <<= 5
         ecc = (isecc and 0b1 or 0b0) << 4
         endian = (little_endian and 0b1 or 0b0) << 3
         return struct.pack('<B', profile | ecc | endian | bits)
@@ -36,6 +36,26 @@ class headb:
         little_endian = pfb>>3&0b1==0b1 and True or False # 0x08@0b011:    Endian
         float_bits = pfb & 0b111                          # 0x08@0b010-3b: Stream bit depth
         return profile, ecc, little_endian, float_bits
+
+    @staticmethod
+    def encode_css_prf1(channels: int, srate: int, fsize: int) -> bytes:
+        chnl = (channels-1)<<10
+        srate = variables.prf1_srates.index(srate) << 6
+        for mult in [128, 144, 192, None]:
+            if mult is None: return struct.pack('>H', chnl | srate )
+            smp_mult = int(math.log2(fsize / mult))
+            if fsize == mult * (2**smp_mult): break
+        px = [128, 144, 192].index(mult) << 4
+        fsize = int(math.log2(fsize / mult)) << 1
+        return struct.pack('>H', chnl | srate | px | fsize)
+
+    @staticmethod
+    def decode_css_prf1(css: int) -> tuple[int, bool, bool, int]:
+        channels = (css>>10) + 1                          # 0x09@0b111-6b: Channels
+        srate = variables.prf1_srates[css>>6&0b1111]      # 0x09@0b001-4b: Sample rate index
+        fsize_prefix = [128, 144, 192][css>>4&0b11]       # 0x0a@0b101-2b: Frame size prefix
+        fsize = fsize_prefix * 2**(css>>1&0b111)          # 0x0a@0b011-3b: Frame size
+        return channels, srate, fsize
 
     @staticmethod
     def uilder(meta: list[list[str]] | None = None, img: bytes | None = None):

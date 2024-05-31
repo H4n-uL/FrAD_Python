@@ -7,29 +7,43 @@ from .tools.headb import headb
 
 class encode:
     @staticmethod
-    def overlap(data: np.ndarray, prev: np.ndarray, **kwargs) -> tuple[np.ndarray, np.ndarray]:
-        olap = variables.overlap_rate
+    def overlap(data: np.ndarray, prev: np.ndarray, olap: int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
         if len(prev) != 0: data = np.concatenate([prev, data])
         if kwargs.get('profile') in [1, 2]: prev = data[-kwargs.get('fsize', None)//olap:]
         else: prev = np.array([])
         return data, prev
 
     @staticmethod
-    def write_frame(file: typing.BinaryIO, frame: bytes, channels: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int) -> None:
-        if not struct.unpack('>B', pfb)[0]&0b00010000: ecc_list = (0, 0)
+    def write_frame(file: typing.BinaryIO, frame: bytes, channels: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> None:
+        profile, isecc, _, _ = headb.decode_pfb(struct.unpack('>B', pfb)[0])
+        if not isecc: ecc_list = (0, 0)
         data = bytes(
             variables.FRM_SIGN +
             struct.pack('>I', len(frame)) +
-            pfb +
-            struct.pack('>B', channels - 1) +
-            struct.pack('>B', ecc_list[0]) +
-            struct.pack('>B', ecc_list[1]) +
-            struct.pack('>I', srate) +
-            b'\x00'*8 +
-            struct.pack('>I', fsize) +
-            struct.pack('>I', zlib.crc32(frame)) +
-            frame
+            pfb
         )
+        if profile == 0:
+            data += (
+                struct.pack('>B', channels - 1) +
+                struct.pack('>B', ecc_list[0]) +
+                struct.pack('>B', ecc_list[1]) +
+                struct.pack('>I', srate) +
+                b'\x00'*8 +
+                struct.pack('>I', fsize) +
+                struct.pack('>I', zlib.crc32(frame))
+            )
+        elif profile == 1:
+            data += (
+                headb.encode_css_prf1(channels, srate, fsize) +
+                struct.pack('>B', variables.overlap_rate)
+            )
+            if isecc:
+                data += (
+                    struct.pack('>B', ecc_list[0]) +
+                    struct.pack('>B', ecc_list[1]) +
+                    struct.pack('>H', methods.crc16_ansi(frame))
+                )
+        data += frame
         file.write(data)
         return None
 
@@ -119,6 +133,7 @@ class encode:
         little_endian: bool = kwargs.get('le', False)
         profile: int = kwargs.get('prf', 0)
         loss_level: int = kwargs.get('lv', 0)
+        overlap: int = kwargs.get('olap', variables.overlap_rate)
         gain: float = kwargs.get('gain', None)
 
         # ECC settings
@@ -154,6 +169,11 @@ class encode:
             if chnl is None: print('Channel count is required for raw PCM.'); sys.exit(1)
             channels, smprate = chnl, new_srate
         if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
+        if profile in [1]:
+            if fsize > 24576: fsize = 2048
+            for mult in [128, 144, 192, None]:
+                pfix = 2**int(math.log2(fsize / mult))
+                if fsize <= mult * pfix: fsize = mult * pfix; break
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
         # Getting Audio info w. ffmpeg & ffprobe
@@ -161,7 +181,9 @@ class encode:
         cmd = []
         if not raw:
             channels, smprate, codec, duration = encode.get_info(file_path)
-            if profile in [1, 2]: new_srate = min(new_srate or smprate, 96000)
+            if profile in [1, 2]:
+                new_srate = min(new_srate or smprate, 96000)
+                if not new_srate in variables.prf1_srates: new_srate = 48000
             cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
             if chnl is not None: channels = chnl
             segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
@@ -172,6 +194,8 @@ class encode:
 
         smprate = new_srate is not None and new_srate or smprate
 
+        if overlap < 1: overlap = 1/overlap
+        if overlap%1!=0: overlap = int(overlap)
         # Setting file extension
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
         if not out.lower().endswith(('.frad', '.dsin', '.fra', '.dsn')):
@@ -232,7 +256,7 @@ class encode:
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data[:len(data)//smpsize * smpsize], dtype).astype(float).reshape(-1, channels) * gain
                     rlen = len(frame)
-                    frame, prev = encode.overlap(frame, prev, fsize=fsize, chnl=channels, profile=profile)
+                    frame, prev = encode.overlap(frame, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
                     if raw:
                         if not raw.startswith('f'):
                             frame /= 2**(sample_bytes*8-1)

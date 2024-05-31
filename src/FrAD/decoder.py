@@ -14,15 +14,26 @@ class ASFH:
     def __init__(self): pass
 
     def update(self, file: typing.BinaryIO):
-        header = variables.FRM_SIGN + file.read(28)
-        self.frmlen = struct.unpack('>I', header[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
-        self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(struct.unpack('>B', header[0x8:0x9])[0]) # 0x08: EFloat Byte
-        self.chnl = struct.unpack('>B', header[0x9:0xa])[0] + 1     # 0x09:    Channels
-        self.ecc_dsize = struct.unpack('>B', header[0xa:0xb])[0]    # 0x0a:    ECC Data block size
-        self.ecc_codesize = struct.unpack('>B', header[0xb:0xc])[0] # 0x0b:    ECC Code size
-        self.srate = struct.unpack('>I', header[0xc:0x10])[0]       # 0x0c-4B: Sample rate
-        self.fsize = struct.unpack('>I', header[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
-        self.crc32 = header[0x1c:0x20]                              # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+        fhead = variables.FRM_SIGN + file.read(5)
+        self.frmlen = struct.unpack('>I', fhead[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
+        self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(struct.unpack('>B', fhead[0x8:0x9])[0]) # 0x08: EFloat Byte
+        if self.profile == 0:
+            fhead += file.read(19)
+            self.chnl = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
+            self.ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]    # 0x0a:    ECC Data block size
+            self.ecc_codesize = struct.unpack('>B', fhead[0xb:0xc])[0] # 0x0b:    ECC Code size
+            self.srate = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
+            self.fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
+            self.crc = fhead[0x1c:0x20]                                # 0x1c-4B: ISO 3309 CRC32 of Audio Data
+        elif self.profile == 1:
+            fhead += file.read(3)
+            self.chnl, self.srate, self.fsize = headb.decode_css_prf1(struct.unpack('>H', fhead[0x9:0xb])[0])
+            self.overlap = struct.unpack('>B', fhead[0xb:0xc])[0]      # 0x0b: Overlap rate
+            if self.ecc == True:
+                fhead += file.read(4)
+                self.ecc_dsize = struct.unpack('>B', fhead[0xc:0xd])[0]
+                self.ecc_codesize = struct.unpack('>B', fhead[0xd:0xe])[0]
+                self.crc = fhead[0xe:0x10]                             # 0x0e-2B: ANSI CRC16 of Audio Data
 
 filelist = []
 
@@ -36,7 +47,6 @@ def cleanup():
 class decode:
     @staticmethod
     def overlap(frame: np.ndarray, prev: np.ndarray, asfh: ASFH) -> tuple[np.ndarray, np.ndarray]:
-        olap = variables.overlap_rate
         # 1/16 Overlapping
         if len(prev)>0:
             fade_in = np.linspace(0, 1, len(prev))
@@ -46,7 +56,7 @@ class decode:
                 (frame[:len(prev), c] * fade_in) +\
                 (prev[:, c]           * fade_out)
         if asfh.profile in [1, 2]:
-            prev = frame[-len(frame)//olap:]
+            prev = frame[-len(frame)//asfh.overlap:]
             frame = frame[:-len(prev)]
         else: prev = np.array([])
         return frame, prev
@@ -105,9 +115,12 @@ class decode:
                     continue
                 asfh.update(f)
                 data = f.read(asfh.frmlen)
-                if fix_error and zlib.crc32(data) != struct.unpack('>I', asfh.crc32)[0]:
-                    error_dir.append(str(framescount))
-                    if not warned: warned = True; print("This file may had been corrupted. Please repack your file via 'ecc' option for the best music experience.")
+                if fix_error:
+                    if ((asfh.profile == 0 and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
+                    or (asfh.profile in [1, 2] and asfh.ecc and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
+                    ):
+                        error_dir.append(str(framescount))
+                        if not warned: warned = True; print("This file may had been corrupted. Please repack your file via 'ecc' option for the best music experience.")
 
                 try: ddict[asfh.srate] += asfh.fsize
                 except: ddict[asfh.srate] = asfh.fsize
@@ -173,8 +186,11 @@ class decode:
 
                     # Decoding ECC
                     if asfh.ecc:
-                        if fix_error and zlib.crc32(data) != struct.unpack('>I', asfh.crc32)[0]:
-                            data = ecc.decode(data, asfh.ecc_dsize, asfh.ecc_codesize)
+                        if fix_error:
+                            if ((asfh.profile == 0 and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
+                            or (asfh.profile in [1, 2] and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
+                            ):
+                                data = ecc.decode(data, asfh.ecc_dsize, asfh.ecc_codesize)
                         else: data = ecc.unecc(data, asfh.ecc_dsize, asfh.ecc_codesize)
 
                     # Decoding
