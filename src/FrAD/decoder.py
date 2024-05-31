@@ -226,7 +226,7 @@ class decode:
 # ------------------------------- End verbose block ------------------------------ #
                     fhead = None
 
-                if printed and play and verbose: print(RM_CLI*4, end='')
+                if printed and play and verbose: print(RM_CLI*5, end='')
                 stdoutstrm.stop()
                 tempfstrm.close()
             except KeyboardInterrupt:
