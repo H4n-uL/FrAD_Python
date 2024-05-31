@@ -231,12 +231,13 @@ class encode:
 
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data[:len(data)//smpsize * smpsize], dtype).astype(float).reshape(-1, channels) * gain
-                    flen = len(frame)
+                    rlen = len(frame)
                     frame, prev = encode.overlap(frame, prev, fsize=fsize, chnl=channels, profile=profile)
                     if raw:
                         if not raw.startswith('f'):
                             frame /= 2**(sample_bytes*8-1)
                             if raw.startswith('u'): frame-=1
+                    flen = len(frame)
 
                     # Encoding
                     frame, bit_depth_frame, channels_frame, bits_efb = \
@@ -252,8 +253,8 @@ class encode:
                     # Verbose block
                     if verbose:
                         sample_size = bit_depth_frame // 8 * channels
-                        total_bytes += flen * sample_size
-                        total_samples += flen
+                        total_bytes += rlen * sample_size
+                        total_samples += rlen
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
                         mult = bps / smprate / sample_size
