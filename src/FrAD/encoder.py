@@ -18,7 +18,7 @@ class encode:
     def write_frame(file: typing.BinaryIO, frame: bytes, channels: int, srate: int, efb: bytes, ecc_list: tuple[int, int], fsize: int) -> None:
         if not struct.unpack('>B', efb)[0]&0b00010000: ecc_list = (0, 0)
         data = bytes(
-            b'\xff\xd0\xd2\x97' +
+            variables.FRM_SIGN +
             struct.pack('>I', len(frame)) +
             efb +
             struct.pack('>B', channels - 1) +
