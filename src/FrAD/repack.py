@@ -33,7 +33,7 @@ class repack:
                             continue
 
                         # Parsing ASFH
-                        asfh.update(fhead+f.read(28))
+                        asfh.update(f)
                         # Reading Frame
                         frame = f.read(asfh.frmlen)
 

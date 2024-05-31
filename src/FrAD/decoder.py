@@ -2,7 +2,8 @@ from .common import variables, methods
 from .fourier import fourier
 from .header import header
 import numpy as np
-import atexit, math, os, platform, shutil, struct, subprocess, sys, tempfile, time, traceback, zlib
+import atexit, math, os, platform, shutil, struct, subprocess,\
+       sys, tempfile, time, traceback, typing, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -12,7 +13,8 @@ RM_CLI = '\x1b[1A\x1b[2K'
 class ASFH:
     def __init__(self): pass
 
-    def update(self, header: bytes):
+    def update(self, file: typing.BinaryIO):
+        header = variables.FRM_SIGN + file.read(28)
         self.frmlen = struct.unpack('>I', header[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_efb(struct.unpack('>B', header[0x8:0x9])[0]) # 0x08: EFloat Byte
         self.chnl = struct.unpack('>B', header[0x9:0xa])[0] + 1     # 0x09:    Channels
@@ -94,14 +96,14 @@ class decode:
             while True:
                 # Finding Audio Stream Frame Header(AFSH)
                 if fhead is None: fhead = f.read(4)
-                if fhead != b'\xff\xd0\xd2\x97':
+                if fhead != variables.FRM_SIGN:
                     hq = f.read(1)
                     if not hq:
                         if asfh.profile in [1, 2]: ddict[asfh.srate] += asfh.fsize//16
                         break
                     fhead = fhead[1:]+hq
                     continue
-                asfh.update(fhead+f.read(28))
+                asfh.update(f)
                 data = f.read(asfh.frmlen)
                 if fix_error and zlib.crc32(data) != struct.unpack('>I', asfh.crc32)[0]:
                     error_dir.append(str(framescount))
@@ -153,7 +155,7 @@ class decode:
                 while True:
                     # Finding Audio Stream Frame Header(AFSH)
                     if fhead is None: fhead = f.read(4)
-                    if fhead != b'\xff\xd0\xd2\x97':
+                    if fhead != variables.FRM_SIGN:
                         hq = f.read(1)
                         if not hq:
                             if prev is not None:
@@ -165,7 +167,7 @@ class decode:
                         continue
 
                     # Parsing ASFH
-                    asfh.update(fhead+f.read(28))
+                    asfh.update(f)
                     # Reading Block
                     data: bytes = f.read(asfh.frmlen)
 

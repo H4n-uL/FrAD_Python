@@ -7,6 +7,7 @@ directory = os.path.dirname(os.path.realpath(__file__))
 res = os.path.join(directory, 'res')
 
 class variables:
+    FRM_SIGN = b'\xff\xd0\xd2\x97'
     cli_width = 40
     overlap_rate = 16
 
