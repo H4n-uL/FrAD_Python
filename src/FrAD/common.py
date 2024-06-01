@@ -121,7 +121,7 @@ class methods:
             if os.path.exists(file):
                 try:os.remove(file)
                 except:pass
-    
+
     @staticmethod
     def logging(loglevel: int, method: str, printed: bool, **kwargs) -> bool:
         if loglevel == 1:
