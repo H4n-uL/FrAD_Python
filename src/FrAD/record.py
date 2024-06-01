@@ -45,8 +45,8 @@ class recorder:
             new_srate = min(new_srate or smprate, 96000)
             if not new_srate in variables.prf1_srates: new_srate = 48000
 
-        if overlap <= 0: overlap = 0
-        elif overlap is None: overlap = variables.overlap_rate
+        if overlap is None: overlap = variables.overlap_rate
+        elif overlap <= 0: overlap = 0
         else:
             if overlap < 2: overlap = 1/overlap
             if overlap%1!=0: overlap = int(overlap)
