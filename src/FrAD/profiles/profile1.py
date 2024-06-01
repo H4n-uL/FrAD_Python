@@ -20,8 +20,7 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
     endian = be and '>' or '<'
 
     # DCT
-    dlen = len(pcm)
-    pcm = np.pad(pcm, ((0, headb.decode_css_prf1(headb.encode_css_prf1(channels, 48000, dlen))[2]-dlen), (0, 0)), mode='constant')
+    pcm = np.pad(pcm, ((0, headb.decode_css_prf1(headb.encode_css_prf1(channels, 48000, len(pcm)))[2]-len(pcm)), (0, 0)), mode='constant')
     dlen = len(pcm)
     freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
