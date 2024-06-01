@@ -16,7 +16,7 @@ class ASFH:
     def update(self, file: typing.BinaryIO):
         fhead = variables.FRM_SIGN + file.read(5)
         self.frmlen = struct.unpack('>I', fhead[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
-        self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(struct.unpack('>B', fhead[0x8:0x9])[0]) # 0x08: EFloat Byte
+        self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
         if self.profile == 0:
             fhead += file.read(19)
             self.chnl = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
@@ -27,7 +27,7 @@ class ASFH:
             self.crc = fhead[0x1c:0x20]                                # 0x1c-4B: ISO 3309 CRC32 of Audio Data
         elif self.profile == 1:
             fhead += file.read(3)
-            self.chnl, self.srate, self.fsize = headb.decode_css_prf1(struct.unpack('>H', fhead[0x9:0xb])[0])
+            self.chnl, self.srate, self.fsize = headb.decode_css_prf1(fhead[0x9:0xb])
             self.overlap = struct.unpack('>B', fhead[0xb:0xc])[0]      # 0x0b: Overlap rate
             if self.ecc == True:
                 fhead += file.read(4)
