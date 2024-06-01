@@ -237,13 +237,6 @@ class encode:
             open(out, 'wb').write(headb.uilder(meta, img))
             with open(out, 'ab') as file:
                 while True:
-                    # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
-                    # fsize = random.choice(list(range(32, 8193))) # Random spf test
-                    # profile = random.choice(list(range(2))) # Random profile test
-                    # loss_level = random.choice(list(range(21))) # Random lossy level test
-                    # apply_ecc = random.choice([True, False]) # Random ECC test
-                    # ecc_dsize, ecc_codesize = random.choice(list(range(64, 129))), random.choice(list(range(16, 64))) # Random ECC test
-
                     # Getting required read length
                     rlen = fsize
                     while rlen < len(prev): rlen += 128
