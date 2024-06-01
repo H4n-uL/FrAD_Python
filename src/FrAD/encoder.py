@@ -252,12 +252,12 @@ class encode:
 
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data[:len(data)//smpsize * smpsize], dtype).astype(float).reshape(-1, channels) * gain
-                    rlen = len(frame)
-                    frame, prev = encode.overlap(frame, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
                     if raw:
                         if not raw.startswith('f'):
                             frame /= 2**(sample_bytes*8-1)
                             if raw.startswith('u'): frame-=1
+                    rlen = len(frame)
+                    frame, prev = encode.overlap(frame, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
                     flen = len(frame)
 
                     # Encoding
