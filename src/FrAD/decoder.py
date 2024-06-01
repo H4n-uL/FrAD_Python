@@ -47,7 +47,6 @@ def cleanup():
 class decode:
     @staticmethod
     def overlap(frame: np.ndarray, prev: np.ndarray, asfh: ASFH) -> tuple[np.ndarray, np.ndarray]:
-        # 1/16 Overlapping
         if len(prev)>0:
             fade_in = np.linspace(0, 1, len(prev))
             fade_out = np.linspace(1, 0, len(prev))
