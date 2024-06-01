@@ -1,4 +1,5 @@
 from .fourier import fourier
+from .common import variables
 from .encoder import encode
 import numpy as np
 import math, os, sys
@@ -30,17 +31,18 @@ class recorder:
         meta = kwargs.get('meta', None)
         img = kwargs.get('img', None)
 
-        segmax = ((2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * 256 * 16)//16)
-        if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit()
-        if fsize < 2: print(f'Sample size must be at least 2.'); sys.exit()
-        if fsize % 2 != 0: print('Sample size must be multiple of 2.'); sys.exit()
+        # segmax for Profile 0 = 4GiB / (intra-channel-sample size * channels * ECC mapping)
+        # intra-channel-sample size = bit depth * 8, least 3 bytes(float s1e8m15)
+        # ECC mapping = (block size / data size)
+        segmax = {0: (2**32-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * max(bit_depth/8, 3)),
+                    1: max(variables.prf1_smpls_li)}
+        if fsize > segmax[profile]: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+        if profile == 1: fsize = min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
         if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
-        if profile == 2 and fsize%8!=0: print(f'Invalid frame size {fsize} Frame size should be multiple of 8 for Profile 2.'); sys.exit()
-        if profile in [1]:
-            for mult in [128, 144, 192, None]:
-                if mult == None: print(f'Invalid frame size: {fsize}, Frame size should be [128, 144, 192] * 2^({{0~7}}).'); sys.exit(1)
-                if fsize == mult * (2**int(math.log2(fsize / mult))): break
 
+        if profile in [1, 2]:
+            new_srate = min(new_srate or smprate, 96000)
+            if not new_srate in variables.prf1_srates: new_srate = 48000
         if overlap < 1: overlap = 1/overlap
         if overlap%1!=0: overlap = int(overlap)
         if overlap > 255: overlap = 255
