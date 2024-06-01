@@ -18,7 +18,7 @@ class ASFH:
         self.frmlen = struct.unpack('>I', fhead[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
         if self.profile == 0:
-            fhead += file.read(19)
+            fhead += file.read(23)
             self.chnl = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
             self.ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]    # 0x0a:    ECC Data block size
             self.ecc_codesize = struct.unpack('>B', fhead[0xb:0xc])[0] # 0x0b:    ECC Code size
