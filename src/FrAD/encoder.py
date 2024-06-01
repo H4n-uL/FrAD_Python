@@ -195,6 +195,7 @@ class encode:
         smprate = new_srate is not None and new_srate or smprate
 
         if overlap <= 0: overlap = 0
+        elif overlap is None: overlap = variables.overlap_rate
         else:
             if overlap < 2: overlap = 1/overlap
             if overlap%1!=0: overlap = int(overlap)

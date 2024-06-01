@@ -46,9 +46,11 @@ class recorder:
             if not new_srate in variables.prf1_srates: new_srate = 48000
 
         if overlap <= 0: overlap = 0
-        elif overlap < 2: overlap = 2
-        if overlap%1!=0: overlap = int(overlap)
-        if overlap > 255: overlap = 255
+        elif overlap is None: overlap = variables.overlap_rate
+        else:
+            if overlap < 2: overlap = 1/overlap
+            if overlap%1!=0: overlap = int(overlap)
+            if overlap > 255: overlap = 255
         print('Please enter your recording device ID from below.')
         for ind, dev in enumerate(sd.query_devices()):
             if dev['max_input_channels'] != 0:
