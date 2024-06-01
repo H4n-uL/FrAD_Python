@@ -11,6 +11,8 @@ class variables:
     cli_width = 80
     overlap_rate = 16
     prf1_srates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000]
+    prf1_smpls = {128: [128 * 2**i for i in range(8)], 144: [144 * 2**i for i in range(8)], 192: [192 * 2**i for i in range(8)]}
+    prf1_smpls_li = [item for sublist in prf1_smpls.values() for item in sublist]
 
     # Temporary files for metadata processing / stream repairing
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frad').name

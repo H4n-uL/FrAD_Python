@@ -1,6 +1,7 @@
 from scipy.fft import dct, idct
 import numpy as np
 from .tools import p1tools
+from ..tools.headb import headb
 import zlib
 
 depths = [8, 12, 16, 24, 32, 48, 64]
@@ -19,6 +20,8 @@ def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwa
     endian = be and '>' or '<'
 
     # DCT
+    dlen = len(pcm)
+    pcm = np.pad(pcm, ((0, headb.decode_css_prf1(headb.encode_css_prf1(channels, 48000, dlen))[2]-dlen), (0, 0)), mode='constant')
     dlen = len(pcm)
     freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
@@ -57,6 +60,7 @@ def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) ->
     be = not little_endian
     endian = be and '>' or '<'
     bits = depths[fb]
+
 
     # Inflating
     frad = zlib.decompress(frad)

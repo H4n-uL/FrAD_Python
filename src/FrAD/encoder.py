@@ -15,7 +15,7 @@ class encode:
 
     @staticmethod
     def write_frame(file: typing.BinaryIO, frame: bytes, channels: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> None:
-        profile, isecc, _, _ = headb.decode_pfb(struct.unpack('>B', pfb)[0])
+        profile, isecc, _, _ = headb.decode_pfb(pfb)
         if not isecc: ecc_list = (0, 0)
         data = bytes(
             variables.FRM_SIGN +
@@ -169,11 +169,6 @@ class encode:
             if chnl is None: print('Channel count is required for raw PCM.'); sys.exit(1)
             channels, smprate = chnl, new_srate
         if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
-        if profile in [1]:
-            if fsize > 24576: fsize = 2048
-            for mult in [128, 144, 192, None]:
-                pfix = 2**int(math.log2(fsize / mult)+0.5)
-                if fsize <= mult * pfix: fsize = mult * pfix; break
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
         # Getting Audio info w. ffmpeg & ffprobe
@@ -186,8 +181,13 @@ class encode:
                 if not new_srate in variables.prf1_srates: new_srate = 48000
             cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
             if chnl is not None: channels = chnl
-            segmax = (2**31-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * 16)//16
-            if fsize > segmax: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+            # segmax for Profile 0 = 4GiB / (intra-channel-sample size * channels * ECC mapping)
+            # intra-channel-sample size = bit depth * 8, least 3 bytes(float s1e8m15)
+            # ECC mapping = (block size / data size)
+            segmax = {0: (2**32-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * max(bits/8, 3)),
+                      1: max(variables.prf1_smpls_li)}
+            if fsize > segmax[profile]: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+            if profile == 1: fsize = min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
             if new_srate is not None: duration = int(duration / smprate * new_srate)
             if meta == None: meta = encode.get_metadata(file_path)
             if img  == None: img  = encode.get_image(   file_path)
