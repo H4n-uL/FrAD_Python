@@ -55,7 +55,7 @@ class decode:
                 frame[:len(prev), c] = \
                 (frame[:len(prev), c] * fade_in) +\
                 (prev[:, c]           * fade_out)
-        if asfh.profile in [1, 2]:
+        if asfh.profile in [1, 2] and asfh.overlap != 0:
             prev = frame[-len(frame)//asfh.overlap:]
             frame = frame[:-len(prev)]
         else: prev = np.array([])
@@ -124,7 +124,7 @@ class decode:
 
                 try: ddict[asfh.srate] += asfh.fsize
                 except: ddict[asfh.srate] = asfh.fsize
-                if asfh.profile in [1, 2]: ddict[asfh.srate] -= asfh.fsize//16
+                if asfh.profile in [1, 2] and asfh.overlap != 0: ddict[asfh.srate] -= asfh.fsize//asfh.overlap
 
                 dlen += asfh.frmlen
                 framescount += 1

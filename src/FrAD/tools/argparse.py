@@ -71,6 +71,16 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     print(f'Value cannot be parsed as Integer: {arg} {fsz}')
                     sys.exit(1)
 
+            # Overlap ratio
+            elif key in ['olap', 'overlap']:
+                olap = '<null>'
+                try:
+                    olap = args.pop(0)
+                    key, value = 'overlap', int(olap)
+                except:
+                    print(f'Value cannot be parsed as Integer: {arg} {olap}')
+                    sys.exit(1)
+
             # Codec type
             elif key in ['codec']:
                 key, value = 'codec', args.pop(0)

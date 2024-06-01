@@ -9,7 +9,7 @@ class encode:
     @staticmethod
     def overlap(data: np.ndarray, prev: np.ndarray, olap: int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
         if len(prev) != 0: data = np.concatenate([prev, data])
-        if kwargs.get('profile') in [1, 2]: prev = data[-kwargs.get('fsize', None)//olap:]
+        if kwargs.get('profile') in [1, 2] and olap: prev = data[-kwargs.get('fsize', None)//olap:]
         else: prev = np.array([])
         return data, prev
 
@@ -35,7 +35,7 @@ class encode:
         elif profile == 1:
             data += (
                 headb.encode_css_prf1(channels, srate, fsize) +
-                struct.pack('>B', variables.overlap_rate)
+                struct.pack('>B', kwargs.get('olap', 0))
             )
             if isecc:
                 data += (
@@ -194,9 +194,11 @@ class encode:
 
         smprate = new_srate is not None and new_srate or smprate
 
-        if overlap < 1: overlap = 1/overlap
-        if overlap%1!=0: overlap = int(overlap)
-        if overlap > 255: overlap = 255
+        if overlap <= 0: overlap = 0
+        else:
+            if overlap < 2: overlap = 1/overlap
+            if overlap%1!=0: overlap = int(overlap)
+            if overlap > 255: overlap = 255
         # Setting file extension
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
         if not out.lower().endswith(('.frad', '.dsin', '.fra', '.dsn')):
@@ -273,7 +275,7 @@ class encode:
 
                     # EFloat Byte
                     pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bits_pfb)
-                    encode.write_frame(file, frame, channels_frame, smprate, pfb, (ecc_dsize, ecc_codesize), flen)
+                    encode.write_frame(file, frame, channels_frame, smprate, pfb, (ecc_dsize, ecc_codesize), flen, olap=overlap)
 
                     # Verbose block
                     if verbose:

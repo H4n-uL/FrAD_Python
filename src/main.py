@@ -27,6 +27,7 @@ fourier encode path/to/audio.file --bits [bit depth] {{kwargs...}}
                   |                   (alias: fr, frame-size, samples-per-frame)
     --gain        | Gain level in both dBFS and amplitude (alias: g, gain)
     --le          | Little Endian Toggle (alias: le, little-endian)
+    --overlap     | Overlap ratio in 1/{{value}} (alias: olap)
                   |
     --meta        | Metadata in [key] [value], default: pre-embedded meta
                   |                                                   (alias: m)
@@ -94,6 +95,7 @@ This action will capture audio stream and write directly to FrAD file.
                   | default: 96, 24 (alias: e, apply-ecc, enable-ecc)
                   |
     --le          | Little Endian Toggle (alias: le, little-endian)
+    --overlap     | Overlap ratio in 1/{{value}} (alias: olap)
                   |
     --profile     | FrAD Profile from 0 to 7, NOT RECOMMENDED (alias: prf)
     --loss-level  | Lossy compression level (alias: lv, level)'''
@@ -194,7 +196,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
                 out=output, prf=profile, lv=loss_level,
                 fsize=fsize, gain=gain, ecc=ecc_enabled, ecc_sizes=data_ecc,
                 srate=srate, chnl=kwargs.get('chnl', None),
-                raw=kwargs.get('raw', False),
+                raw=kwargs.get('raw', False), olap=kwargs.get('overlap', None),
                 meta=meta, img=img, verbose=verbose)
 
     elif action in decode_opt:
@@ -223,7 +225,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
         bits = kwargs.get('bits', 16)
         recorder.record_audio(file_path, 
             srate=kwargs.get('srate', 48000),
-            bits=bits, fsize=fsize,
+            bits=bits, fsize=fsize, olap=kwargs.get('overlap', None),
             ecc=ecc_enabled, ecc_sizes=data_ecc,
             prf=profile, lv=loss_level, le=le)
 

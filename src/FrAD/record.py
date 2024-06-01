@@ -20,6 +20,7 @@ class recorder:
         little_endian: bool = kwargs.get('le', False)
         profile: int = kwargs.get('prf', 0)
         loss_level: int = kwargs.get('lv', 0)
+        overlap: int = kwargs.get('olap', variables.overlap_rate)
 
         # ECC settings
         apply_ecc = kwargs.get('ecc', False)
@@ -43,7 +44,9 @@ class recorder:
         if profile in [1, 2]:
             new_srate = min(new_srate or smprate, 96000)
             if not new_srate in variables.prf1_srates: new_srate = 48000
-        if overlap < 1: overlap = 1/overlap
+
+        if overlap <= 0: overlap = 0
+        elif overlap < 2: overlap = 2
         if overlap%1!=0: overlap = int(overlap)
         if overlap > 255: overlap = 255
         print('Please enter your recording device ID from below.')
@@ -83,14 +86,14 @@ class recorder:
                     # Overlap
                     if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
                     data = record.read(rlen)[0]
-                    data, prev = encode.overlap(data, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
+                    if overlap: data, prev = encode.overlap(data, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
                     frame, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
                     pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bf)
-                    encode.write_frame(f, frame, chnl, smprate, pfb, (ecc_dsize, ecc_codesize), len(data))
+                    encode.write_frame(f, frame, chnl, smprate, pfb, (ecc_dsize, ecc_codesize), len(data), olap=overlap)
 
                 except KeyboardInterrupt:
                     break
