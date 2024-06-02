@@ -1,4 +1,4 @@
-from .common import variables, methods
+from .common import variables, methods, terminal
 from .fourier import fourier
 import json, os, math, random, struct, subprocess, sys, time, traceback, typing, zlib
 import numpy as np
@@ -62,7 +62,7 @@ class encode:
             if stream['codec_type'] == 'audio':
                 duration = stream['duration_ts'] * int(stream['sample_rate']) // int(stream['time_base'][2:])
                 return int(stream['channels']), int(stream['sample_rate']), stream['codec_name'], duration
-        print('No audio stream found.')
+        terminal('No audio stream found.')
         sys.exit(1)
 
     @staticmethod
@@ -165,10 +165,10 @@ class encode:
 
         # Forcing sample rate and channel count for raw PCM
         if raw:
-            if new_srate is None: print('Sample rate is required for raw PCM.'); sys.exit(1)
-            if chnl is None: print('Channel count is required for raw PCM.'); sys.exit(1)
+            if new_srate is None: terminal('Sample rate is required for raw PCM.'); sys.exit(1)
+            if chnl is None: terminal('Channel count is required for raw PCM.'); sys.exit(1)
             channels, smprate = chnl, new_srate
-        if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
+        if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
         # Getting Audio info w. ffmpeg & ffprobe
@@ -186,7 +186,7 @@ class encode:
             # ECC mapping = (block size / data size)
             segmax = {0: (2**32-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * max(bits/8, 3)),
                       1: max(variables.prf1_smpls_li)}
-            if fsize > segmax[profile]: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+            if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
             if profile == 1: fsize = min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
             if new_srate is not None: duration = int(duration / smprate * new_srate)
             if meta == None: meta = encode.get_metadata(file_path)
@@ -211,7 +211,7 @@ class encode:
                 else: out += '.dsin'
 
         if os.path.exists(out):
-            print(f'{out} Already exists. Proceed?')
+            terminal(f'{out} Already exists. Proceed?')
             while True:
                 x = input('> ').lower()
                 if x == 'y': break
@@ -221,7 +221,6 @@ class encode:
         try:
             start_time = time.time()
             total_bytes, total_samples = 0, 0
-            cli_width = 40
 
             prev = np.array([])
             dtype, sample_bytes = methods.get_dtype(raw)
@@ -282,8 +281,8 @@ class encode:
                         printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
 
         except KeyboardInterrupt:
-            print('Aborting...')
+            terminal('Aborting...')
             sys.exit(0)
         except Exception as e:
-            if verbose: print('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
+            if verbose: terminal('\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K', end='')
             sys.exit(traceback.format_exc())

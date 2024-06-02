@@ -1,5 +1,5 @@
 import json, shutil, struct, sys
-from .common import variables, methods
+from .common import variables, methods, terminal
 from .tools.headb import headb
 
 class header:
@@ -22,7 +22,7 @@ class header:
 
     @staticmethod
     def modify(file_path, meta: list | None = None, img: bytes | None = None, **kwargs) -> None:
-        if file_path is None: print('File path is required.'); sys.exit(1)
+        if file_path is None: terminal('File path is required.'); sys.exit(1)
         add = kwargs.get('add', False)
         remove = kwargs.get('remove', False)
         write_img = kwargs.get('write_img', False)
@@ -61,5 +61,5 @@ class header:
             open(variables.temp, 'wb').write(head_new+open(variables.temp2, 'rb').read())
             shutil.move(variables.temp, file_path)
         except KeyboardInterrupt:
-            print('Aborting...')
+            terminal('Aborting...')
             sys.exit(0)

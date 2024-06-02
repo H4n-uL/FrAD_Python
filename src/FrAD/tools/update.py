@@ -1,5 +1,9 @@
 import hashlib, os, requests, sys
 
+def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n', flush: False = False):
+    sys.stderr.write(sep.join(args)+end)
+    if flush: sys.stderr.flush()
+
 def getsha1(file):
     sha = hashlib.sha1()
     sha.update(f'blob {os.path.getsize(file)}\x00'.encode())
@@ -14,8 +18,8 @@ def fetch_git(url, dir, dref='/src', ref='main'):
     res = requests.get(url, params={'ref': ref})
 
     if res.status_code != 200:
-        print(f'STATUS CODE: {res.status_code}, Failed to update FrAD')
-        print(f'{res.json()['message']}')
+        terminal(f'STATUS CODE: {res.status_code}, Failed to update FrAD')
+        terminal(f'{res.json()['message']}')
         sys.exit(1)
 
     for content in res.json():
@@ -28,5 +32,5 @@ def fetch_git(url, dir, dref='/src', ref='main'):
             try:    sha = getsha1(os.path.join(dir, content['name']))
             except: sha = None
             if content['sha'] != sha:
-                print(f'Updating {newref} from {sha is not None and f"{sha[:8]}..." or "null"} to {content['sha'][:8]}...')
+                terminal(f'Updating {newref} from {sha is not None and f"{sha[:8]}..." or "null"} to {content['sha'][:8]}...')
                 open(os.path.join(dir, content['name']), 'wb').write(requests.get(content['download_url']).content)

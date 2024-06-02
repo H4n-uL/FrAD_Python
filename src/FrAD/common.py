@@ -6,6 +6,11 @@ ys = yd * 86400
 directory = os.path.dirname(os.path.realpath(__file__))
 res = os.path.join(directory, 'res')
 
+def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n', flush: False = False):
+    msg = sep.join(args) + end
+    sys.stderr.write(msg)
+    if flush: sys.stderr.flush()
+
 class variables:
     FRM_SIGN = b'\xff\xd0\xd2\x97'
     cli_width = 80
@@ -48,13 +53,13 @@ class variables:
         if aac is not None:
             subprocess.run([aac,       '-h'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
-        print('Error: ffmpeg or ffprobe not found. Please install and try again,')
-        print(f'or download and put them in {res}')
-        if oper.system == 'Windows':  print('QAAC is built-in on this repository.')
-        elif oper.system == 'Darwin': print('afconvert is built-in on macOS')
+        terminal('Error: ffmpeg or ffprobe not found. Please install and try again,')
+        terminal(f'or download and put them in {res}')
+        if oper.system == 'Windows':  terminal('QAAC is built-in on this repository.')
+        elif oper.system == 'Darwin': terminal('afconvert is built-in on macOS')
         else:
-            print('On Linux, you have no way to use Apple AAC encoder.')
-            print('can anyone please reverse-engineer it and open its source')
+            terminal('On Linux, you have no way to use Apple AAC encoder.')
+            terminal('can anyone please reverse-engineer it and open its source')
         sys.exit(1)
 
 class methods:
@@ -104,7 +109,7 @@ class methods:
         if ty=='s': ty = 'i'
         elif ty=='u': ty = 'u'
         elif ty=='f': ty = 'f'
-        else: print(f'Invalid raw PCM type: {ty}'); sys.exit(1)
+        else: terminal(f'Invalid raw PCM type: {ty}'); sys.exit(1)
         depth = int(raw)//8
         return f'{endian}{ty}{depth}', depth
 
@@ -129,8 +134,8 @@ class methods:
             elapsed_time = kwargs.get('time', 0)
 
             eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
-            if printed: print('\x1b[1A\x1b[2K', end='')
-            print(f'{method}: {percent:.3f}% | Elapsed {methods.tformat(elapsed_time)} | ETA {methods.tformat(eta)}')
+            if printed: terminal('\x1b[1A\x1b[2K', end='')
+            terminal(f'{method}: {percent:.3f}% | Elapsed {methods.tformat(elapsed_time)} | ETA {methods.tformat(eta)}')
         elif loglevel == 3:
             percent = kwargs.get('percent', 0)
             bps = kwargs.get('bps', 0)
@@ -141,8 +146,8 @@ class methods:
             cli_width = variables.cli_width - len(f'[] {percent:.3f}% completed')
             prgbar = int(percent / 100 * cli_width)
             eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
-            if printed: print('\x1b[1A\x1b[2K'*3, end='')
-            print(f'{method} speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s{mult and f", X{mult:.3f}" or ""}')
-            print(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
-            print(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
+            if printed: terminal('\x1b[1A\x1b[2K'*3, end='')
+            terminal(f'{method} speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s{mult and f", X{mult:.3f}" or ""}')
+            terminal(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
+            terminal(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
         return True

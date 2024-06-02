@@ -1,4 +1,4 @@
-from .common import variables, methods
+from .common import variables, methods, terminal
 from .fourier import fourier
 from .header import header
 import numpy as np
@@ -62,12 +62,13 @@ class decode:
 
     @staticmethod
     def internal(file_path: str, **kwargs):
-        speed = kwargs.get('speed', 1)
-        play = kwargs.get('play', False)
-        ispipe = kwargs.get('pipe', False)
-        fix_error = kwargs.get('ecc', False)
-        gain = kwargs.get('gain', 1)
-        verbose = kwargs.get('verbose', False)
+        speed: float = kwargs.get('speed', 1)
+        play: bool = kwargs.get('play', False)
+        ispipe: bool = kwargs.get('pipe', False)
+        fix_error: bool = kwargs.get('ecc', False)
+        gain: float = kwargs.get('gain', 1)
+        verbose: bool = kwargs.get('verbose', False)
+        dtype: str = kwargs.get('dtype', False)
         global filelist
         with open(file_path, 'rb') as f:
 
@@ -119,7 +120,7 @@ class decode:
                     or (asfh.profile in [1, 2] and asfh.ecc and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
                     ):
                         error_dir.append(str(framescount))
-                        if not warned: warned = True; print("This file may had been corrupted. Please repack your file via 'ecc' option for the best music experience.")
+                        if not warned: warned = True; terminal("This file may had been corrupted. Please repack your file via 'ecc' option for the best music experience.")
 
                 try: ddict[asfh.srate] += asfh.fsize
                 except: ddict[asfh.srate] = asfh.fsize
@@ -130,7 +131,7 @@ class decode:
                 fhead = None
 
             # show error frames
-            if error_dir != []: print(f'Corrupt frames: {", ".join(error_dir)}')
+            if error_dir != []: terminal(f'Corrupt frames: {", ".join(error_dir)}')
             duration = sum([ddict[k] / k for k in ddict]) / speed
             f.seek(head_len)
 
@@ -142,11 +143,11 @@ class decode:
             #     meta, img = header.parse(file_path)
             #     if meta:
             #         meta_tlen = max([len(m[0]) for m in meta])
-            #         print('Metadata')
+            #         terminal('Metadata')
             #         for m in meta:
             #             if '\n' in m[1]:
             #                 m[1] = m[1].replace('\n', f'\n{" "*max(meta_tlen+2, 19)}: ')
-            #             print(f'  {m[0].ljust(17, ' ')}: {m[1]}')
+            #             terminal(f'  {m[0].ljust(17, ' ')}: {m[1]}')
 
 # ----------------------------------- Decoding ----------------------------------- #
 # This block decodes FrAD stream to PCM stream and writes it on stdout or a file.
@@ -203,9 +204,13 @@ class decode:
                         else: tempfstrm.close(); tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb'); filelist.append([tempfstrm.name, channels, smprate])
 
                     # Write PCM Stream
+                    dt, dp = methods.get_dtype(dtype)
+                    if not dtype.startswith('f'):
+                        if dtype.startswith('u'): frame+=1
+                        frame *= 2**(dp*8-1)
                     if play: stdoutstrm.write(frame.astype(np.float32))
-                    elif ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
-                    else: tempfstrm.write(frame.astype('>f8').tobytes())
+                    elif ispipe: sys.stdout.buffer.write(frame.astype(dt).tobytes())
+                    else: tempfstrm.write(frame.astype(dt).tobytes())
 
 # --------------------------- Verbose block, Optional ---------------------------- #
 #
@@ -221,20 +226,20 @@ class decode:
                         lgs = int(math.log(asfh.srate, 1000))
                         lgv = int(math.log(bpstot/frameNo, 1000))
                         if verbose:
-                            if printed: print(RM_CLI*5, end='')
-                            print(f'{methods.tformat(t_sec)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"})')
-                            print(f'{depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and"B"or"L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
+                            if printed: terminal(RM_CLI*5, end='')
+                            terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"})')
+                            terminal(f'{depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and"B"or"L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
-                            print(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}')
-                            print(f'{len(frame)} sample{len(frame)!=1 and"s"or""}, {asfh.frmlen} Byte{(asfh.frmlen!=1)*"s"} per frame')
-                            print(f'{bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps per-frame, {bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps average')
+                            terminal(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}')
+                            terminal(f'{len(frame)} sample{len(frame)!=1 and"s"or""}, {asfh.frmlen} Byte{(asfh.frmlen!=1)*"s"} per frame')
+                            terminal(f'{bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps per-frame, {bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps average')
                         else:
-                            if printed: print(RM_CLI, end='')
+                            if printed: terminal(RM_CLI, end='')
                             cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(asfh.chnl, f'{asfh.chnl} ch')
-                            print(f'{methods.tformat(t_sec)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
+                            terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
                         printed = True
                     else:
-                        if verbose and not ispipe:
+                        if verbose:
                             elapsed_time = time.time() - start_time
                             bps = bytes_accr / elapsed_time
                             mult = t_sec / elapsed_time
@@ -243,20 +248,20 @@ class decode:
 # ------------------------------- End verbose block ------------------------------ #
                     fhead = None
 
-                if printed and play and verbose: print(RM_CLI*5, end='')
+                if printed and play and verbose: terminal(RM_CLI*5, end='')
                 stdoutstrm.stop()
                 tempfstrm.close()
             except KeyboardInterrupt:
                 stdoutstrm.abort()
                 stdoutstrm.close()
                 if not play:
-                    print('Aborting...')
+                    terminal('Aborting...')
                 sys.exit(0)
 
     @staticmethod
     def split_q(s) -> tuple[int|None, str]:
         if s == None: return None, 'c'
-        if not s[0].isdigit(): print('Quality format should be [{Positive integer}{c/v/a}]'); return None, 'c'
+        if not s[0].isdigit(): terminal('Quality format should be [{Positive integer}{c/v/a}]'); return None, 'c'
         number = int(''.join(filter(str.isdigit, s)))
         strategy = ''.join(filter(str.isalpha, s))
         return number, strategy
@@ -272,11 +277,11 @@ class decode:
     ffmpeg_lossless = ['wav', 'flac', 'wavpack', 'tta', 'truehd', 'alac', 'dts', 'mlp']
 
     @staticmethod
-    def directcmd(temp_pcm, smprate, channels, ffmpeg_cmd):
+    def directcmd(temp_pcm, dtype, smprate, channels, ffmpeg_cmd):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
-            '-f', 'f64be',
+            '-f', dtype,
             '-ar', str(smprate),
             '-ac', str(channels),
             '-i', temp_pcm,
@@ -287,11 +292,11 @@ class decode:
         subprocess.run(command)
 
     @staticmethod
-    def ffmpeg(temp_pcm, smprate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
+    def ffmpeg(temp_pcm, dtype, smprate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
-            '-f', 'f64be',
+            '-f', dtype,
             '-ar', str(smprate),
             '-ac', str(channels),
             '-i', temp_pcm,
@@ -341,13 +346,13 @@ class decode:
         subprocess.run(command)
 
     @staticmethod
-    def AppleAAC_macOS(temp_pcm, smprate, channels, out, quality, strategy):
+    def AppleAAC_macOS(temp_pcm, dtype, smprate, channels, out, quality, strategy):
         try:
             quality = str(quality)
             command = [
                 variables.ffmpeg, '-y',
                 '-loglevel', 'error',
-                '-f', 'f64be',
+                '-f', dtype,
                 '-ar', str(smprate),
                 '-ac', str(channels),
                 '-i', temp_pcm,
@@ -356,7 +361,7 @@ class decode:
             ]
             subprocess.run(command)
         except KeyboardInterrupt:
-            print('Aborting...')
+            terminal('Aborting...')
             sys.exit(0)
         try:
             if strategy in ['c', '', None]: strategy = '0'
@@ -373,18 +378,18 @@ class decode:
             ]
             subprocess.run(command)
         except KeyboardInterrupt:
-            print('Aborting...')
+            terminal('Aborting...')
             sys.exit(0)
 
     @staticmethod
-    def AppleAAC_Windows(temp_pcm, smprate, channels, out, quality, new_srate):
+    def AppleAAC_Windows(temp_pcm, dtype, smprate, channels, out, quality, new_srate):
         try:
             command = [
                 variables.aac,
                 '--raw', temp_pcm,
                 '--raw-channels', str(channels),
                 '--raw-rate', str(smprate),
-                '--raw-format', 'f64b',
+                '--raw-format', dtype[:-1],
                 '--adts',
                 '-c', str(quality),
             ]
@@ -395,7 +400,7 @@ class decode:
             ])
             subprocess.run(command)
         except KeyboardInterrupt:
-            print('Aborting...')
+            terminal('Aborting...')
             sys.exit(0)
 
     @staticmethod
@@ -407,6 +412,7 @@ class decode:
         out: str = kwargs.get('out', None)
 
         # Output file specifications
+        dtype: int = kwargs.get('dtype', 's16le')
         bits: int = kwargs.get('bits', 32)
         codec: str = kwargs.get('codec', None)
         quality: str = kwargs.get('quality', None)
@@ -422,7 +428,7 @@ class decode:
         verbose: bool = kwargs.get('verbose', False)
 
         # Decoding
-        decode.internal(file_path, ecc=ecc, gain=gain, pipe=(out=='pipe'and True or False), verbose=verbose)
+        decode.internal(file_path, ecc=ecc, gain=gain, pipe=(out=='pipe'and True or False), dtype=dtype, verbose=verbose)
         if out == 'pipe': sys.exit(0)
         header.parse_to_ffmeta(file_path, variables.meta)
 
@@ -468,18 +474,18 @@ class decode:
                 temp_pcm, channels, smprate = filelist[z]
 
                 if ffmpeg_cmd is not None:
-                    decode.directcmd(temp_pcm, smprate, channels, ffmpeg_cmd)
+                    decode.directcmd(temp_pcm, dtype, smprate, channels, ffmpeg_cmd)
                 else:
                     if (codec == 'aac' and smprate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
                         if strategy in ['c', 'a']: q = decode.setaacq(q, channels)
-                        if platform.system() == 'Darwin': decode.AppleAAC_macOS(temp_pcm, smprate, channels, (z==0 and out or f'{out}.{z}'), q, strategy)
-                        elif platform.system() == 'Windows': decode.AppleAAC_Windows(temp_pcm, smprate, channels, (z==0 and out or f'{out}.{z}'), q, new_srate)
+                        if platform.system() == 'Darwin': decode.AppleAAC_macOS(temp_pcm, dtype, smprate, channels, (z==0 and out or f'{out}.{z}'), q, strategy)
+                        elif platform.system() == 'Windows': decode.AppleAAC_Windows(temp_pcm, dtype, smprate, channels, (z==0 and out or f'{out}.{z}'), q, new_srate)
                     elif codec not in ['pcm', 'raw']:
-                        decode.ffmpeg(temp_pcm, smprate, channels, codec, f, s, (z==0 and out or f'{out}.{z}'), ext, q, strategy, new_srate)
+                        decode.ffmpeg(temp_pcm, dtype, smprate, channels, codec, f, s, (z==0 and out or f'{out}.{z}'), ext, q, strategy, new_srate)
                     else:
                         shutil.move(temp_pcm, (z==0 and f'{out}.{ext}' or f'{out}.{z}.{ext}'))
                 os.remove(temp_pcm)
 
-        except KeyboardInterrupt: print('Aborting...')
+        except KeyboardInterrupt: terminal('Aborting...')
         except Exception as exc: sys.exit(traceback.format_exc())
         finally: sys.exit(0)

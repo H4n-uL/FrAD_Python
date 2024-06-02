@@ -1,5 +1,9 @@
 import base64, json, os, sys, traceback
 
+def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n', flush: False = False):
+    sys.stderr.write(sep.join(args)+end)
+    if flush: sys.stderr.flush()
+
 encode_help = f'''--------------------------------- Description ----------------------------------
 
 Encode
@@ -159,7 +163,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
 
     ecc_enabled = kwargs.get('ecc', False)
     data_ecc = kwargs.get('data-ecc', [96, 24])
-    if sum(data_ecc) > 255: print('Reed-Solomon supports up to 255 bytes for data and ecc code.'); sys.exit(1)
+    if sum(data_ecc) > 255: terminal('Reed-Solomon supports up to 255 bytes for data and ecc code.'); sys.exit(1)
 
     gain = kwargs.get('gain', 1)
 
@@ -186,9 +190,9 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
     loss_level = kwargs.get('loss-level', 0)
 
     if action in encode_opt:
-        if file_path is None: print('File path is required.'); sys.exit(1)
+        if file_path is None: terminal('File path is required.'); sys.exit(1)
         if kwargs.get('bits', None) is None:
-            print('bit depth is required for encoding.')
+            terminal('bit depth is required for encoding.')
             sys.exit(1)
         from FrAD import encode
         encode.enc(
@@ -200,7 +204,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
                 meta=meta, img=img, verbose=verbose)
 
     elif action in decode_opt:
-        if file_path is None: print('File path is required.'); sys.exit(1)
+        if file_path is None: terminal('File path is required.'); sys.exit(1)
         from FrAD import decode
         bits = kwargs.get('bits', 32)
         decode.dec(
@@ -212,7 +216,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
                 verbose=verbose)
 
     elif action in play_opt:
-        if file_path is None: print('File path is required.'); sys.exit(1)
+        if file_path is None: terminal('File path is required.'); sys.exit(1)
         from FrAD import player
         player.play(
                 file_path, gain, kwargs.get('keys', None),
@@ -220,7 +224,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
                 ecc_enabled, verbose)
 
     elif action in record_opt:
-        if file_path is None: print('File path is required.'); sys.exit(1)
+        if file_path is None: terminal('File path is required.'); sys.exit(1)
         from FrAD import recorder
         bits = kwargs.get('bits', 16)
         recorder.record_audio(file_path, 
@@ -237,17 +241,17 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
         elif metaopt=='rm-img': header.modify(file_path, remove_img=True)
 
         elif metaopt=='overwrite':
-            print('This action will overwrite all metadata and image. if nothing provided, it will be removed. Proceed? (Y/N)')
+            terminal('This action will overwrite all metadata and image. if nothing provided, it will be removed. Proceed? (Y/N)')
             while True:
                 x = input('> ').lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
             header.modify(file_path, meta=meta, img=img)
         elif metaopt=='parse': header.parse(file_path, kwargs.get('output', 'metadata'))
-        else: print('Invalid meta option.'); sys.exit(1)
+        else: terminal('Invalid meta option.'); sys.exit(1)
 
     elif action in repack_ecc_opt:
-        if file_path is None: print('File path is required.'); sys.exit(1)
+        if file_path is None: terminal('File path is required.'); sys.exit(1)
         from FrAD import repack
         repack.ecc(file_path, data_ecc, verbose)
 
@@ -256,19 +260,19 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
         update.fetch_git('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents/src', os.path.dirname(__file__))
 
     elif action in ['help']:
-        print(
+        terminal(
 '''               Fourier Analogue-in-Digital Master encoder/decoder
                              Original Author - HaמuL
 ''')
-        if file_path in encode_opt: print(encode_help)
-        elif file_path in decode_opt: print(decode_help)
-        elif file_path in play_opt: print(play_help)
-        elif file_path in record_opt: print(record_help)
-        elif file_path in meta_opt: print(meta_help)
-        elif file_path in repack_ecc_opt: print(repack_ecc_help)
-        elif file_path in update_opt: print(update_help)
+        if file_path in encode_opt: terminal(encode_help)
+        elif file_path in decode_opt: terminal(decode_help)
+        elif file_path in play_opt: terminal(play_help)
+        elif file_path in record_opt: terminal(record_help)
+        elif file_path in meta_opt: terminal(meta_help)
+        elif file_path in repack_ecc_opt: terminal(repack_ecc_help)
+        elif file_path in update_opt: terminal(update_help)
         else:
-            print(
+            terminal(
 '''------------------------------- Available actions ------------------------------
 
     encode | Encode any audio formats to FrAD (alias: enc)
@@ -278,16 +282,16 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
     repack | Enable/Repack ECC protection     (alias: ecc)
     meta   | Edit metadata on FrAD            (alias: metadata)
     update | Update FrAD codec from Github''')
-        print()
+        terminal()
     else:
-        print(f'Invalid action: {{{action}}} type `fourier help` to get help.')
+        terminal(f'Invalid action: {{{action}}} type `fourier help` to get help.')
         sys.exit(1)
 
 if __name__ == '__main__':
     try:
         if len(sys.argv) == 1:
-            print('Fourier Analogue-in-Digital Master encoder/decoder')
-            print('Please type `fourier help` to get help.')
+            terminal('Fourier Analogue-in-Digital Master encoder/decoder')
+            terminal('Please type `fourier help` to get help.')
             sys.exit(0)
         from FrAD.tools.argparse import parse_args
         action, file_path, metaopt, kwargs = parse_args(sys.argv[1:])
@@ -296,5 +300,5 @@ if __name__ == '__main__':
         if type(e) == KeyboardInterrupt:
             sys.exit(0)
         else:
-            print(traceback.format_exc())
+            terminal(traceback.format_exc())
             sys.exit(1)

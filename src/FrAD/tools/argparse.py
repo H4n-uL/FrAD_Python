@@ -8,6 +8,10 @@ play_opt = ['play']
 record_opt = ['record', 'rec']
 update_opt = ['update']
 
+def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n', flush: False = False):
+    sys.stderr.write(sep.join(args)+end)
+    if flush: sys.stderr.flush()
+
 def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
     try: action = args.pop(0)
     except: return '', '', '', dict()
@@ -34,7 +38,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     b = args.pop(0)
                     key, value = 'bits', int(b)
                 except:
-                    print(f'Value cannot be parsed as Integer: {arg} {b}')
+                    terminal(f'Value cannot be parsed as Integer: {arg} {b}')
                     sys.exit(1)
 
             # Image file path
@@ -48,7 +52,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     nsr = args.pop(0)
                     key, value = 'srate', int(nsr)
                 except:
-                    print(f'Value cannot be parsed as Integer: {arg} {nsr}')
+                    terminal(f'Value cannot be parsed as Integer: {arg} {nsr}')
                     sys.exit(1)
 
             # Channels
@@ -58,7 +62,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     chnl = args.pop(0)
                     key, value = 'chnl', int(chnl)
                 except:
-                    print(f'Value cannot be parsed as Integer: {arg} {chnl}')
+                    terminal(f'Value cannot be parsed as Integer: {arg} {chnl}')
                     sys.exit(1)
 
             # Samples per frame
@@ -68,7 +72,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     fsz = args.pop(0)
                     key, value = 'fsize', int(fsz)
                 except:
-                    print(f'Value cannot be parsed as Integer: {arg} {fsz}')
+                    terminal(f'Value cannot be parsed as Integer: {arg} {fsz}')
                     sys.exit(1)
 
             # Overlap ratio
@@ -78,7 +82,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     olap = args.pop(0)
                     key, value = 'overlap', int(olap)
                 except:
-                    print(f'Value cannot be parsed as Integer: {arg} {olap}')
+                    terminal(f'Value cannot be parsed as Integer: {arg} {olap}')
                     sys.exit(1)
 
             # Codec type
@@ -97,14 +101,14 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     key, value = 'gain', float(g)
                     if db: value = 10 ** (value / 20)
                 except ValueError:
-                    print(f'Value cannot be parsed as Float: {arg} {g_b}')
+                    terminal(f'Value cannot be parsed as Float: {arg} {g_b}')
                     sys.exit(1)
 
             # Raw
             elif key in ['r', 'raw', 'pcm']:
                 try: key, value = 'raw', args.pop(0)
                 except ValueError:
-                    print(f'Value cannot be parsed as String: {arg}')
+                    terminal(f'Value cannot be parsed as String: {arg}')
                     sys.exit(1)
 
             # Enable ECC
@@ -118,7 +122,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                         e = args.pop(0)
                         key, value = 'data-ecc', [int(d), int(e)]
                     except:
-                        print(f'Value cannot be parsed as Integer: {arg} {d} {e}')
+                        terminal(f'Value cannot be parsed as Integer: {arg} {d} {e}')
                         sys.exit(1)
 
             # Play speed
@@ -128,7 +132,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     spd = args.pop(0)
                     key, value = 'speed', float(spd)
                 except:
-                    print(f'Value cannot be parsed as Float: {arg} {spd}')
+                    terminal(f'Value cannot be parsed as Float: {arg} {spd}')
                     sys.exit(1)
 
             # Decode quality
@@ -142,7 +146,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     k = args.pop(0)
                     key, value = 'keys', float(k)
                 except:
-                    print(f'Value cannot be parsed as Float: {arg} {k}')
+                    terminal(f'Value cannot be parsed as Float: {arg} {k}')
                     sys.exit(1)
 
             # Metadata
@@ -154,7 +158,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     try: key, value = 'meta', options['meta']+[[mk, mv]]
                     except KeyError: key, value = 'meta', [[mk, mv]]
                 except IndexError:
-                    print(f'Metadata requires key and value: {arg} {mk} {mv}')
+                    terminal(f'Metadata requires key and value: {arg} {mk} {mv}')
                     sys.exit(1)
 
             # Metadata Key
@@ -178,7 +182,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     prf = args.pop(0)
                     key, value = 'profile', int(prf)
                 except:
-                    print(f'Value cannot be parsed as Integer: {arg} {prf}')
+                    terminal(f'Value cannot be parsed as Integer: {arg} {prf}')
                     sys.exit(1)
 
             # Compression level
@@ -188,7 +192,7 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
                     lv = args.pop(0)
                     key, value = 'loss-level', int(lv)
                 except:
-                    print(f'Value cannot be parsed as Integer: {arg} {lv}')
+                    terminal(f'Value cannot be parsed as Integer: {arg} {lv}')
                     sys.exit(1)
 
             # Verbose CLI Toggle

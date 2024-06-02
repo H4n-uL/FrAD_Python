@@ -1,5 +1,5 @@
 from .fourier import fourier
-from .common import variables
+from .common import variables, terminal
 from .encoder import encode
 import numpy as np
 import math, os, sys
@@ -37,9 +37,9 @@ class recorder:
         # ECC mapping = (block size / data size)
         segmax = {0: (2**32-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * max(bit_depth/8, 3)),
                     1: max(variables.prf1_smpls_li)}
-        if fsize > segmax[profile]: print(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+        if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
         if profile == 1: fsize = min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
-        if not 20 >= loss_level >= 0: print(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
+        if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
 
         if profile in [1, 2]:
             new_srate = min(new_srate or smprate, 96000)
@@ -51,11 +51,11 @@ class recorder:
             if overlap < 2: overlap = 1/overlap
             if overlap%1!=0: overlap = int(overlap)
             if overlap > 255: overlap = 255
-        print('Please enter your recording device ID from below.')
+        terminal('Please enter your recording device ID from below.')
         for ind, dev in enumerate(sd.query_devices()):
             if dev['max_input_channels'] != 0:
-                print(f'{ind} {dev['name']}')
-                print(f'    srate={dev['default_samplerate']}\t channels={dev['max_input_channels']}')
+                terminal(f'{ind} {dev['name']}')
+                terminal(f'    srate={dev['default_samplerate']}\t channels={dev['max_input_channels']}')
         while True:
             hw = int(input('> '))
             if hw in range(len(sd.query_devices())): break
@@ -68,13 +68,13 @@ class recorder:
             else: file_path += '.frad'
 
         if os.path.exists(file_path):
-            print(f'{file_path} Already exists. Proceed?')
+            terminal(f'{file_path} Already exists. Proceed?')
             while True:
                 x = input('> ').lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
         ecc_dsize, ecc_codesize = int(ecc_sizes[0]), int(ecc_sizes[1])
-        print('Recording...')
+        terminal('Recording...')
         open(file_path, 'wb').write(headb.uilder(meta, img))
         prev = np.array([])
 
@@ -100,4 +100,4 @@ class recorder:
                 except KeyboardInterrupt:
                     break
         record.close()
-        print('Recording stopped.')
+        terminal('Recording stopped.')
