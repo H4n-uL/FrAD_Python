@@ -48,7 +48,7 @@ def cleanup():
 class decode:
     @staticmethod
     def overlap(frame: np.ndarray, prev: np.ndarray, asfh: ASFH) -> tuple[np.ndarray, np.ndarray]:
-        if len(prev)>0:
+        if prev.shape != np.array([]).shape:
             fade_in = np.linspace(0, 1, len(prev))
             fade_out = np.linspace(1, 0, len(prev))
             for c in range(asfh.chnl):
@@ -62,7 +62,20 @@ class decode:
         return frame, prev
 
     @staticmethod
-    def internal(file_path: str, **kwargs):
+    def write(frame: np.ndarray, playstream: sd.OutputStream, filestream: typing.BinaryIO, dtype: str, play: bool, ispipe: bool) -> None:
+        if frame.shape != np.array([]).shape:
+            if play: playstream.write(frame.astype(np.float32))
+            else:
+                dt, dp = methods.get_dtype(dtype)
+                if not dtype.startswith('f'):
+                    if dtype.startswith('u'): frame+=1
+                    frame *= 2**(dp*8-1)
+                if ispipe: sys.stdout.buffer.write(frame.astype(dt).tobytes())
+                else: filestream.write(frame.astype(dt).tobytes())
+        return None
+
+    @staticmethod
+    def internal(file_path: str, **kwargs) -> None:
         speed: float = kwargs.get('speed', 1)
         play: bool = kwargs.get('play', False)
         ispipe: bool = kwargs.get('pipe', False)
@@ -159,7 +172,7 @@ class decode:
             try:
                 # Starting stream
                 printed = False
-                bps, bpstot = 0, 0
+                bps = bpstot = 0
                 dlen = os.path.getsize(file_path) - head_len
                 start_time = time.time()
                 fhead, prev, frame = None, np.array([]), np.array([])
@@ -170,34 +183,21 @@ class decode:
                     if fhead is None: fhead = f.read(4)
                     if fhead != variables.FRM_SIGN:
                         hq = f.read(1)
-                        if not hq:
-                            # Flushing the last frame
-                            if prev != np.array([]):
-                                if play: stdoutstrm.write(prev.astype(np.float32))
-                                else:
-                                    dt, dp = methods.get_dtype(dtype)
-                                    if not dtype.startswith('f'):
-                                        if dtype.startswith('u'): prev+=1
-                                        prev *= 2**(dp*8-1)
-                                    if ispipe: sys.stdout.buffer.write(prev.astype(dt).tobytes())
-                                    else: tempfstrm.write(prev.astype(dt).tobytes())
-                            break
+                        if not hq: decode.write(prev, stdoutstrm, tempfstrm, dtype, play, ispipe); break
                         fhead = fhead[1:]+hq
                         continue
 
-                    # Parsing ASFH
+                    # Parsing ASFH & Reading Audio Stream Frame
                     asfh.update(f)
-                    # Reading Block
                     data: bytes = f.read(asfh.frmbytes)
 
                     # Decoding ECC
                     if asfh.ecc:
                         if fix_error:
-                            if ((asfh.profile == 0 and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
-                            or (asfh.profile in [1, 2] and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
-                            ):
-                                data = ecc.decode(data, asfh.ecc_dsize, asfh.ecc_codesize)
-                        else: data = ecc.unecc(data, asfh.ecc_dsize, asfh.ecc_codesize)
+                            if ((asfh.profile == 0      and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
+                            or  (asfh.profile in [1, 2] and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
+                            ): data = ecc.decode(data, asfh.ecc_dsize, asfh.ecc_codesize)
+                        else:  data = ecc.unecc( data, asfh.ecc_dsize, asfh.ecc_codesize)
 
                     # Decoding
                     frame: np.ndarray = fourier.digital(data, asfh.float_bits, asfh.chnl, asfh.endian, profile=asfh.profile, smprate=asfh.srate, fsize=asfh.fsize) * gain
@@ -206,35 +206,16 @@ class decode:
                     # if channels and sample rate changed
                     if channels != asfh.chnl or smprate != asfh.srate:
                         channels, smprate = asfh.chnl, asfh.srate
-
-                        if play:
-                            # Flushing playback stream & Restarting stream
-                            if prev != np.array([]): stdoutstrm.write(prev.astype(np.float32))
-                            stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl)
-                            stdoutstrm.start()
+                        decode.write(prev, stdoutstrm, tempfstrm, dtype, play, ispipe)
+                        if play: stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl); stdoutstrm.start()
                         else:
-                            # Flushing file/stdout stream
-                            if prev != np.array([]):
-                                dt, dp = methods.get_dtype(dtype)
-                                if not dtype.startswith('f'):
-                                    if dtype.startswith('u'): prev+=1
-                                    prev *= 2**(dp*8-1)
-                                if ispipe: sys.stdout.buffer.write(prev.astype(dt).tobytes())
-                                else: tempfstrm.write(prev.astype(dt).tobytes())
-                            # Creating new file stream
+                            prev = np.array([])
                             tempfstrm.close()
                             tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
                             filelist.append([tempfstrm.name, channels, smprate])
 
                     # Write PCM Stream
-                    if play: stdoutstrm.write(frame.astype(np.float32))
-                    else:
-                        dt, dp = methods.get_dtype(dtype)
-                        if not dtype.startswith('f'):
-                            if dtype.startswith('u'): frame+=1
-                            frame *= 2**(dp*8-1)
-                        if ispipe: sys.stdout.buffer.write(frame.astype(dt).tobytes())
-                        else: tempfstrm.write(frame.astype(dt).tobytes())
+                    decode.write(frame, stdoutstrm, tempfstrm, dtype, play, ispipe)
 
 # --------------------------- Verbose block, Optional ---------------------------- #
 #
