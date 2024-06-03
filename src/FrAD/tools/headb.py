@@ -41,18 +41,18 @@ class headb:
     @staticmethod
     def encode_css_prf1(channels: int, srate: int, fsize: int) -> bytes:
         chnl = (channels-1)<<10
-        srate = variables.prf1_srates.index(srate) << 6
-        fsize = min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
-        mult = next((key for key, values in variables.prf1_smpls.items() if fsize in values), None)
+        srate = variables.p1.srates.index(srate) << 6
+        fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=0)
+        mult = next((key for key, values in variables.p1.smpls.items() if fsize in values), 0)
         px = [128, 144, 192].index(mult) << 4
         fsize = int(math.log2(fsize / mult)) << 1
         return struct.pack('>H', chnl | srate | px | fsize)
 
     @staticmethod
-    def decode_css_prf1(css: bytes) -> tuple[int, bool, bool, int]:
+    def decode_css_prf1(css: bytes) -> tuple[int, int, int]:
         cssint = struct.unpack('>H', css)[0]
         channels = (cssint>>10) + 1                     # 0x09@0b111-6b: Channels
-        srate = variables.prf1_srates[cssint>>6&0b1111] # 0x09@0b001-4b: Sample rate index
+        srate = variables.p1.srates[cssint>>6&0b1111] # 0x09@0b001-4b: Sample rate index
         fsize_prefix = [128, 144, 192][cssint>>4&0b11]  # 0x0a@0b101-2b: Frame size prefix
         fsize = fsize_prefix * 2**(cssint>>1&0b111)     # 0x0a@0b011-3b: Frame size
         return channels, srate, fsize

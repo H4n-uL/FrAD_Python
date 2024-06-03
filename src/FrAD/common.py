@@ -6,21 +6,21 @@ ys = yd * 86400
 directory = os.path.dirname(os.path.realpath(__file__))
 res = os.path.join(directory, 'res')
 
-def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n'):
-    sys.stderr.buffer.write(str(sep.join(map(str,args))+end).encode())
+def terminal(*args: object, sep: str = ' ', end: str | None = '\n'):
+    sys.stderr.buffer.write(f'{sep.join(map(str,args))}{end}'.encode())
     sys.stderr.buffer.flush()
 
 class variables:
     FRM_SIGN = b'\xff\xd0\xd2\x97'
     cli_width = 80
     overlap_rate = 16
-    prf1_srates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000]
-    prf1_smpls = {128: [128 * 2**i for i in range(8)], 144: [144 * 2**i for i in range(8)], 192: [192 * 2**i for i in range(8)]}
-    prf1_smpls_li = [item for sublist in prf1_smpls.values() for item in sublist]
+
+    from .fourier import fourier
+    from .profiles.profile1 import p1
 
     bit_depths = [
-        [ 12,  16,  24,  32,  48,  64, 128], # Profile 0
-        [  8,  12,  16,  24,  32,  48,  64]  # Profile 1
+        fourier.depths,
+        p1.depths
     ]
 
     # Temporary files for metadata processing / stream repairing

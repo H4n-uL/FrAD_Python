@@ -1,6 +1,6 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .profiles import profile1
+from .profiles.profile1 import p1
 
 class fourier:
     depths = [12, 16, 24, 32, 48, 64, 128]
@@ -8,7 +8,7 @@ class fourier:
 
     @staticmethod
     def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> tuple[bytes, int, int, int]:
-        if profile == 1: return profile1.analogue(pcm, bits, channels, little_endian, kwargs)
+        if profile == 1: return p1.analogue(pcm, bits, channels, little_endian, kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'
@@ -41,7 +41,7 @@ class fourier:
 
     @staticmethod
     def digital(frad: bytes, fb: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> np.ndarray:
-        if profile == 1: return profile1.digital(frad, fb, channels, little_endian, kwargs)
+        if profile == 1: return p1.digital(frad, fb, channels, little_endian, kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'

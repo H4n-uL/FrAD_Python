@@ -180,26 +180,26 @@ class encode:
             channels, smprate, codec, duration = encode.get_info(file_path)
             if profile in [1, 2]:
                 new_srate = min(new_srate or smprate, 96000)
-                if not new_srate in variables.prf1_srates: new_srate = 48000
+                if not new_srate in variables.p1.srates: new_srate = 48000
             cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
             if chnl is not None: channels = chnl
             # segmax for Profile 0 = 4GiB / (intra-channel-sample size * channels * ECC mapping)
             # intra-channel-sample size = bit depth * 8, least 3 bytes(float s1e8m15)
             # ECC mapping = (block size / data size)
             segmax = {0: (2**32-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * max(bits/8, 3)),
-                      1: max(variables.prf1_smpls_li)}
+                      1: max(variables.p1.smpls_li)}
             if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
-            if profile == 1: fsize = min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
+            if profile == 1: fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
             if new_srate is not None: duration = int(duration / smprate * new_srate)
             if meta == None: meta = encode.get_metadata(file_path)
             if img  == None: img  = encode.get_image(   file_path)
 
         smprate = new_srate is not None and new_srate or smprate
 
-        if overlap is None: overlap = variables.overlap_rate
+        if type(overlap) != int: overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
         else:
-            if overlap < 2: overlap = 1/overlap
+            if overlap < 2: overlap = int(1/overlap)
             if overlap%1!=0: overlap = int(overlap)
             if overlap > 255: overlap = 255
         # Setting file extension
@@ -240,7 +240,7 @@ class encode:
             with open(out, 'ab') as file:
                 while True:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
-                    # fsize = random.choice(variables.prf1_smpls_li) # Random spf test
+                    # fsize = random.choice(variables.p1.smpls_li) # Random spf test
                     # profile = random.choice(range(2)) # Random profile test
                     # loss_level = random.choice(range(21)) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
@@ -248,7 +248,7 @@ class encode:
                     # overlap = random.choice(range(2, 256)) # Random overlap test
 
                     # Getting required read length
-                    rlen = profile == 0 and fsize or min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
+                    rlen = profile == 0 and fsize or min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
                     while rlen < len(prev): rlen += 128
                     # Overlap
                     if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)

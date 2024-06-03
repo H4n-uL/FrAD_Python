@@ -1,89 +1,97 @@
 from scipy.fft import dct, idct
 import numpy as np
 from .tools import p1tools
-from ..tools.headb import headb
 import zlib
 
-depths = [8, 12, 16, 24, 32, 48, 64]
-dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
-get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
+class p1:
+    srates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000]
+    smpls = {128: [128 * 2**i for i in range(8)], 144: [144 * 2**i for i in range(8)], 192: [192 * 2**i for i in range(8)]}
+    smpls_li = [item for sublist in smpls.values() for item in sublist]
 
-def signext_24x(byte: bytes, bits, be):
-    return (int((be and byte.hex()[0] or byte.hex()[-1]), base=16) > 7 and b'\xff' or b'\x00') * (bits//24) + byte
+    depths = [8, 12, 16, 24, 32, 48, 64]
+    dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
+    get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
 
-def signext_12(hex_str):
-    if len(hex_str)!=3: return ''
-    return (int(hex_str[0], base=16) > 7 and 'f' or '0') + hex_str
+    @staticmethod
+    def signext_24x(byte: bytes, bits, be):
+        return (int((be and byte.hex()[0] or byte.hex()[-1]), base=16) > 7 and b'\xff' or b'\x00') * (bits//24) + byte
 
-def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> tuple[bytes, int, int, int]:
-    be = not little_endian
-    endian = be and '>' or '<'
+    @staticmethod
+    def signext_12(hex_str):
+        if len(hex_str)!=3: return ''
+        return (int(hex_str[0], base=16) > 7 and 'f' or '0') + hex_str
 
-    # DCT
-    pcm = np.pad(pcm, ((0, headb.decode_css_prf1(headb.encode_css_prf1(channels, 48000, len(pcm)))[2]-len(pcm)), (0, 0)), mode='constant')
-    dlen = len(pcm)
-    freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
+    @staticmethod
+    def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> tuple[bytes, int, int, int]:
+        be = not little_endian
+        endian = be and '>' or '<'
 
-    freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
+        # DCT
+        pcm = np.pad(pcm, ((0, min((x for x in p1.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
+        dlen = len(pcm)
+        freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
-    # Overflow check & Increasing bit depth
-    while not (2**(bits-1)-1 >= freqs.any() >= -(2**(bits-1))):
-        if bits == 64: raise Exception('Overflow with reaching the max bit depth.')
-        bits = {8:12, 12:16, 16:24, 24:32, 32:48, 48:64}.get(bits, 64)
+        freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
 
-    # Ravelling and packing
-    if bits%8!=0: endian = '>'
-    frad: bytes = freqs.T.ravel().astype(endian+dtypes[bits]).tobytes()
+        # Overflow check & Increasing bit depth
+        while not (2**(bits-1)-1 >= freqs.any() >= -(2**(bits-1))):
+            if bits == 64: raise Exception('Overflow with reaching the max bit depth.')
+            bits = {8:12, 12:16, 16:24, 24:32, 32:48, 48:64}.get(bits, 64)
 
-    # Cutting off bits
-    if bits in [64, 32, 16, 8]:
-        pass
-    elif bits in [48, 24]:
-        hexa = frad.hex()
-        frad = bytes.fromhex(''.join([be and hexa[i+(bits//12):i+(bits//6*2)] or hexa[i:i+bits//4] for i in range(0, len(hexa), bits//6*2)]))
-    elif bits == 12:
-        hexa = frad.hex()
-        hexa = ''.join([hexa[i+1:i+4] for i in range(0, len(hexa), 4)])
-        if len(hexa)%2!=0: hexa+='0'
-        frad = bytes.fromhex(hexa)
-    else: raise Exception('Illegal bits value.')
+        # Ravelling and packing
+        if bits%8!=0: endian = '>'
+        frad: bytes = freqs.T.ravel().astype(endian+p1.dtypes[bits]).tobytes()
 
-    frad = (pns.T/(2**(bits-1))).astype(endian+'e').tobytes() + frad
+        # Cutting off bits
+        if bits in [64, 32, 16, 8]:
+            pass
+        elif bits in [48, 24]:
+            hexa = frad.hex()
+            frad = bytes.fromhex(''.join([be and hexa[i+(bits//12):i+(bits//6*2)] or hexa[i:i+bits//4] for i in range(0, len(hexa), bits//6*2)]))
+        elif bits == 12:
+            hexa = frad.hex()
+            hexa = ''.join([hexa[i+1:i+4] for i in range(0, len(hexa), 4)])
+            if len(hexa)%2!=0: hexa+='0'
+            frad = bytes.fromhex(hexa)
+        else: raise Exception('Illegal bits value.')
 
-    # Deflating
-    frad = zlib.compress(frad, level=9)
+        frad = (pns.T/(2**(bits-1))).astype(endian+'e').tobytes() + frad
 
-    return frad, bits, channels, depths.index(bits)
+        # Deflating
+        frad = zlib.compress(frad, level=9)
 
-def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) -> np.ndarray:
-    be = not little_endian
-    endian = be and '>' or '<'
-    bits = depths[fb]
+        return frad, bits, channels, p1.depths.index(bits)
+
+    @staticmethod
+    def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) -> np.ndarray:
+        be = not little_endian
+        endian = be and '>' or '<'
+        bits = p1.depths[fb]
 
 
-    # Inflating
-    frad = zlib.decompress(frad)
-    thresbytes = frad[:p1tools.subbands*channels*2]
-    thres = np.frombuffer(thresbytes, dtype=endian+'e').reshape((-1, channels)).T * (2**(bits-1))
-    frad = frad.removeprefix(thresbytes)
+        # Inflating
+        frad = zlib.decompress(frad)
+        thresbytes = frad[:p1tools.subbands*channels*2]
+        thres = np.frombuffer(thresbytes, dtype=endian+'e').reshape((-1, channels)).T * (2**(bits-1))
+        frad = frad.removeprefix(thresbytes)
 
-    # Padding bits
-    if bits % 3 != 0: pass
-    elif bits in [24, 48]:
-        frad = b''.join([signext_24x(frad[i:i+(bits//8)], bits, be) for i in range(0, len(frad), bits//8)])
-    elif bits == 12:
-        hexa = frad.hex()
-        frad = bytes.fromhex(''.join([signext_12(hexa[i:i+3]) for i in range(0, len(hexa), 3)]))
-    else: raise Exception('Illegal bits value.')
+        # Padding bits
+        if bits % 3 != 0: pass
+        elif bits in [24, 48]:
+            frad = b''.join([p1.signext_24x(frad[i:i+(bits//8)], bits, be) for i in range(0, len(frad), bits//8)])
+        elif bits == 12:
+            hexa = frad.hex()
+            frad = bytes.fromhex(''.join([p1.signext_12(hexa[i:i+3]) for i in range(0, len(hexa), 3)]))
+        else: raise Exception('Illegal bits value.')
 
-    # Unpacking and unravelling
-    if channels > 2: channels += 1
-    if bits%8!=0: endian = '>'
-    freqs: np.ndarray = np.frombuffer(frad, dtype=endian+dtypes[bits]).astype(float).reshape(-1, channels).T
+        # Unpacking and unravelling
+        if channels > 2: channels += 1
+        if bits%8!=0: endian = '>'
+        freqs: np.ndarray = np.frombuffer(frad, dtype=endian+p1.dtypes[bits]).astype(float).reshape(-1, channels).T
 
-    # Removing potential Infinities and Non-numbers
-    freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
-    freqs = p1tools.dequant(freqs, channels, thres, kwargs)
+        # Removing potential Infinities and Non-numbers
+        freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
+        freqs = p1tools.dequant(freqs, channels, thres, kwargs)
 
-    # Inverse DCT and stacking
-    return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in freqs]).T)/(2**(bits-1))
+        # Inverse DCT and stacking
+        return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in freqs]).T)/(2**(bits-1))

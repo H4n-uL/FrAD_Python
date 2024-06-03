@@ -15,7 +15,7 @@ class recorder:
         channels = kwargs.get('chnl', None)
 
         # FrAD specifications
-        bit_depth = kwargs.get('bits', 16)
+        bit_depth: int = kwargs.get('bits', 16)
         fsize: int = kwargs.get('fsize', 2048)
         little_endian: bool = kwargs.get('le', False)
         profile: int = kwargs.get('prf', 0)
@@ -36,19 +36,19 @@ class recorder:
         # intra-channel-sample size = bit depth * 8, least 3 bytes(float s1e8m15)
         # ECC mapping = (block size / data size)
         segmax = {0: (2**32-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * max(bit_depth/8, 3)),
-                    1: max(variables.prf1_smpls_li)}
+                    1: max(variables.p1.smpls_li)}
         if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
-        if profile == 1: fsize = min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
+        if profile == 1: fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
         if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
 
         if profile in [1, 2]:
-            new_srate = min(new_srate or smprate, 96000)
-            if not new_srate in variables.prf1_srates: new_srate = 48000
+            smprate = min(smprate, 96000)
+            if not smprate in variables.p1.srates: smprate = 48000
 
         if overlap is None: overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
         else:
-            if overlap < 2: overlap = 1/overlap
+            if overlap < 2: overlap = int(1/overlap)
             if overlap%1!=0: overlap = int(overlap)
             if overlap > 255: overlap = 255
         terminal('Please enter your recording device ID from below.')
