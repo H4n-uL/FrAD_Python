@@ -171,10 +171,14 @@ class decode:
                     if fhead != variables.FRM_SIGN:
                         hq = f.read(1)
                         if not hq:
-                            if prev is not None:
-                                if play: stdoutstrm.write(frame.astype(np.float32))
-                                elif ispipe: sys.stdout.buffer.write(frame.astype('>f8').tobytes())
-                                else: tempfstrm.write(frame.astype('>f8').tobytes())
+                            if play: stdoutstrm.write(prev.astype(np.float32))
+                            else:
+                                dt, dp = methods.get_dtype(dtype)
+                                if not dtype.startswith('f'):
+                                    if dtype.startswith('u'): prev+=1
+                                    prev *= 2**(dp*8-1)
+                                if ispipe: sys.stdout.buffer.write(prev.astype(dt).tobytes())
+                                else: tempfstrm.write(prev.astype(dt).tobytes())
                             break
                         fhead = fhead[1:]+hq
                         continue
@@ -204,13 +208,14 @@ class decode:
                         else: tempfstrm.close(); tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb'); filelist.append([tempfstrm.name, channels, smprate])
 
                     # Write PCM Stream
-                    dt, dp = methods.get_dtype(dtype)
-                    if not dtype.startswith('f'):
-                        if dtype.startswith('u'): frame+=1
-                        frame *= 2**(dp*8-1)
                     if play: stdoutstrm.write(frame.astype(np.float32))
-                    elif ispipe: sys.stdout.buffer.write(frame.astype(dt).tobytes())
-                    else: tempfstrm.write(frame.astype(dt).tobytes())
+                    else:
+                        dt, dp = methods.get_dtype(dtype)
+                        if not dtype.startswith('f'):
+                            if dtype.startswith('u'): frame+=1
+                            frame *= 2**(dp*8-1)
+                        if ispipe: sys.stdout.buffer.write(frame.astype(dt).tobytes())
+                        else: tempfstrm.write(frame.astype(dt).tobytes())
 
 # --------------------------- Verbose block, Optional ---------------------------- #
 #
