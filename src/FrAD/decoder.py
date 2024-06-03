@@ -162,7 +162,7 @@ class decode:
                 bps, bpstot = 0, 0
                 dlen = os.path.getsize(file_path) - head_len
                 start_time = time.time()
-                fhead, prev, frame = b'', np.array([]), np.array([])
+                fhead, prev, frame = None, np.array([]), np.array([])
 
     # ----------------------------- Main decode loop ----------------------------- #
                 while True:
