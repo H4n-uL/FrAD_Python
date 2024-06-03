@@ -6,10 +6,9 @@ ys = yd * 86400
 directory = os.path.dirname(os.path.realpath(__file__))
 res = os.path.join(directory, 'res')
 
-def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n', flush: False = False):
-    msg = sep.join(args) + end
-    sys.stderr.write(msg)
-    if flush: sys.stderr.flush()
+def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n'):
+    sys.stderr.buffer.write(str(sep.join(map(str,args))+end).encode())
+    sys.stderr.buffer.flush()
 
 class variables:
     FRM_SIGN = b'\xff\xd0\xd2\x97'

@@ -1,8 +1,8 @@
 import hashlib, os, requests, sys
 
-def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n', flush: False = False):
-    sys.stderr.write(sep.join(args)+end)
-    if flush: sys.stderr.flush()
+def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n'):
+    sys.stderr.buffer.write(str(sep.join(map(str,args))+end).encode())
+    sys.stderr.buffer.flush()
 
 def getsha1(file):
     sha = hashlib.sha1()
