@@ -18,9 +18,10 @@ class variables:
     prf1_smpls = {128: [128 * 2**i for i in range(8)], 144: [144 * 2**i for i in range(8)], 192: [192 * 2**i for i in range(8)]}
     prf1_smpls_li = [item for sublist in prf1_smpls.values() for item in sublist]
 
-    from .fourier import fourier
-    from .profiles import profile1
-    bit_depths = [fourier.depths, profile1.depths]
+    bit_depths = [
+        [ 12,  16,  24,  32,  48,  64, 128], # Profile 0
+        [  8,  12,  16,  24,  32,  48,  64]  # Profile 1
+    ]
 
     # Temporary files for metadata processing / stream repairing
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frad').name
