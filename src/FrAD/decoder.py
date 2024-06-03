@@ -412,7 +412,7 @@ class decode:
         out: str = kwargs.get('out', None)
 
         # Output file specifications
-        dtype: int = kwargs.get('dtype', 's16le')
+        dtype: int = kwargs.get('dtype', 'f64be')
         bits: int = kwargs.get('bits', 32)
         codec: str = kwargs.get('codec', None)
         quality: str = kwargs.get('quality', None)
