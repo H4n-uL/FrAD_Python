@@ -201,7 +201,6 @@ class decode:
 
                     # Decoding
                     frame: np.ndarray = fourier.digital(data, asfh.float_bits, asfh.chnl, asfh.endian, profile=asfh.profile, smprate=asfh.srate, fsize=asfh.fsize) * gain
-                    frame, prev = decode.overlap(frame, prev, asfh)
 
                     # if channels and sample rate changed
                     if channels != asfh.chnl or smprate != asfh.srate:
@@ -213,6 +212,8 @@ class decode:
                             tempfstrm.close()
                             tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
                             filelist.append([tempfstrm.name, channels, smprate])
+
+                    frame, prev = decode.overlap(frame, prev, asfh)
 
                     # Write PCM Stream
                     decode.write(frame, stdoutstrm, tempfstrm, dtype, play, ispipe)
