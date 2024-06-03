@@ -237,8 +237,16 @@ class encode:
             open(out, 'wb').write(headb.uilder(meta, img))
             with open(out, 'ab') as file:
                 while True:
+                    # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
+                    # fsize = random.choice(variables.prf1_smpls_li) # Random spf test
+                    # profile = random.choice(range(2)) # Random profile test
+                    # loss_level = random.choice(range(21)) # Random lossy level test
+                    # apply_ecc = random.choice([True, False]) # Random ECC test
+                    # ecc_dsize, ecc_codesize = random.choice(range(64, 129)), random.choice(range(16, 64)) # Random ECC test
+                    # overlap = random.choice(range(2, 256)) # Random overlap test
+
                     # Getting required read length
-                    rlen = fsize
+                    rlen = profile == 0 and fsize or min((x for x in variables.prf1_smpls_li if x >= fsize), default=None)
                     while rlen < len(prev): rlen += 128
                     # Overlap
                     if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
