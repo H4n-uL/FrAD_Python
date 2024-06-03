@@ -35,7 +35,7 @@ class repack:
                         # Parsing ASFH
                         asfh.update(f)
                         # Reading Frame
-                        frame = f.read(asfh.frmlen)
+                        frame = f.read(asfh.frmbytes)
 
                         # Fixing errors and repacking
                         if asfh.ecc: frame = ecc.decode(frame, asfh.ecc_dsize, asfh.ecc_codesize)
@@ -51,7 +51,7 @@ class repack:
                         encode.write_frame(t, frame, asfh.chnl, asfh.srate, pfb, (ecc_dsize, ecc_codesize), asfh.fsize)
 
                         if verbose:
-                            total_bytes += asfh.frmlen+32
+                            total_bytes += asfh.frmbytes+asfh.headlen
                             elapsed_time = time.time() - start_time
                             bps = total_bytes / elapsed_time
                             percent = total_bytes * 100 / dlen

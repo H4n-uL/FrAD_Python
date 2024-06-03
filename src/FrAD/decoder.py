@@ -15,7 +15,7 @@ class ASFH:
 
     def update(self, file: typing.BinaryIO):
         fhead = variables.FRM_SIGN + file.read(5)
-        self.frmlen = struct.unpack('>I', fhead[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
+        self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
         if self.profile == 0:
             fhead += file.read(23)
@@ -34,6 +34,7 @@ class ASFH:
                 self.ecc_dsize = struct.unpack('>B', fhead[0xc:0xd])[0]
                 self.ecc_codesize = struct.unpack('>B', fhead[0xd:0xe])[0]
                 self.crc = fhead[0xe:0x10]                             # 0x0e-2B: ANSI CRC16 of Audio Data
+        self.headlen = len(fhead)
 
 filelist = []
 
@@ -114,7 +115,7 @@ class decode:
                     fhead = fhead[1:]+hq
                     continue
                 asfh.update(f)
-                data = f.read(asfh.frmlen)
+                data = f.read(asfh.frmbytes)
                 if fix_error:
                     if ((asfh.profile == 0 and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
                     or (asfh.profile in [1, 2] and asfh.ecc and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
@@ -126,7 +127,7 @@ class decode:
                 except: ddict[asfh.srate] = asfh.fsize
                 if asfh.profile in [1, 2] and asfh.overlap != 0: ddict[asfh.srate] -= asfh.fsize//asfh.overlap
 
-                dlen += asfh.frmlen
+                dlen += asfh.frmbytes
                 framescount += 1
                 fhead = None
 
@@ -186,7 +187,7 @@ class decode:
                     # Parsing ASFH
                     asfh.update(f)
                     # Reading Block
-                    data: bytes = f.read(asfh.frmlen)
+                    data: bytes = f.read(asfh.frmbytes)
 
                     # Decoding ECC
                     if asfh.ecc:
@@ -223,11 +224,11 @@ class decode:
                     try: t_accr[smprate*speed] += len(frame)
                     except: t_accr[smprate*speed] = len(frame)
                     t_sec = sum([t_accr[k] / k for k in t_accr])
-                    bytes_accr += asfh.frmlen + 32
+                    bytes_accr += asfh.frmbytes + asfh.headlen
                     if play:
-                        bps = (((asfh.frmlen+len(fhead)) * 8) * asfh.srate / len(frame))
+                        bps = (((asfh.frmbytes+len(fhead)) * 8) * asfh.srate / len(frame))
                         bpstot += bps
-                        depth = [[12,16,24,32,48,64,128],[8,12,16,24,32,48,64],[8,12,16,24,32,48,64]][asfh.profile][asfh.float_bits]
+                        depth = variables.bit_depths[asfh.profile][asfh.float_bits]
                         lgs = int(math.log(asfh.srate, 1000))
                         lgv = int(math.log(bpstot/frameNo, 1000))
                         if verbose:
@@ -236,7 +237,7 @@ class decode:
                             terminal(f'{depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and"B"or"L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
                             terminal(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}')
-                            terminal(f'{len(frame)} sample{len(frame)!=1 and"s"or""}, {asfh.frmlen} Byte{(asfh.frmlen!=1)*"s"} per frame')
+                            terminal(f'{len(frame)} sample{len(frame)!=1 and"s"or""}, {asfh.frmbytes} Byte{(asfh.frmbytes!=1)*"s"} per frame')
                             terminal(f'{bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps per-frame, {bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps average')
                         else:
                             if printed: terminal(RM_CLI, end='')

@@ -163,6 +163,8 @@ class encode:
 # --------------------------- Pre-Encode error checks ---------------------------- #
         methods.cantreencode(open(file_path, 'rb').read(4))
 
+        try: variables.bit_depths[profile].index(bits)
+        except: terminal(f'Invalid bit depth {bits} for Profile {profile}'); sys.exit(1)
         # Forcing sample rate and channel count for raw PCM
         if raw:
             if new_srate is None: terminal('Sample rate is required for raw PCM.'); sys.exit(1)
