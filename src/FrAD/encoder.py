@@ -8,7 +8,7 @@ from .tools.headb import headb
 class encode:
     @staticmethod
     def overlap(data: np.ndarray, prev: np.ndarray, olap: int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
-        if len(prev) != 0: data = np.concatenate([prev, data])
+        if prev.shape != np.array([]).shape: data = np.concatenate([prev, data])
         if kwargs.get('profile') in [1, 2] and olap: prev = data[-kwargs.get('fsize', None)//olap:]
         else: prev = np.array([])
         return data, prev
