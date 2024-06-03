@@ -110,7 +110,7 @@ class decode:
                 if fhead != variables.FRM_SIGN:
                     hq = f.read(1)
                     if not hq:
-                        if asfh.profile in [1, 2]: ddict[asfh.srate] += asfh.fsize//16
+                        if asfh.profile in [1, 2]: ddict[asfh.srate] += asfh.fsize//asfh.overlap
                         break
                     fhead = fhead[1:]+hq
                     continue
@@ -154,16 +154,15 @@ class decode:
 # This block decodes FrAD stream to PCM stream and writes it on stdout or a file.
 # ESSENTIAL
 
-            stdoutstrm = sd.OutputStream()
+            stdoutstrm = sd.OutputStream(channels=1)
             tempfstrm = open(os.devnull, 'wb')
             try:
                 # Starting stream
                 printed = False
                 bps, bpstot = 0, 0
                 dlen = os.path.getsize(file_path) - head_len
-                cli_width = 40
                 start_time = time.time()
-                fhead, prev, frame = None, np.array([]), np.array([])
+                fhead, prev, frame = b'', np.array([]), np.array([])
 
     # ----------------------------- Main decode loop ----------------------------- #
                 while True:
@@ -172,14 +171,16 @@ class decode:
                     if fhead != variables.FRM_SIGN:
                         hq = f.read(1)
                         if not hq:
-                            if play: stdoutstrm.write(prev.astype(np.float32))
-                            else:
-                                dt, dp = methods.get_dtype(dtype)
-                                if not dtype.startswith('f'):
-                                    if dtype.startswith('u'): prev+=1
-                                    prev *= 2**(dp*8-1)
-                                if ispipe: sys.stdout.buffer.write(prev.astype(dt).tobytes())
-                                else: tempfstrm.write(prev.astype(dt).tobytes())
+                            # Flushing the last frame
+                            if prev != np.array([]):
+                                if play: stdoutstrm.write(prev.astype(np.float32))
+                                else:
+                                    dt, dp = methods.get_dtype(dtype)
+                                    if not dtype.startswith('f'):
+                                        if dtype.startswith('u'): prev+=1
+                                        prev *= 2**(dp*8-1)
+                                    if ispipe: sys.stdout.buffer.write(prev.astype(dt).tobytes())
+                                    else: tempfstrm.write(prev.astype(dt).tobytes())
                             break
                         fhead = fhead[1:]+hq
                         continue
@@ -205,8 +206,25 @@ class decode:
                     # if channels and sample rate changed
                     if channels != asfh.chnl or smprate != asfh.srate:
                         channels, smprate = asfh.chnl, asfh.srate
-                        if play: stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl); stdoutstrm.start()
-                        else: tempfstrm.close(); tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb'); filelist.append([tempfstrm.name, channels, smprate])
+
+                        if play:
+                            # Flushing playback stream & Restarting stream
+                            if prev != np.array([]): stdoutstrm.write(prev.astype(np.float32))
+                            stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl)
+                            stdoutstrm.start()
+                        else:
+                            # Flushing file/stdout stream
+                            if prev != np.array([]):
+                                dt, dp = methods.get_dtype(dtype)
+                                if not dtype.startswith('f'):
+                                    if dtype.startswith('u'): prev+=1
+                                    prev *= 2**(dp*8-1)
+                                if ispipe: sys.stdout.buffer.write(prev.astype(dt).tobytes())
+                                else: tempfstrm.write(prev.astype(dt).tobytes())
+                            # Creating new file stream
+                            tempfstrm.close()
+                            tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
+                            filelist.append([tempfstrm.name, channels, smprate])
 
                     # Write PCM Stream
                     if play: stdoutstrm.write(frame.astype(np.float32))
@@ -254,7 +272,9 @@ class decode:
 # ------------------------------- End verbose block ------------------------------ #
                     fhead = None
 
-                if printed and play and verbose: terminal(RM_CLI*5, end='')
+                if printed and play:
+                    terminal(RM_CLI, end='')
+                    if verbose: terminal(RM_CLI*4, end='')
                 stdoutstrm.stop()
                 stdoutstrm.close()
                 tempfstrm.close()
