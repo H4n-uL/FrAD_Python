@@ -249,7 +249,7 @@ class encode:
 
                     # Getting required read length
                     rlen = profile == 0 and fsize or min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
-                    while rlen < len(prev): rlen += 128
+                    while rlen <= len(prev): rlen += 128
                     # Overlap
                     if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
 
