@@ -255,10 +255,12 @@ class decode:
 
                 if printed and play and verbose: terminal(RM_CLI*5, end='')
                 stdoutstrm.stop()
+                stdoutstrm.close()
                 tempfstrm.close()
             except KeyboardInterrupt:
                 stdoutstrm.abort()
                 stdoutstrm.close()
+                tempfstrm.close()
                 if not play:
                     terminal('Aborting...')
                 sys.exit(0)

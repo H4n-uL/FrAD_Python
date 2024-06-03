@@ -257,7 +257,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
 
     elif action in update_opt:
         from FrAD.tools import update
-        update.fetch_git('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents/src', os.path.dirname(__file__))
+        update.fetch_git(os.path.dirname(__file__))
 
     elif action in ['help']:
         terminal(

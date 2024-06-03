@@ -14,7 +14,8 @@ def getsha1(file):
             sha.update(data)
     return sha.hexdigest()
 
-def fetch_git(url, dir, dref='/src', ref='main'):
+def fetch_git(dir, gitdir='src', ref='main'):
+    url = os.path.join('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents', gitdir)
     res = requests.get(url, params={'ref': ref})
 
     if res.status_code != 200:
@@ -23,14 +24,14 @@ def fetch_git(url, dir, dref='/src', ref='main'):
         sys.exit(1)
 
     for content in res.json():
-        newref = os.path.join(dref, content['name'])
+        file = os.path.join(gitdir, content['name'])
         if content['type'] == 'dir':
             newdir = os.path.join(dir, content['name'])
             os.makedirs(newdir, exist_ok=True)
-            fetch_git(content['url'], newdir, dref=newref)
+            if content['name'] != 'src': fetch_git(newdir, file)
         else:
             try:    sha = getsha1(os.path.join(dir, content['name']))
             except: sha = None
             if content['sha'] != sha:
-                terminal(f'Updating {newref} from {sha is not None and f"{sha[:8]}..." or "null"} to {content['sha'][:8]}...')
+                terminal(f'Updating {file} from {sha is not None and f"{sha[:8]}..." or "null"} to {content['sha'][:8]}...')
                 open(os.path.join(dir, content['name']), 'wb').write(requests.get(content['download_url']).content)
