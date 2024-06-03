@@ -9,7 +9,7 @@ record_opt = ['record', 'rec']
 update_opt = ['update']
 
 def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n'):
-    sys.stderr.buffer.write(str(sep.join(map(str,args))+end).encode())
+    sys.stderr.buffer.write(f'{(sep or '').join(map(str,args))}{end}'.encode())
     sys.stderr.buffer.flush()
 
 def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:

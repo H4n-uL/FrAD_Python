@@ -6,8 +6,8 @@ ys = yd * 86400
 directory = os.path.dirname(os.path.realpath(__file__))
 res = os.path.join(directory, 'res')
 
-def terminal(*args: object, sep: str = ' ', end: str | None = '\n'):
-    sys.stderr.buffer.write(f'{sep.join(map(str,args))}{end}'.encode())
+def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n'):
+    sys.stderr.buffer.write(f'{(sep or '').join(map(str,args))}{end}'.encode())
     sys.stderr.buffer.flush()
 
 class variables:

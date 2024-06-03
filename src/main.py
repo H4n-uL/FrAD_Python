@@ -1,7 +1,7 @@
 import base64, json, os, sys, traceback
 
 def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n'):
-    sys.stderr.buffer.write(str(sep.join(map(str,args))+end).encode())
+    sys.stderr.buffer.write(f'{(sep or '').join(map(str,args))}{end}'.encode())
     sys.stderr.buffer.flush()
 
 encode_help = f'''--------------------------------- Description ----------------------------------
