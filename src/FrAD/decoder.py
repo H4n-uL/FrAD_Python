@@ -68,7 +68,7 @@ class decode:
         fix_error: bool = kwargs.get('ecc', False)
         gain: float = kwargs.get('gain', 1)
         verbose: bool = kwargs.get('verbose', False)
-        dtype: str = kwargs.get('dtype', False)
+        dtype: str = kwargs.get('dtype', 'f64be')
         global filelist
         with open(file_path, 'rb') as f:
 
