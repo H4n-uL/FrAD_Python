@@ -250,7 +250,9 @@ class encode:
 
                     # Getting required read length
                     if profile == 0: rlen = fsize
-                    elif profile == 1: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x >= fsize+len(prev)))
+                    elif profile == 1:
+                        rlen = min((x-len(prev) for x in variables.p1.smpls_li if x >= fsize))
+                        if rlen <= 0: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x-len(prev) >= fsize))
 
                     if not raw:
                         if process.stdout is None: raise FileNotFoundError('Broken pipe.')
