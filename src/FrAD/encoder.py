@@ -230,9 +230,11 @@ class encode:
             smpsize = sample_bytes * channels # Single sample size = bit depth * channels
 
             # Open FFmpeg
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-            rfile = open(file_path, 'rb')
-            if raw: duration = os.path.getsize(file_path) / smpsize
+            process, rfile = None, open(os.devnull, 'rb')
+            if raw:
+                rfile = open(file_path, 'rb')
+                duration = os.path.getsize(file_path) / smpsize
+            else: process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
             printed = False
             # Write file
@@ -254,7 +256,7 @@ class encode:
                         rlen = min((x-len(prev) for x in variables.p1.smpls_li if x >= fsize))
                         if rlen <= 0: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x-len(prev) >= fsize))
 
-                    if not raw:
+                    if type(process) == subprocess.Popen:
                         if process.stdout is None: raise FileNotFoundError('Broken pipe.')
                         data = process.stdout.read(rlen * smpsize) # Reading PCM
                     else: data = rfile.read(rlen * smpsize)        # Reading RAW PCM
@@ -291,6 +293,8 @@ class encode:
                         mult = bps / smprate / sample_size
                         printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
 
+            if type(process) == subprocess.Popen: process.terminate()
+            rfile.close()
         except KeyboardInterrupt:
             terminal('Aborting...')
             sys.exit(0)
