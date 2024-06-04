@@ -240,12 +240,13 @@ class encode:
             open(out, 'wb').write(headb.uilder(meta, img))
             with open(out, 'ab') as file:
                 while True:
-                    # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
+                    # profile = random.randrange(2) # Random profile test
+                    # bits = random.choice(variables.bit_depths[profile]) # Random bit depth test
                     # fsize = random.choice(variables.p1.smpls_li[:-1]) # Random spf test
-                    # profile = random.choice(range(2)) # Random profile test
                     # loss_level = random.choice(range(21)) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
-                    # ecc_dsize, ecc_codesize = random.choice(range(64, 129)), random.choice(range(16, 64)) # Random ECC test
+                    # ecc_codesize = random.randrange(1, 254)
+                    # ecc_dsize = random.randrange(1, 255-ecc_codesize)
                     # overlap = random.choice(range(2, 256)) # Random overlap test
 
                     # Getting required read length
