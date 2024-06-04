@@ -8,8 +8,9 @@ from .tools.headb import headb
 class encode:
     @staticmethod
     def overlap(data: np.ndarray, prev: np.ndarray, olap: int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
+        fsize = len(data) + len(prev)
         if prev.shape != np.array([]).shape: data = np.concatenate([prev, data])
-        if kwargs.get('profile') in [1, 2] and olap: prev = data[-kwargs.get('fsize', None)//olap:]
+        if kwargs.get('profile') in [1, 2] and olap: prev = data[-fsize//olap:]
         else: prev = np.array([])
         return data, prev
 
@@ -240,7 +241,7 @@ class encode:
             with open(out, 'ab') as file:
                 while True:
                     # bits = random.choice([12, 16, 24, 32, 48, 64]) # Random bit depth test
-                    # fsize = random.choice(variables.p1.smpls_li) # Random spf test
+                    # fsize = random.choice(variables.p1.smpls_li[:-1]) # Random spf test
                     # profile = random.choice(range(2)) # Random profile test
                     # loss_level = random.choice(range(21)) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
@@ -248,10 +249,10 @@ class encode:
                     # overlap = random.choice(range(2, 256)) # Random overlap test
 
                     # Getting required read length
-                    rlen = profile == 0 and fsize or min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
-                    while rlen <= len(prev): rlen += 128
+                    if profile == 0: rlen = fsize
+                    elif profile == 1: rlen = min((x for x in variables.p1.smpls_li if x >= fsize+len(prev)), default=2048+len(prev))
                     # Overlap
-                    if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
+                    if profile in [1, 2]: rlen -= len(prev)
 
                     if not raw:
                         if process.stdout is None: raise FileNotFoundError('Broken pipe.')
@@ -266,7 +267,7 @@ class encode:
                             frame /= 2**(sample_bytes*8-1)
                             if raw.startswith('u'): frame-=1
                     rlen = len(frame)
-                    frame, prev = encode.overlap(frame, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
+                    frame, prev = encode.overlap(frame, prev, overlap, chnl=channels, profile=profile)
                     flen = len(frame)
 
                     # Encoding
