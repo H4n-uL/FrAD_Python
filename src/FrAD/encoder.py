@@ -230,10 +230,9 @@ class encode:
             smpsize = sample_bytes * channels # Single sample size = bit depth * channels
 
             # Open FFmpeg
-            if not raw: process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-            else:
-                rfile = open(file_path, 'rb')
-                duration = os.path.getsize(file_path) / smpsize
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            rfile = open(file_path, 'rb')
+            if raw: duration = os.path.getsize(file_path) / smpsize
 
             printed = False
             # Write file
@@ -250,8 +249,8 @@ class encode:
                     # overlap = random.choice(range(2, 256)) # Random overlap test
 
                     # Getting required read length
-                    if profile == 0: rlen = fsize
-                    elif profile == 1:
+                    rlen = fsize
+                    if profile == 1:
                         rlen = min((x-len(prev) for x in variables.p1.smpls_li if x >= fsize))
                         if rlen <= 0: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x-len(prev) >= fsize))
 
