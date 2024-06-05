@@ -1,6 +1,6 @@
 from .common import variables, methods, terminal
 from .fourier import fourier
-import json, os, math, random, struct, subprocess, sys, time, traceback, typing, zlib
+import io, json, os, math, random, struct, subprocess, sys, time, traceback, zlib
 import numpy as np
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -16,7 +16,7 @@ class encode:
         return data, prev
 
     @staticmethod
-    def write_frame(file: typing.BinaryIO, frame: bytes, channels: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> None:
+    def write_frame(file: io.BufferedWriter, frame: bytes, channels: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> None:
         profile, isecc, _, _ = headb.decode_pfb(pfb)
         if not isecc: ecc_list = (0, 0)
         data = bytes(
@@ -232,9 +232,8 @@ class encode:
             smpsize = sample_bytes * channels # Single sample size = bit depth * channels
 
             # Open FFmpeg
-            process, rfile = None, open(os.devnull, 'rb')
             if raw:
-                rfile = open(file_path, 'rb')
+                process = open(file_path, 'rb')
                 duration = os.path.getsize(file_path) / smpsize
             else: process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
@@ -261,7 +260,9 @@ class encode:
                     if type(process) == subprocess.Popen:
                         if process.stdout is None: raise FileNotFoundError('Broken pipe.')
                         data = process.stdout.read(rlen * smpsize) # Reading PCM
-                    else: data = rfile.read(rlen * smpsize)        # Reading RAW PCM
+                    elif type(process) == io.BufferedReader:
+                        data = process.read(rlen * smpsize)        # Reading RAW PCM
+                    else: raise BufferError('Broken pipe.')
                     if not data: break                             # if no data, Break
 
                     # RAW PCM to Numpy
@@ -296,7 +297,8 @@ class encode:
                         printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
 
             if type(process) == subprocess.Popen: process.terminate()
-            rfile.close()
+            elif type(process) == io.BufferedReader: process.close()
+            else: raise BufferError('Broken pipe.')
         except KeyboardInterrupt:
             terminal('Aborting...')
             sys.exit(0)

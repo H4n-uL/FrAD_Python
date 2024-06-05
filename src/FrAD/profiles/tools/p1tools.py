@@ -4,7 +4,7 @@ import numpy as np
 MOS =  (0,     200,   400,   600,   800,   1000,  1200,  1400,
         1600,  2000,  2400,  2800,  3200,  4000,  4800,  5600,
         6800,  8000,  9600,  12000, 15600, 20000, 24000, 28800,
-        34400, 40800, 48000, 2**32)
+        34400, 40800, 48000, -1)
 
 subbands = len(MOS) - 1
 rndint = lambda x: int(x+0.5)
@@ -13,7 +13,7 @@ class pns:
     @staticmethod
     def getbinrng(dlen: int, smprate: int, subband_index: int) -> slice:
         return slice(rndint(dlen/(smprate/2)*MOS[subband_index]),
-            None if MOS[subband_index+1] is None else rndint(dlen/(smprate/2)*MOS[subband_index+1]))
+            None if MOS[subband_index+1] is -1 else rndint(dlen/(smprate/2)*MOS[subband_index+1]))
 
     @staticmethod
     def mask_thres_MOS(freqs: np.ndarray, alpha: float, smprate: int) -> np.ndarray:
@@ -21,7 +21,7 @@ class pns:
         for i in range(subbands):
             subfreqs = freqs[pns.getbinrng(len(freqs), smprate, i)]
             if len(subfreqs) > 0:
-                if MOS[i+1] == None: thres[pns.getbinrng(len(freqs), smprate, i)] = np.inf; continue
+                if MOS[i+1] == -1: thres[pns.getbinrng(len(freqs), smprate, i)] = np.inf; continue
                 f = (MOS[i] + MOS[i+1]) / 2
                 ABS = (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))
                 ABS = np.clip(ABS, None, 96)

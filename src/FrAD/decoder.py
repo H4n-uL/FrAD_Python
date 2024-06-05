@@ -2,8 +2,8 @@ from .common import variables, methods, terminal
 from .fourier import fourier
 from .header import header
 import numpy as np
-import atexit, math, os, platform, shutil, struct, subprocess,\
-       sys, tempfile, time, traceback, typing, zlib
+import atexit, io, math, os, platform, shutil, struct,\
+       subprocess, sys, tempfile, time, traceback, zlib
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -13,7 +13,7 @@ RM_CLI = '\x1b[1A\x1b[2K'
 class ASFH:
     def __init__(self): pass
 
-    def update(self, file: typing.BinaryIO):
+    def update(self, file: io.BufferedReader):
         fhead = variables.FRM_SIGN + file.read(5)
         self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
@@ -63,7 +63,7 @@ class decode:
         return frame, prev
 
     @staticmethod
-    def write(frame: np.ndarray, playstream: sd.OutputStream, filestream: typing.BinaryIO, dtype: str, play: bool, ispipe: bool) -> None:
+    def write(frame: np.ndarray, playstream: sd.OutputStream, filestream: io.BufferedWriter, dtype: str, play: bool, ispipe: bool) -> None:
         if frame.shape != np.array([]).shape:
             if play: playstream.write(frame.astype(np.float32))
             else:
