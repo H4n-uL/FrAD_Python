@@ -256,12 +256,12 @@ class decode:
 # ------------------------------- End verbose block ------------------------------ #
                     fhead = None
 
-                if printed and play:
-                    terminal(RM_CLI, end='')
-                    if verbose: terminal(RM_CLI*4, end='')
                 stdoutstrm.stop()
                 stdoutstrm.close()
                 tempfstrm.close()
+                if printed and play:
+                    terminal(RM_CLI, end='')
+                    if verbose: terminal(RM_CLI*4, end='')
             except KeyboardInterrupt:
                 stdoutstrm.abort()
                 stdoutstrm.close()
