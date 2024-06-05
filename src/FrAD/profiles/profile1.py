@@ -6,7 +6,7 @@ import zlib
 class p1:
     srates = (96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000)
     smpls = {128: [128 * 2**i for i in range(8)], 144: [144 * 2**i for i in range(8)], 192: [192 * 2**i for i in range(8)]}
-    smpls_li = (item for sublist in smpls.values() for item in sublist)
+    smpls_li = tuple([item for sublist in smpls.values() for item in sublist])
 
     depths = (8, 12, 16, 24, 32, 48, 64)
     dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
