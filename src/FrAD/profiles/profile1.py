@@ -4,11 +4,11 @@ from .tools import p1tools
 import zlib
 
 class p1:
-    srates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000]
+    srates = (96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000)
     smpls = {128: [128 * 2**i for i in range(8)], 144: [144 * 2**i for i in range(8)], 192: [192 * 2**i for i in range(8)]}
-    smpls_li = [item for sublist in smpls.values() for item in sublist]
+    smpls_li = (item for sublist in smpls.values() for item in sublist)
 
-    depths = [8, 12, 16, 24, 32, 48, 64]
+    depths = (8, 12, 16, 24, 32, 48, 64)
     dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
     get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
 
@@ -43,9 +43,9 @@ class p1:
         frad: bytes = freqs.T.ravel().astype(endian+p1.dtypes[bits]).tobytes()
 
         # Cutting off bits
-        if bits in [64, 32, 16, 8]:
+        if bits in (64, 32, 16, 8):
             pass
-        elif bits in [48, 24]:
+        elif bits in (48, 24):
             hexa = frad.hex()
             frad = bytes.fromhex(''.join([be and hexa[i+(bits//12):i+(bits//6*2)] or hexa[i:i+bits//4] for i in range(0, len(hexa), bits//6*2)]))
         elif bits == 12:
@@ -77,7 +77,7 @@ class p1:
 
         # Padding bits
         if bits % 3 != 0: pass
-        elif bits in [24, 48]:
+        elif bits in (24, 48):
             frad = b''.join([p1.signext_24x(frad[i:i+(bits//8)], bits, be) for i in range(0, len(frad), bits//8)])
         elif bits == 12:
             hexa = frad.hex()

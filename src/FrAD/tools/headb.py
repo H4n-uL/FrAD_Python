@@ -45,7 +45,7 @@ class headb:
         srate = variables.p1.srates.index(srate) << 6
         fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=0)
         mult = next((key for key, values in variables.p1.smpls.items() if fsize in values), 0)
-        px = [128, 144, 192].index(mult) << 4
+        px = tuple(variables.p1.smpls).index(mult) << 4
         fsize = int(math.log2(fsize / mult)) << 1
         return struct.pack('>H', chnl | srate | px | fsize)
 

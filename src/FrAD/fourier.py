@@ -3,7 +3,7 @@ import numpy as np
 from .profiles.profile1 import p1
 
 class fourier:
-    depths = [12, 16, 24, 32, 48, 64, 128]
+    depths = (12, 16, 24, 32, 48, 64, 128)
     dtypes = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
 
     @staticmethod
@@ -26,9 +26,9 @@ class fourier:
         frad: bytes = freqs.T.ravel().astype(endian+fourier.dtypes[bits]).tobytes()
 
         # Cutting off bits
-        if bits in [128, 64, 32, 16]:
+        if bits in (128, 64, 32, 16):
             pass
-        elif bits in [48, 24]:
+        elif bits in (48, 24):
             frad = b''.join([be and frad[i:i+(bits//8)] or frad[i+(bits//24):i+(bits//6)] for i in range(0, len(frad), bits//6)])
         elif bits == 12:
             hexa = frad.hex()
@@ -49,7 +49,7 @@ class fourier:
 
         # Padding bits
         if bits % 3 != 0: pass
-        elif bits in [24, 48]:
+        elif bits in (24, 48):
             frad = b''.join([be and frad[i:i+(bits//8)]+(b'\x00'*(bits//24)) or (b'\x00'*(bits//24))+frad[i:i+(bits//8)] for i in range(0, len(frad), bits//8)])
         elif bits == 12:
             hexa = frad.hex()

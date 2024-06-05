@@ -18,10 +18,10 @@ class variables:
     from .fourier import fourier
     from .profiles.profile1 import p1
 
-    bit_depths = [
+    bit_depths = (
         fourier.depths,
         p1.depths
-    ]
+    )
 
     # Temporary files for metadata processing / stream repairing
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frad').name
@@ -75,7 +75,7 @@ class methods:
 
     @staticmethod
     def cantreencode(sign: bytes): # Anti-re-encode
-        if sign in [b'fRad', b'\xff\xd0\xd2\x97']:
+        if sign in (b'fRad', b'\xff\xd0\xd2\x97'):
             raise Exception('This is an already encoded Fourier Analogue file.')
 
     @staticmethod
@@ -105,7 +105,7 @@ class methods:
         # in [s,u,f]{bit depth}[be,le], e.g. s16be, u32le, f64be
         # This is only for Numpy dtype, and should be implemented differently for each implementations
         if not raw: return '>f8', 8
-        if raw[-2:] in ['be', 'le']:
+        if raw[-2:] in ('be', 'le'):
             raw, endian = raw[:-2], raw[-2:]
             endian = endian=='be' and '>' or endian=='le' and '<' or ''
         else: endian = ''
