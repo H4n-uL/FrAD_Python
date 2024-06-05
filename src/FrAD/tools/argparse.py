@@ -1,12 +1,12 @@
 import sys
 
-encode_opt = ('encode', 'enc')
-decode_opt = ('decode', 'dec')
-meta_opt = ('meta', 'metadata')
-repack_ecc_opt = ('ecc', 'repack')
-play_opt = ('play')
-record_opt = ('record', 'rec')
-update_opt = ('update')
+encode_opt = ['encode', 'enc']
+decode_opt = ['decode', 'dec']
+meta_opt = ['meta', 'metadata']
+repack_ecc_opt = ['ecc', 'repack']
+play_opt = ['play']
+record_opt = ['record', 'rec']
+update_opt = ['update']
 
 def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n'):
     sys.stderr.buffer.write(f'{(sep or '').join(map(str,args))}{end}'.encode())
