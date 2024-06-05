@@ -199,7 +199,7 @@ class encode:
 
         smprate = new_srate is not None and new_srate or smprate
 
-        if type(overlap) != int: overlap = variables.overlap_rate
+        if not isinstance(overlap, (int, float)): overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
         elif overlap <= 0.5: overlap = int(1/overlap)
         elif overlap < 2: overlap = 2
@@ -257,10 +257,10 @@ class encode:
                         rlen = min((x-len(prev) for x in variables.p1.smpls_li if x >= fsize))
                         if rlen <= 0: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x-len(prev) >= fsize))
 
-                    if type(process) == subprocess.Popen:
+                    if isinstance(process, subprocess.Popen):
                         if process.stdout is None: raise FileNotFoundError('Broken pipe.')
                         data = process.stdout.read(rlen * smpsize) # Reading PCM
-                    elif type(process) == io.BufferedReader:
+                    elif isinstance(process, io.BufferedReader):
                         data = process.read(rlen * smpsize)        # Reading RAW PCM
                     else: raise BufferError('Broken pipe.')
                     if not data: break                             # if no data, Break
@@ -296,8 +296,8 @@ class encode:
                         mult = bps / smprate / sample_size
                         printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
 
-            if type(process) == subprocess.Popen: process.terminate()
-            elif type(process) == io.BufferedReader: process.close()
+            if isinstance(process, subprocess.Popen): process.terminate()
+            elif isinstance(process, io.BufferedReader): process.close()
             else: raise BufferError('Broken pipe.')
         except KeyboardInterrupt:
             terminal('Aborting...')

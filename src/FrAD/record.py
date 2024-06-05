@@ -45,7 +45,7 @@ class recorder:
             smprate = min(smprate, 96000)
             if not smprate in variables.p1.srates: smprate = 48000
 
-        if type(overlap) != int: overlap = variables.overlap_rate
+        if not isinstance(overlap, (int, float)): overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
         elif overlap <= 0.5: overlap = int(1/overlap)
         elif overlap < 2: overlap = 2

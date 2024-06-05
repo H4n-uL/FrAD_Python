@@ -88,7 +88,7 @@ class methods:
 
     @staticmethod
     def tformat(n: float | str) -> str: # i'm dying help
-        if type(n) != float: return str(n)
+        if not isinstance(n, (int, float)): return str(n)
         if n < 0: return f'-{methods.tformat(-n)}'
         if n == 0: return '0'
         if n < 0.000001: return f'{n*10**9:.3f} ns'

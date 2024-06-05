@@ -7,8 +7,8 @@ COMMENT = b'\xfa\xaa'
 class metablock:
     @staticmethod
     def comment(title: str, data: str | bytes) -> bytes:
-        if type(data) == bytes: dbytes = data
-        elif type(data) == str: dbytes = data.encode('utf-8')
+        if isinstance(data, bytes): dbytes = data
+        elif isinstance(data, str): dbytes = data.encode('utf-8')
         else: dbytes = str(data).encode('utf-8')
         title_length = struct.pack('>I', len(title))
         data_comb = title.encode('utf-8') + dbytes

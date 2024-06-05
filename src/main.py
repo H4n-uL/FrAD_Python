@@ -297,7 +297,7 @@ if __name__ == '__main__':
         action, file_path, metaopt, kwargs = parse_args(sys.argv[1:])
         main(action, file_path, metaopt, kwargs)
     except Exception as e:
-        if type(e) == KeyboardInterrupt:
+        if isinstance(e, KeyboardInterrupt):
             sys.exit(0)
         else:
             terminal(traceback.format_exc())
