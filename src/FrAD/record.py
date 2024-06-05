@@ -45,12 +45,12 @@ class recorder:
             smprate = min(smprate, 96000)
             if not smprate in variables.p1.srates: smprate = 48000
 
-        if overlap is None: overlap = variables.overlap_rate
+        if type(overlap) != int: overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
-        else:
-            if overlap < 2: overlap = int(1/overlap)
-            if overlap%1!=0: overlap = int(overlap)
-            if overlap > 255: overlap = 255
+        elif overlap <= 0.5: overlap = int(1/overlap)
+        elif overlap < 2: overlap = 2
+        elif overlap > 255: overlap = 255
+        if overlap%1!=0: overlap = int(overlap)
         terminal('Please enter your recording device ID from below.')
         for ind, dev in enumerate(sd.query_devices()):
             if dev['max_input_channels'] != 0:

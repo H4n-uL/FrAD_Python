@@ -199,10 +199,10 @@ class encode:
 
         if type(overlap) != int: overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
-        else:
-            if overlap < 2: overlap = int(1/overlap)
-            if overlap%1!=0: overlap = int(overlap)
-            if overlap > 255: overlap = 255
+        elif overlap <= 0.5: overlap = int(1/overlap)
+        elif overlap < 2: overlap = 2
+        elif overlap > 255: overlap = 255
+        if overlap%1!=0: overlap = int(overlap)
         # Setting file extension
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
         if not out.lower().endswith(('.frad', '.dsin', '.fra', '.dsn')):
