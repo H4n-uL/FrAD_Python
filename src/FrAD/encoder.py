@@ -9,6 +9,7 @@ class encode:
     @staticmethod
     def overlap(data: np.ndarray, prev: np.ndarray, olap: int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
         fsize = len(data) + len(prev)
+        olap = olap > 0 and (olap > 2 and (olap > 255 and 255 or olap) or 2) or 0
         if prev.shape != np.array([]).shape: data = np.concatenate([prev, data])
         if kwargs.get('profile') in [1, 2] and olap: prev = data[-fsize//olap:]
         else: prev = np.array([])
