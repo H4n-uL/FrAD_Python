@@ -61,7 +61,8 @@ class encode:
 
         for stream in info['streams']:
             if stream['codec_type'] == 'audio':
-                duration = stream['duration_ts'] * int(stream['sample_rate']) // int(stream['time_base'][2:])
+                tbase = stream['time_base'].split('/')
+                duration = stream['duration_ts'] * int(stream['sample_rate']) // int(tbase[1]) * int(tbase[0])
                 return int(stream['channels']), int(stream['sample_rate']), stream['codec_name'], duration
         terminal('No audio stream found.')
         sys.exit(1)
