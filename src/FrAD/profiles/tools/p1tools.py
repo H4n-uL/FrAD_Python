@@ -13,7 +13,7 @@ class pns:
     @staticmethod
     def getbinrng(dlen: int, smprate: int, subband_index: int) -> slice:
         return slice(rndint(dlen/(smprate/2)*MOS[subband_index]),
-            None if MOS[subband_index+1] is -1 else rndint(dlen/(smprate/2)*MOS[subband_index+1]))
+            MOS[subband_index+1] == -1 and None or rndint(dlen/(smprate/2)*MOS[subband_index+1]))
 
     @staticmethod
     def mask_thres_MOS(freqs: np.ndarray, alpha: float, smprate: int) -> np.ndarray:
