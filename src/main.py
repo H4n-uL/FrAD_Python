@@ -27,7 +27,7 @@ fourier encode path/to/audio.file --bits [bit depth] {{kwargs...}}
     --channels    | Channels (alias: c, chnl, channel)
     --raw         | Raw PCM data flag with data type (alias: r, pcm)
                   |
-    --fsize       | Samples per frame, default: 2048 
+    --fsize       | Samples per frame, default: 2048
                   |                   (alias: fr, frame-size, samples-per-frame)
     --gain        | Gain level in both dBFS and amplitude (alias: g, gain)
     --le          | Little Endian Toggle (alias: le, little-endian)
@@ -227,7 +227,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
         if file_path is None: terminal('File path is required.'); sys.exit(1)
         from FrAD import recorder
         bits = kwargs.get('bits', 16)
-        recorder.record_audio(file_path, 
+        recorder.record_audio(file_path,
             srate=kwargs.get('srate', 48000),
             bits=bits, fsize=fsize, olap=kwargs.get('overlap', None),
             ecc=ecc_enabled, ecc_sizes=data_ecc,
