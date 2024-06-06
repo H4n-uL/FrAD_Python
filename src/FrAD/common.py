@@ -12,6 +12,7 @@ def terminal(*args: object, sep: str | None = ' ', end: str | None = '\n'):
 
 class variables:
     FRM_SIGN = b'\xff\xd0\xd2\x97'
+    FRM_MAXSZ = 2**32-1
     cli_width = 80
     overlap_rate = 16
 

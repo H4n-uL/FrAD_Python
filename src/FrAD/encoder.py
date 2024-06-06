@@ -21,7 +21,7 @@ class encode:
         if not isecc: ecc_list = (0, 0)
         data = bytes(
             variables.FRM_SIGN +
-            struct.pack('>I', len(frame)) +
+            struct.pack('>I', min(len(frame), variables.FRM_MAXSZ)) +
             pfb
         )
         if profile == 0:
@@ -45,6 +45,7 @@ class encode:
                     struct.pack('>B', ecc_list[1]) +
                     struct.pack('>H', methods.crc16_ansi(frame))
                 )
+        if len(frame) >= variables.FRM_MAXSZ: data += struct.pack('>Q', len(frame))
         data += frame
         file.write(data)
         return None
@@ -189,7 +190,7 @@ class encode:
             # segmax for Profile 0 = 4GiB / (intra-channel-sample size * channels * ECC mapping)
             # intra-channel-sample size = bit depth * 8, least 3 bytes(float s1e8m15)
             # ECC mapping = (block size / data size)
-            segmax = {0: (2**32-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * max(bits/8, 3)),
+            segmax = {0: 2**32-1,
                       1: max(variables.p1.smpls_li)}
             if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
             if profile == 1: fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)

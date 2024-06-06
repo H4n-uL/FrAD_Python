@@ -17,6 +17,7 @@ class ASFH:
         fhead = variables.FRM_SIGN + file.read(5)
         self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
+
         if self.profile == 0:
             fhead += file.read(23)
             self.chnl = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
@@ -25,7 +26,8 @@ class ASFH:
             self.srate = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
             self.fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
             self.crc = fhead[0x1c:0x20]                                # 0x1c-4B: ISO 3309 CRC32 of Audio Data
-        elif self.profile == 1:
+
+        if self.profile == 1:
             fhead += file.read(3)
             self.chnl, self.srate, self.fsize = headb.decode_css_prf1(fhead[0x9:0xb])
             self.overlap = struct.unpack('>B', fhead[0xb:0xc])[0]      # 0x0b: Overlap rate
@@ -34,6 +36,11 @@ class ASFH:
                 self.ecc_dsize = struct.unpack('>B', fhead[0xc:0xd])[0]
                 self.ecc_codesize = struct.unpack('>B', fhead[0xd:0xe])[0]
                 self.crc = fhead[0xe:0x10]                             # 0x0e-2B: ANSI CRC16 of Audio Data
+
+        if self.frmbytes == variables.FRM_MAXSZ:
+            fhead += file.read(8)
+            self.frmbytes = struct.unpack('>Q', fhead[-8:])[0]
+
         self.headlen = len(fhead)
 
 filelist = []
@@ -155,7 +162,7 @@ class decode:
 # This block parses and shows the metadata and image data from the header.
 # OPTIONAL: i don't even activate this block cuz it makes cli becomes messy
 
-            # if verbose: 
+            # if verbose:
             #     meta, img = header.parse(file_path)
             #     if meta:
             #         meta_tlen = max([len(m[0]) for m in meta])
