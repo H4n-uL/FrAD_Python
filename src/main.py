@@ -25,7 +25,8 @@ fourier encode path/to/audio.file --bits [bit depth] {{kwargs...}}
     --output      | Output file path (alias: o, out, output-file)
     --sample-rate | Sample rate (alias: sr, srate)
     --channels    | Channels (alias: c, chnl, channel)
-    --raw         | Raw PCM data flag with data type (alias: r, pcm)
+    --raw         | Raw PCM data flag in [data type, sample rate, channels]
+                  |                                              (alias: r, pcm)
                   |
     --fsize       | Samples per frame, default: 2048
                   |                   (alias: fr, frame-size, samples-per-frame)
@@ -264,13 +265,13 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
 '''               Fourier Analogue-in-Digital Master encoder/decoder
                              Original Author - HaמuL
 ''')
-        if file_path in encode_opt: terminal(encode_help)
-        elif file_path in decode_opt: terminal(decode_help)
-        elif file_path in play_opt: terminal(play_help)
-        elif file_path in record_opt: terminal(record_help)
-        elif file_path in meta_opt: terminal(meta_help)
+        if   file_path in encode_opt:     terminal(encode_help)
+        elif file_path in decode_opt:     terminal(decode_help)
+        elif file_path in play_opt:       terminal(play_help)
+        elif file_path in record_opt:     terminal(record_help)
+        elif file_path in meta_opt:       terminal(meta_help)
         elif file_path in repack_ecc_opt: terminal(repack_ecc_help)
-        elif file_path in update_opt: terminal(update_help)
+        elif file_path in update_opt:     terminal(update_help)
         else:
             terminal(
 '''------------------------------- Available actions ------------------------------

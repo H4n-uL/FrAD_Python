@@ -11,7 +11,7 @@ class recorder:
     @staticmethod
     def record_audio(file_path, **kwargs):
         # Audio settings
-        smprate = kwargs.get('srate', 48000)
+        srate = kwargs.get('srate', 48000)
         channels = kwargs.get('chnl', None)
 
         # FrAD specifications
@@ -42,8 +42,8 @@ class recorder:
         if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
 
         if profile in [1, 2]:
-            smprate = min(smprate, 96000)
-            if not smprate in variables.p1.srates: smprate = 48000
+            srate = min(srate, 96000)
+            if not srate in variables.p1.srates: srate = 48000
 
         if not isinstance(overlap, (int, float)): overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
@@ -78,7 +78,7 @@ class recorder:
         open(file_path, 'wb').write(headb.uilder(meta, img))
         prev = np.array([])
 
-        record = sd.InputStream(samplerate=smprate, channels=channels, device=hw, dtype=np.float32)
+        record = sd.InputStream(samplerate=srate, channels=channels, device=hw, dtype=np.float32)
         record.start()
         with open(file_path, 'ab') as f:
             while True:
@@ -89,13 +89,13 @@ class recorder:
                     if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
                     data = record.read(rlen)[0]
                     if overlap: data, prev = encode.overlap(data, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
-                    frame, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
+                    frame, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, srate=srate, level=loss_level)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
                     pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bf)
-                    encode.write_frame(f, frame, chnl, smprate, pfb, (ecc_dsize, ecc_codesize), len(data), olap=overlap)
+                    encode.write_frame(f, frame, chnl, srate, pfb, (ecc_dsize, ecc_codesize), len(data), olap=overlap)
 
                 except KeyboardInterrupt:
                     break

@@ -45,8 +45,8 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
             elif key in ('img', 'image'):
                 key, value = 'image', args.pop(0)
 
-            # New sample rate
-            elif key in ('sr', 'srate', 'sample-rate', 'nsr', 'new-srate', 'new-sample-rate', 'resample'):
+            # Sample rate
+            elif key in ('sr', 'srate', 'sample-rate'):
                 nsr = '<null>'
                 try:
                     nsr = args.pop(0)
@@ -106,9 +106,12 @@ def parse_args(args: list[str]) -> tuple[str, str|None, str|None, dict]:
 
             # Raw
             elif key in ('r', 'raw', 'pcm'):
-                try: key, value = 'raw', args.pop(0)
+                dtype = rsr = rch = '<null>'
+                try:
+                    dtype = args.pop(0); rsr = args.pop(0); rch = args.pop(0)
+                    key, value = 'raw', (dtype, int(rsr), int(rch))
                 except ValueError:
-                    terminal(f'Value cannot be parsed as String: {arg}')
+                    terminal(f'Value cannot be parsed as [dtype, raw srate, raw chnl]: {dtype}, {rsr}, {rch}')
                     sys.exit(1)
 
             # Enable ECC

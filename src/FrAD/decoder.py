@@ -105,7 +105,7 @@ class decode:
             ftype = methods.signature(head[0x0:0x4])
             # Taking Stream info
             channels = int()
-            smprate = int()
+            srate = int()
 
             # Container starts with 'fRad', and Stream starts with 0xffd0d297
             if ftype == 'container':
@@ -209,18 +209,18 @@ class decode:
                         else:  data = ecc.unecc( data, asfh.ecc_dsize, asfh.ecc_codesize)
 
                     # Decoding
-                    frame: np.ndarray = fourier.digital(data, asfh.float_bits, asfh.chnl, asfh.endian, profile=asfh.profile, smprate=asfh.srate, fsize=asfh.fsize) * gain
+                    frame: np.ndarray = fourier.digital(data, asfh.float_bits, asfh.chnl, asfh.endian, profile=asfh.profile, srate=asfh.srate, fsize=asfh.fsize) * gain
 
                     # if channels and sample rate changed
-                    if channels != asfh.chnl or smprate != asfh.srate:
-                        channels, smprate = asfh.chnl, asfh.srate
+                    if channels != asfh.chnl or srate != asfh.srate:
+                        channels, srate = asfh.chnl, asfh.srate
                         decode.write(prev, stdoutstrm, tempfstrm, dtype, play, ispipe)
                         if play: stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl); stdoutstrm.start()
                         else:
                             prev = np.array([])
                             tempfstrm.close()
                             tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
-                            filelist.append([tempfstrm.name, channels, smprate])
+                            filelist.append([tempfstrm.name, channels, srate])
 
                     frame, prev = decode.overlap(frame, prev, asfh)
 
@@ -230,8 +230,8 @@ class decode:
 # --------------------------- Verbose block, Optional ---------------------------- #
 #
                     frameNo += 1
-                    try: t_accr[smprate*speed] += len(frame)
-                    except: t_accr[smprate*speed] = len(frame)
+                    try: t_accr[srate*speed] += len(frame)
+                    except: t_accr[srate*speed] = len(frame)
                     t_sec = sum([t_accr[k] / k for k in t_accr])
                     bytes_accr += asfh.frmbytes + asfh.headlen
                     if play:
@@ -296,12 +296,12 @@ class decode:
     ffmpeg_lossless = ['wav', 'flac', 'wavpack', 'tta', 'truehd', 'alac', 'dts', 'mlp']
 
     @staticmethod
-    def directcmd(temp_pcm, dtype, smprate, channels, ffmpeg_cmd):
+    def directcmd(temp_pcm, dtype, srate, channels, ffmpeg_cmd):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
             '-f', dtype,
-            '-ar', str(smprate),
+            '-ar', str(srate),
             '-ac', str(channels),
             '-i', temp_pcm,
             '-i', variables.meta,
@@ -311,12 +311,12 @@ class decode:
         subprocess.run(command)
 
     @staticmethod
-    def ffmpeg(temp_pcm, dtype, smprate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
+    def ffmpeg(temp_pcm, dtype, srate, channels, codec, f, s, out, ext, quality, strategy, new_srate):
         command = [
             variables.ffmpeg, '-y',
             '-loglevel', 'error',
             '-f', dtype,
-            '-ar', str(smprate),
+            '-ar', str(srate),
             '-ac', str(channels),
             '-i', temp_pcm,
             '-i', variables.meta,
@@ -329,7 +329,7 @@ class decode:
         if os.path.exists(f'{variables.meta}.image'):
             command.extend(['-map', '2:v'])
 
-        if new_srate is not None and new_srate != smprate: command.extend(['-ar', str(new_srate)])
+        if new_srate is not None and new_srate != srate: command.extend(['-ar', str(new_srate)])
 
         command.append('-c:a')
         if codec in ['wav', 'riff']:
@@ -365,14 +365,14 @@ class decode:
         subprocess.run(command)
 
     @staticmethod
-    def AppleAAC_macOS(temp_pcm, dtype, smprate, channels, out, quality, strategy):
+    def AppleAAC_macOS(temp_pcm, dtype, srate, channels, out, quality, strategy):
         try:
             quality = str(quality)
             command = [
                 variables.ffmpeg, '-y',
                 '-loglevel', 'error',
                 '-f', dtype,
-                '-ar', str(smprate),
+                '-ar', str(srate),
                 '-ac', str(channels),
                 '-i', temp_pcm,
                 '-sample_fmt', 's32',
@@ -401,18 +401,18 @@ class decode:
             sys.exit(0)
 
     @staticmethod
-    def AppleAAC_Windows(temp_pcm, dtype, smprate, channels, out, quality, new_srate):
+    def AppleAAC_Windows(temp_pcm, dtype, srate, channels, out, quality, new_srate):
         try:
             command = [
                 variables.aac,
                 '--raw', temp_pcm,
                 '--raw-channels', str(channels),
-                '--raw-rate', str(smprate),
+                '--raw-rate', str(srate),
                 '--raw-format', dtype[:-1],
                 '--adts',
                 '-c', str(quality),
             ]
-            if new_srate is not None and new_srate != smprate: command.extend(['--rate', str(new_srate)])
+            if new_srate is not None and new_srate != srate: command.extend(['--rate', str(new_srate)])
             command.extend([
                 '-o', f'{out}.aac',
                 '-s'
@@ -490,17 +490,17 @@ class decode:
             else: raise ValueError(f'Illegal value {bits} for bits: only 8, 16, and 32 bits are available for decoding.')
 
             for z in range(len(filelist)):
-                temp_pcm, channels, smprate = filelist[z]
+                temp_pcm, channels, srate = filelist[z]
 
                 if ffmpeg_cmd is not None:
-                    decode.directcmd(temp_pcm, dtype, smprate, channels, ffmpeg_cmd)
+                    decode.directcmd(temp_pcm, dtype, srate, channels, ffmpeg_cmd)
                 else:
-                    if (codec == 'aac' and smprate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
+                    if (codec == 'aac' and srate <= 48000 and channels <= 2) or codec in ['appleaac', 'apple_aac']:
                         if strategy in ['c', 'a']: q = decode.setaacq(q, channels)
-                        if platform.system() == 'Darwin': decode.AppleAAC_macOS(temp_pcm, dtype, smprate, channels, (z==0 and out or f'{out}.{z}'), q, strategy)
-                        elif platform.system() == 'Windows': decode.AppleAAC_Windows(temp_pcm, dtype, smprate, channels, (z==0 and out or f'{out}.{z}'), q, new_srate)
+                        if platform.system() == 'Darwin': decode.AppleAAC_macOS(temp_pcm, dtype, srate, channels, (z==0 and out or f'{out}.{z}'), q, strategy)
+                        elif platform.system() == 'Windows': decode.AppleAAC_Windows(temp_pcm, dtype, srate, channels, (z==0 and out or f'{out}.{z}'), q, new_srate)
                     elif codec not in ['pcm', 'raw']:
-                        decode.ffmpeg(temp_pcm, dtype, smprate, channels, codec, f, s, (z==0 and out or f'{out}.{z}'), ext, q, strategy, new_srate)
+                        decode.ffmpeg(temp_pcm, dtype, srate, channels, codec, f, s, (z==0 and out or f'{out}.{z}'), ext, q, strategy, new_srate)
                     else:
                         shutil.move(temp_pcm, (z==0 and f'{out}.{ext}' or f'{out}.{z}.{ext}'))
                 os.remove(temp_pcm)

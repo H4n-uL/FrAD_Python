@@ -16,7 +16,7 @@ class encode:
         return data, prev
 
     @staticmethod
-    def write_frame(file: io.BufferedWriter, frame: bytes, channels: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> None:
+    def write_frame(file: io.BufferedWriter, frame: bytes, chnl: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> None:
         profile, isecc, _, _ = headb.decode_pfb(pfb)
         if not isecc: ecc_list = (0, 0)
         data = bytes(
@@ -26,7 +26,7 @@ class encode:
         )
         if profile == 0:
             data += (
-                struct.pack('>B', channels - 1) +
+                struct.pack('>B', chnl - 1) +
                 struct.pack('>B', ecc_list[0]) +
                 struct.pack('>B', ecc_list[1]) +
                 struct.pack('>I', srate) +
@@ -36,7 +36,7 @@ class encode:
             )
         elif profile == 1:
             data += (
-                headb.encode_css_prf1(channels, srate, fsize) +
+                headb.encode_css_prf1(chnl, srate, fsize) +
                 struct.pack('>B', kwargs.get('olap', 0))
             )
             if isecc:
@@ -70,16 +70,23 @@ class encode:
         sys.exit(1)
 
     @staticmethod
-    def get_pcm_command(file_path: str, osr: int, new_srate: int | None, chnl: int | None) -> list[str]:
+    def get_pcm_command(file_path: str, raw: tuple[str, int | None, int | None], srate: int | None, chnl: int | None) -> list[str]:
         command = [
             variables.ffmpeg,
-            '-v', 'quiet',
+            '-v', 'quiet']
+
+        if raw: command.extend([
+            '-f', raw[0],
+            '-ar', str(raw[1]),
+            '-ac', str(raw[2])])
+        
+        command.extend([
             '-i', file_path,
             '-f', 'f64be',
-            '-vn'
-        ]
-        if new_srate is not None and new_srate != osr:
-            command.extend(['-ar', str(new_srate)])
+            '-vn'])
+
+        if srate is not None:
+            command.extend(['-ar', str(srate)])
         if chnl is not None:
             command.extend(['-ac', str(chnl)])
         command.append('pipe:1')
@@ -148,10 +155,11 @@ class encode:
 
         # Audio settings
         new_srate: int = kwargs.get('srate', None)
-        chnl: int = kwargs.get('chnl', None)
+        new_chnl: int = kwargs.get('chnl', None)
 
         # Raw PCM
-        raw: str = kwargs.get('raw', None)
+        raw: tuple[str, int, int] = kwargs.get('raw', ('f64be', 0, 0))
+        # raw: str = kwargs.get('raw', None)
 
         # Metadata
         meta: list[list[str]] = kwargs.get('meta', None)
@@ -162,43 +170,38 @@ class encode:
         out: str = kwargs.get('out', None)
 
         channels: int = 0
-        smprate: int = 0
+        srate: int = 0
 
 # --------------------------- Pre-Encode error checks ---------------------------- #
         methods.cantreencode(open(file_path, 'rb').read(4))
 
         try: variables.bit_depths[profile].index(bits)
         except: terminal(f'Invalid bit depth {bits} for Profile {profile}'); sys.exit(1)
-        # Forcing sample rate and channel count for raw PCM
-        if raw:
-            if new_srate is None: terminal('Sample rate is required for raw PCM.'); sys.exit(1)
-            if chnl is None: terminal('Channel count is required for raw PCM.'); sys.exit(1)
-            channels, smprate = chnl, new_srate
         if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
 
+        segmax = {0: 2**32-1,
+                    1: max(variables.p1.smpls_li)}
+        if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+
 # ------------------------------ Pre-Encode settings ----------------------------- #
-        # Getting Audio info w. ffmpeg & ffprobe
         duration = 0
-        cmd = []
+
         if not raw:
-            channels, smprate, codec, duration = encode.get_info(file_path)
-            if profile in [1, 2]:
-                new_srate = min(new_srate or smprate, 96000)
-                if not new_srate in variables.p1.srates: new_srate = 48000
-            cmd = encode.get_pcm_command(file_path, smprate, new_srate, chnl)
-            if chnl is not None: channels = chnl
-            # segmax for Profile 0 = 4GiB / (intra-channel-sample size * channels * ECC mapping)
-            # intra-channel-sample size = bit depth * 8, least 3 bytes(float s1e8m15)
-            # ECC mapping = (block size / data size)
-            segmax = {0: 2**32-1,
-                      1: max(variables.p1.smpls_li)}
-            if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
-            if profile == 1: fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
-            if new_srate is not None: duration = int(duration / smprate * new_srate)
+            channels, srate, codec, duration = encode.get_info(file_path)
+            if new_srate is not None: duration = int(duration / srate * new_srate)
             if meta == None: meta = encode.get_metadata(file_path)
             if img  == None: img  = encode.get_image(   file_path)
+        else: channels, srate = raw[2], raw[1]
 
-        smprate = new_srate is not None and new_srate or smprate
+        if profile in [1, 2]:
+            new_srate = min(new_srate or raw[1] or srate, 96000)
+            if not new_srate in variables.p1.srates: new_srate = 48000
+            fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
+
+        cmd = encode.get_pcm_command(file_path, raw, new_srate, new_chnl)
+        srate = new_srate or srate
+        channels = new_chnl or channels
+        if raw: duration = os.path.getsize(file_path) / methods.get_dtype(raw[0])[1] * ((srate or raw[1]) / raw[1]) / raw[2]
 
         if not isinstance(overlap, (int, float)): overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
@@ -229,14 +232,10 @@ class encode:
             total_bytes, total_samples = 0, 0
 
             prev = np.array([])
-            dtype, sample_bytes = methods.get_dtype(raw)
-            smpsize = sample_bytes * channels # Single sample size = bit depth * channels
+            smpsize = 8 * channels
 
             # Open FFmpeg
-            if raw:
-                process = open(file_path, 'rb')
-                duration = os.path.getsize(file_path) / smpsize
-            else: process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
             printed = False
             # Write file
@@ -258,34 +257,26 @@ class encode:
                         rlen = min((x-len(prev) for x in variables.p1.smpls_li if x >= fsize))
                         if rlen <= 0: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x-len(prev) >= fsize))
 
-                    if isinstance(process, subprocess.Popen):
-                        if process.stdout is None: raise FileNotFoundError('Broken pipe.')
-                        data = process.stdout.read(rlen * smpsize) # Reading PCM
-                    elif isinstance(process, io.BufferedReader):
-                        data = process.read(rlen * smpsize)        # Reading RAW PCM
-                    else: raise BufferError('Broken pipe.')
-                    if not data: break                             # if no data, Break
+                    if process.stdout is None: raise FileNotFoundError('Broken pipe.')
+                    data = process.stdout.read(rlen * smpsize) # Reading PCM
+                    if not data: break                         # if no data, Break
 
                     # RAW PCM to Numpy
-                    frame = np.frombuffer(data[:len(data)//smpsize * smpsize], dtype).astype(float).reshape(-1, channels) * gain
-                    if raw:
-                        if not raw.startswith('f'):
-                            frame /= 2**(sample_bytes*8-1)
-                            if raw.startswith('u'): frame-=1
+                    frame = np.frombuffer(data, '>f8').astype(float).reshape(-1, channels) * gain
                     rlen = len(frame)
-                    frame, prev = encode.overlap(frame, prev, overlap, chnl=channels, profile=profile)
+                    frame, prev = encode.overlap(frame, prev, overlap, profile=profile)
                     flen = len(frame)
 
                     # Encoding
                     frame, bit_depth_frame, channels_frame, bits_pfb = \
-                        fourier.analogue(frame, bits, channels, little_endian, profile=profile, smprate=smprate, level=loss_level)
+                        fourier.analogue(frame, bits, channels, little_endian, profile=profile, srate=srate, level=loss_level)
 
                     # Applying ECC
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
                     # EFloat Byte
                     pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bits_pfb)
-                    encode.write_frame(file, frame, channels_frame, smprate, pfb, (ecc_dsize, ecc_codesize), flen, olap=overlap)
+                    encode.write_frame(file, frame, channels_frame, srate, pfb, (ecc_dsize, ecc_codesize), flen, olap=overlap)
 
                     # Verbose block
                     if verbose:
@@ -294,12 +285,10 @@ class encode:
                         total_samples += rlen
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
-                        mult = bps / smprate / sample_size
+                        mult = bps / srate / sample_size
                         printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
 
-            if isinstance(process, subprocess.Popen): process.terminate()
-            elif isinstance(process, io.BufferedReader): process.close()
-            else: raise BufferError('Broken pipe.')
+            process.terminate()
         except KeyboardInterrupt:
             terminal('Aborting...')
             sys.exit(0)
