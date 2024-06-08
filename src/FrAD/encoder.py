@@ -186,22 +186,26 @@ class encode:
 # ------------------------------ Pre-Encode settings ----------------------------- #
         duration = 0
 
+        # File info and metadata
+        # original channels and srate
         if not raw:
             channels, srate, codec, duration = encode.get_info(file_path)
             if new_srate is not None: duration = int(duration / srate * new_srate)
             if meta == None: meta = encode.get_metadata(file_path)
             if img  == None: img  = encode.get_image(   file_path)
-        else: channels, srate = raw[2], raw[1]
+        else:
+            duration = os.path.getsize(file_path) / methods.get_dtype(raw[0])[1] * ((new_srate or raw[1]) / raw[1]) / raw[2]
+            channels, srate = raw[2], raw[1]
 
+        # Modifying new_srate for Profile 1
         if profile in [1, 2]:
             new_srate = min(new_srate or raw[1] or srate, 96000)
             if not new_srate in variables.p1.srates: new_srate = 48000
             fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
 
+        # Moulding FFmpeg command and initting read srates and channels
         cmd = encode.get_pcm_command(file_path, raw, new_srate, new_chnl)
-        srate = new_srate or srate
-        channels = new_chnl or channels
-        if raw: duration = os.path.getsize(file_path) / methods.get_dtype(raw[0])[1] * ((srate or raw[1]) / raw[1]) / raw[2]
+        srate, channels = new_srate or srate, new_chnl or channels
 
         if not isinstance(overlap, (int, float)): overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
@@ -230,9 +234,7 @@ class encode:
         try:
             start_time = time.time()
             total_bytes, total_samples = 0, 0
-
             prev = np.array([])
-            smpsize = 8 * channels
 
             # Open FFmpeg
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -258,8 +260,8 @@ class encode:
                         if rlen <= 0: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x-len(prev) >= fsize))
 
                     if process.stdout is None: raise FileNotFoundError('Broken pipe.')
-                    data = process.stdout.read(rlen * smpsize) # Reading PCM
-                    if not data: break                         # if no data, Break
+                    data = process.stdout.read(rlen * 8 * channels) # Reading PCM
+                    if not data: break                        # if no data, Break
 
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data, '>f8').astype(float).reshape(-1, channels) * gain
