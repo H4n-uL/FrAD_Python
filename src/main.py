@@ -201,7 +201,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
                 out=output, prf=profile, lv=loss_level,
                 fsize=fsize, gain=gain, ecc=ecc_enabled, ecc_sizes=data_ecc,
                 srate=srate, chnl=kwargs.get('chnl', None),
-                raw=kwargs.get('raw', False), olap=kwargs.get('overlap', None),
+                raw=kwargs.get('raw', None), olap=kwargs.get('overlap', None),
                 meta=meta, img=img, verbose=verbose)
 
     elif action in decode_opt:

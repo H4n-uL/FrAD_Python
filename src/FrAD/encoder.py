@@ -194,12 +194,12 @@ class encode:
             if meta == None: meta = encode.get_metadata(file_path)
             if img  == None: img  = encode.get_image(   file_path)
         else:
-            duration = os.path.getsize(file_path) / methods.get_dtype(raw[0])[1] * ((new_srate or raw[1]) / raw[1]) / raw[2]
             channels, srate = raw[2], raw[1]
+            duration = os.path.getsize(file_path) / methods.get_dtype(raw[0])[1] * ((new_srate or srate) / srate) / channels
 
         # Modifying new_srate for Profile 1
         if profile in [1, 2]:
-            new_srate = min(new_srate or raw[1] or srate, 96000)
+            new_srate = min(new_srate or srate, 96000)
             if not new_srate in variables.p1.srates: new_srate = 48000
             fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
 
