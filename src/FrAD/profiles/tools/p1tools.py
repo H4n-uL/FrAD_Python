@@ -48,7 +48,7 @@ class pns:
 def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np.ndarray, np.ndarray]:
     alpha = 0.8
 
-    const_factor = (kwargs['level']+2) / 4
+    const_factor = 1.25**kwargs['level'] / 19 + 0.5
 
     # Perceptual Noise Substitution
     pns_sgnl = []
