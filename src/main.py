@@ -285,7 +285,7 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
     update | Update FrAD codec from Github''')
         terminal()
     else:
-        terminal(f'Invalid action: {{{action}}} type `fourier help` to get help.')
+        terminal(f'Invalid action "{action}", type `fourier help` to get help.')
         sys.exit(1)
 
 if __name__ == '__main__':
