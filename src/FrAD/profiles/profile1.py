@@ -13,6 +13,15 @@ class p1:
     get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
 
     @staticmethod
+    def signext_24x(byte: bytes, bits, be):
+        return (int((be and byte.hex()[0] or byte.hex()[-1]), base=16) > 7 and b'\xff' or b'\x00') * (bits//24) + byte
+
+    @staticmethod
+    def signext_12(hex_str):
+        if len(hex_str)!=3: return ''
+        return (int(hex_str[0], base=16) > 7 and 'f' or '0') + hex_str
+
+    @staticmethod
     def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> tuple[bytes, int, int, int]:
         be = not little_endian
         endian = be and '>' or '<'
