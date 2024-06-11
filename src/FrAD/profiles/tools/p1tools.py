@@ -69,7 +69,8 @@ bitstr2bytes = lambda bstr: bytes(int(bstr[i:i+8].ljust(8, '0'), 2) for i in ran
 bytes2bitstr = lambda b: ''.join(f'{byte:08b}' for byte in b)
 
 def exp_golomb_rice_encode(data: np.ndarray):
-    k = int(np.ceil(np.log2(np.max(np.abs(data)))/2))
+    dmax = np.abs(data).max()
+    k = dmax and int(np.ceil(np.log2(dmax))) or 0
     encoded = ''
     for n in data:
         n = (n>0) and (2*n-1) or (-2*n)
