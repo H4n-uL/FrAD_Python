@@ -149,7 +149,7 @@ class methods:
 
             lgb = int(math.log(bps, 1000))
             cli_width = variables.cli_width - len(f'[] {percent:.3f}% completed')
-            prgbar = int(percent / 100 * cli_width)
+            prgbar = min(int(percent / 100 * cli_width), cli_width)
             eta = (elapsed_time / (percent / 100)) - elapsed_time if percent != 0 else 'infinity'
             if printed: terminal('\x1b[1A\x1b[2K'*3, end='')
             terminal(f'{method} speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s{mult and f", X{mult:.3f}" or ""}')
