@@ -1,4 +1,5 @@
 import numpy as np
+import struct
 
 # Modified Opus Subbands
 MOS =  (0,     200,   400,   600,   800,   1000,  1200,  1400,
@@ -47,8 +48,7 @@ class pns:
 def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np.ndarray, np.ndarray]:
     alpha = 0.8
 
-    if kwargs['level'] < 11: const_factor = (kwargs['level']+1)*7/80
-    else: const_factor = (kwargs['level']+1 - 10) / 2
+    const_factor = (kwargs['level']+2) / 4
 
     # Perceptual Noise Substitution
     pns_sgnl = []
@@ -64,3 +64,32 @@ def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np
 def dequant(pns_sgnl: np.ndarray, channels: int, masks: np.ndarray, kwargs: dict) -> np.ndarray:
     masks = np.where(np.isnan(masks) | np.isinf(masks), 0, masks)
     return np.array([pns_sgnl[c] * pns.mappingfromopus(masks[c], len(pns_sgnl[c]), kwargs['srate']) for c in range(channels)])
+
+bitstr2bytes = lambda bstr: bytes(int(bstr[i:i+8].ljust(8, '0'), 2) for i in range(0, len(bstr), 8))
+bytes2bitstr = lambda b: ''.join(f'{byte:08b}' for byte in b)
+
+def exp_golomb_rice_encode(data: np.ndarray):
+    k = int(np.ceil(np.log2(np.max(np.abs(data))+1)))
+    encoded = ''
+    for n in data:
+        n = (n>0) and (2*n-1) or (-2*n)
+        binary_code = bin(n + 2**k)[2:]
+        m = len(binary_code) - (k+1)
+        encoded += ('0' * m + binary_code)
+
+    return struct.pack('B', k) + bitstr2bytes(encoded)
+
+def exp_golomb_rice_decode(dbytes: bytes):
+    k = struct.unpack('B', dbytes[:1])[0]
+    decoded = []
+    data = bytes2bitstr(dbytes[1:])
+    while data:
+        try: m = data.index('1')
+        except: break
+
+        codeword, data = data[:(m*2)+k+1], data[(m*2)+k+1:]
+        n = int(codeword, 2) - 2**k
+        n = (n%2==1) and ((n+1)//2) or (-n//2)
+        decoded.append(n)
+
+    return np.array(decoded)

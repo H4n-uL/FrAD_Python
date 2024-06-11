@@ -1,7 +1,7 @@
 from scipy.fft import dct, idct
 import numpy as np
 from .tools import p1tools
-import zlib
+import struct, zlib
 
 class p1:
     srates = (96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000)
@@ -13,15 +13,6 @@ class p1:
     get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
 
     @staticmethod
-    def signext_24x(byte: bytes, bits, be):
-        return (int((be and byte.hex()[0] or byte.hex()[-1]), base=16) > 7 and b'\xff' or b'\x00') * (bits//24) + byte
-
-    @staticmethod
-    def signext_12(hex_str):
-        if len(hex_str)!=3: return ''
-        return (int(hex_str[0], base=16) > 7 and 'f' or '0') + hex_str
-
-    @staticmethod
     def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> tuple[bytes, int, int, int]:
         be = not little_endian
         endian = be and '>' or '<'
@@ -31,6 +22,7 @@ class p1:
         dlen = len(pcm)
         freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
+        # Quantisation
         freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
 
         # Overflow check & Increasing bit depth
@@ -39,23 +31,9 @@ class p1:
             bits = {8:12, 12:16, 16:24, 24:32, 32:48, 48:64}.get(bits, 64)
 
         # Ravelling and packing
-        if bits%8!=0: endian = '>'
-        frad: bytes = freqs.T.ravel().astype(endian+p1.dtypes[bits]).tobytes()
-
-        # Cutting off bits
-        if bits in (64, 32, 16, 8):
-            pass
-        elif bits in (48, 24):
-            hexa = frad.hex()
-            frad = bytes.fromhex(''.join([be and hexa[i+(bits//12):i+(bits//6*2)] or hexa[i:i+bits//4] for i in range(0, len(hexa), bits//6*2)]))
-        elif bits == 12:
-            hexa = frad.hex()
-            hexa = ''.join([hexa[i+1:i+4] for i in range(0, len(hexa), 4)])
-            if len(hexa)%2!=0: hexa+='0'
-            frad = bytes.fromhex(hexa)
-        else: raise Exception('Illegal bits value.')
-
-        frad = (pns.T/(2**(bits-1))).astype(endian+'e').tobytes() + frad
+        pns_glm = p1tools.exp_golomb_rice_encode(np.frombuffer(np.array(pns.T/(2**(bits-1))).astype(endian+'e').tobytes(), dtype=f'{endian}i2'))
+        frad: bytes = p1tools.exp_golomb_rice_encode(freqs.T.ravel().astype(int))
+        frad = struct.pack(f'{endian}I', len(pns_glm)) + pns_glm + frad
 
         # Deflating
         frad = zlib.compress(frad, level=9)
@@ -68,29 +46,19 @@ class p1:
         endian = be and '>' or '<'
         bits = p1.depths[fb]
 
-
         # Inflating
         frad = zlib.decompress(frad)
-        thresbytes = frad[:p1tools.subbands*channels*2]
-        thres = np.frombuffer(thresbytes, dtype=endian+'e').reshape((-1, channels)).T * (2**(bits-1))
-        frad = frad.removeprefix(thresbytes)
-
-        # Padding bits
-        if bits % 3 != 0: pass
-        elif bits in (24, 48):
-            frad = b''.join([p1.signext_24x(frad[i:i+(bits//8)], bits, be) for i in range(0, len(frad), bits//8)])
-        elif bits == 12:
-            hexa = frad.hex()
-            frad = bytes.fromhex(''.join([p1.signext_12(hexa[i:i+3]) for i in range(0, len(hexa), 3)]))
-        else: raise Exception('Illegal bits value.')
+        thresbytes, frad = struct.unpack(f'{endian}I', frad[:4])[0], frad[4:]
+        thres_int, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).astype(f'{endian}i2').tobytes(), frad[thresbytes:]
+        thres = np.frombuffer(thres_int, dtype=f'{endian}f2').reshape((-1, channels)).T * (2**(bits-1))
 
         # Unpacking and unravelling
-        if channels > 2: channels += 1
-        if bits%8!=0: endian = '>'
-        freqs: np.ndarray = np.frombuffer(frad, dtype=endian+p1.dtypes[bits]).astype(float).reshape(-1, channels).T
+        freqs: np.ndarray = p1tools.exp_golomb_rice_decode(frad).astype(float).reshape(-1, channels).T
 
         # Removing potential Infinities and Non-numbers
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
+
+        # Dequantisation
         freqs = p1tools.dequant(freqs, channels, thres, kwargs)
 
         # Inverse DCT and stacking
