@@ -79,7 +79,7 @@ class encode:
             '-f', raw[0],
             '-ar', str(raw[1]),
             '-ac', str(raw[2])])
-        
+
         command.extend([
             '-i', file_path,
             '-f', 'f64be',
