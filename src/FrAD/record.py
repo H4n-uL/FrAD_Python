@@ -35,8 +35,8 @@ class recorder:
         # segmax for Profile 0 = 4GiB / (intra-channel-sample size * channels * ECC mapping)
         # intra-channel-sample size = bit depth * 8, least 3 bytes(float s1e8m15)
         # ECC mapping = (block size / data size)
-        segmax = {0: (2**32-1) // (((ecc_dsize+ecc_codesize)/ecc_dsize if apply_ecc else 1) * channels * max(bit_depth/8, 3)),
-                    1: max(variables.p1.smpls_li)}
+        segmax = {0: 2**32-1,
+                  1: max(variables.p1.smpls_li)}
         if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
         if profile == 1: fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
         if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
