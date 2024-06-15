@@ -121,7 +121,6 @@ class methods:
         temp_files = [
             variables.temp,
             variables.temp2,
-            variables.temp_dsd,
             variables.temp_flac,
             variables.meta]
 
