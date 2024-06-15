@@ -202,9 +202,8 @@ class decode:
 
                     # Decoding ECC
                     if asfh.ecc:
-                        if fix_error:
-                            if ((asfh.profile == 0      and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
-                            or  (asfh.profile in [1, 2] and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
+                        if fix_error and ((asfh.profile == 0      and zlib.crc32(data)         != struct.unpack('>I', asfh.crc)[0])
+                            or            (asfh.profile in [1, 2] and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
                             ): data = ecc.decode(data, asfh.ecc_dsize, asfh.ecc_codesize)
                         else:  data = ecc.unecc( data, asfh.ecc_dsize, asfh.ecc_codesize)
 
