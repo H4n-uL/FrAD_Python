@@ -10,7 +10,6 @@ class p1:
 
     depths = (8, 12, 16, 24, 32, 48, 64)
     dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
-    get_range = lambda fs, sr, x: x is not np.inf and int(fs*x*2/sr+0.5) or 2**32
 
     @staticmethod
     def signext_24x(byte: bytes, bits, be):
@@ -33,11 +32,6 @@ class p1:
 
         # Quantisation
         freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
-
-        # Overflow check & Increasing bit depth
-        while not (2**(bits-1)-1 >= freqs.any() >= -(2**(bits-1))):
-            if bits == 64: raise Exception('Overflow with reaching the max bit depth.')
-            bits = {8:12, 12:16, 16:24, 24:32, 32:48, 48:64}.get(bits, 64)
 
         # Ravelling and packing
         pns_glm = p1tools.exp_golomb_rice_encode(np.frombuffer(np.array(pns.T/(2**(bits-1))).astype(endian+'e').tobytes(), dtype=f'{endian}i2'))
