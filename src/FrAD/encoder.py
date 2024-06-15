@@ -224,9 +224,10 @@ class encode:
                 else: out += '.dsin'
 
         if os.path.exists(out):
-            terminal(f'{out} Already exists. Proceed?')
+            terminal(f'{out} Already exists. Proceed? (Y/N)')
             while True:
-                x = input('> ').lower()
+                terminal('> ', end='')
+                x = input().lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
 

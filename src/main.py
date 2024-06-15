@@ -244,7 +244,8 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
         elif metaopt=='overwrite':
             terminal('This action will overwrite all metadata and image. if nothing provided, it will be removed. Proceed? (Y/N)')
             while True:
-                x = input('> ').lower()
+                terminal('> ', end='')
+                x = input().lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
             header.modify(file_path, meta=meta, img=img)

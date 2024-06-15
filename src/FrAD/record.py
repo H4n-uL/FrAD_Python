@@ -57,7 +57,9 @@ class recorder:
                 terminal(f'{ind} {dev['name']}')
                 terminal(f'    srate={dev['default_samplerate']}\t channels={dev['max_input_channels']}')
         while True:
-            hw = int(input('> '))
+            terminal('> ', end='')
+            try: hw = int(input())
+            except: continue
             if hw in range(len(sd.query_devices())): break
 
         if channels is None: channels = sd.query_devices()[hw]['max_input_channels']
@@ -68,9 +70,10 @@ class recorder:
             else: file_path += '.frad'
 
         if os.path.exists(file_path):
-            terminal(f'{file_path} Already exists. Proceed?')
+            terminal(f'{file_path} Already exists. Proceed? (Y/N)')
             while True:
-                x = input('> ').lower()
+                terminal('> ', end='')
+                x = input().lower()
                 if x == 'y': break
                 if x == 'n': sys.exit('Aborted.')
         ecc_dsize, ecc_codesize = int(ecc_sizes[0]), int(ecc_sizes[1])
