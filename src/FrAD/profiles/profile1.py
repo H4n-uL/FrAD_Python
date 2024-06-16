@@ -34,7 +34,7 @@ class p1:
         freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
 
         # Ravelling and packing
-        pns_glm = p1tools.exp_golomb_rice_encode(np.frombuffer(np.array(pns.T/(2**(bits-1))).astype(endian+'e').tobytes(), dtype=f'{endian}i2'))
+        pns_glm = p1tools.exp_golomb_rice_encode(np.frombuffer(np.array(pns.T/(2**(bits-1))).astype('>f2').tobytes(), dtype=f'>i2'))
         frad: bytes = p1tools.exp_golomb_rice_encode(freqs.T.ravel().astype(int))
         frad = struct.pack(f'{endian}I', len(pns_glm)) + pns_glm + frad
 
@@ -52,8 +52,8 @@ class p1:
         # Inflating
         frad = zlib.decompress(frad)
         thresbytes, frad = struct.unpack(f'{endian}I', frad[:4])[0], frad[4:]
-        thres_int, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).astype(f'{endian}i2').tobytes(), frad[thresbytes:]
-        thres = np.frombuffer(thres_int, dtype=f'{endian}f2').reshape((-1, channels)).T * (2**(bits-1))
+        thres_int, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).astype(f'>i2').tobytes(), frad[thresbytes:]
+        thres = np.frombuffer(thres_int, dtype=f'>f2').reshape((-1, channels)).T * (2**(bits-1))
 
         # Unpacking and unravelling
         freqs: np.ndarray = p1tools.exp_golomb_rice_decode(frad).astype(float).reshape(-1, channels).T
