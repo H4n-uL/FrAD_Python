@@ -16,6 +16,8 @@ class variables:
     cli_width = 80
     overlap_rate = 16
 
+    crc16t_ansi = [(lambda c: [c := (c >> 1) ^ 0xA001 if c & 0x0001 else c >> 1 for _ in range(8)][-1])(i) for i in range(256)]
+
     from .fourier import fourier
     from .profiles.profile1 import p1
 
@@ -77,13 +79,11 @@ class methods:
         if sign in (b'fRad', b'\xff\xd0\xd2\x97'):
             raise Exception('This is an already encoded Fourier Analogue file.')
 
-    @staticmethod
-    def crc16_ansi(data: bytes) -> int:
-        crc = 0x0000
+    def crc16_ansi(data):
+        crc = 0
         for byte in data:
-            crc ^= byte
-            for _ in range(8): crc = (crc & 0x0001) and ((crc >> 1) ^ 0xA001) or (crc >> 1)
-        return crc & 0xFFFF
+            crc = (crc >> 8) ^ variables.crc16t_ansi[(crc ^ byte) & 0xff]
+        return crc
 
     @staticmethod
     def tformat(n: float | str) -> str: # i'm dying help
