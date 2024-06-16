@@ -15,7 +15,7 @@ class ASFH:
 
     def update(self, file: io.BufferedReader):
         fhead = variables.FRM_SIGN + file.read(5)
-        self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]       # 0x04-4B: Audio Stream Frame length
+        self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
 
         if self.profile == 0:
