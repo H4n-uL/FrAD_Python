@@ -51,7 +51,7 @@ leans on ffmpeg for re-encoding.
 
 ------------------------------------ Usage -------------------------------------
 
-fourier encode path/to/audio.file {{kwargs...}} {{--ffmpeg {{ffmpeg decode command}}}}
+fourier decode path/to/audio.file {{kwargs...}} {{--ffmpeg {{ffmpeg decode command}}}}
 
 ----------------------------------- Options ------------------------------------
 
