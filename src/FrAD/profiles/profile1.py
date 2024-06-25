@@ -21,10 +21,7 @@ class p1:
         return (int(hex_str[0], base=16) > 7 and 'f' or '0') + hex_str
 
     @staticmethod
-    def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, kwargs) -> tuple[bytes, int, int, int]:
-        be = not little_endian
-        endian = be and '>' or '<'
-
+    def analogue(pcm: np.ndarray, bits: int, channels: int, kwargs) -> tuple[bytes, int, int, int]:
         # DCT
         pcm = np.pad(pcm, ((0, min((x for x in p1.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
         dlen = len(pcm)
@@ -36,7 +33,7 @@ class p1:
         # Ravelling and packing
         pns_glm = p1tools.exp_golomb_rice_encode(np.frombuffer(np.array(pns.T/(2**(bits-1))).astype('>f2').tobytes(), dtype=f'>i2'))
         frad: bytes = p1tools.exp_golomb_rice_encode(freqs.T.ravel().astype(int))
-        frad = struct.pack(f'{endian}I', len(pns_glm)) + pns_glm + frad
+        frad = struct.pack(f'>I', len(pns_glm)) + pns_glm + frad
 
         # Deflating
         frad = zlib.compress(frad, level=9)
@@ -44,14 +41,12 @@ class p1:
         return frad, bits, channels, p1.depths.index(bits)
 
     @staticmethod
-    def digital(frad: bytes, fb: int, channels: int, little_endian: bool, kwargs) -> np.ndarray:
-        be = not little_endian
-        endian = be and '>' or '<'
+    def digital(frad: bytes, fb: int, channels: int, kwargs) -> np.ndarray:
         bits = p1.depths[fb]
 
         # Inflating
         frad = zlib.decompress(frad)
-        thresbytes, frad = struct.unpack(f'{endian}I', frad[:4])[0], frad[4:]
+        thresbytes, frad = struct.unpack(f'>I', frad[:4])[0], frad[4:]
         thres_int, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).astype(f'>i2').tobytes(), frad[thresbytes:]
         thres = np.frombuffer(thres_int, dtype=f'>f2').reshape((-1, channels)).T * (2**(bits-1))
 
