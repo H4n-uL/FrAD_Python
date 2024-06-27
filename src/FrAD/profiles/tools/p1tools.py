@@ -57,7 +57,7 @@ def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np
         mask.append(thres)
         pns_sgnl.append(np.around(freqs[c] / pns.mappingfromopus(thres,dlen,kwargs['srate'])))
 
-    return np.around(np.array(pns_sgnl)), np.array(mask)
+    return np.array(pns_sgnl), np.array(mask)
 
 def dequant(pns_sgnl: np.ndarray, channels: int, masks: np.ndarray, kwargs: dict) -> np.ndarray:
     masks = np.where(np.isnan(masks) | np.isinf(masks), 0, masks)
