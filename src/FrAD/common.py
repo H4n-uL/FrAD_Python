@@ -36,10 +36,10 @@ class variables:
 
     # Finding ffmpeg and ffprobe from src/FrAD/res
     resfiles = lambda x: [f for f in os.listdir(res) if x in f]
-    if resfiles('ffmpeg'):  ffmpeg  = os.path.join(res, resfiles('ffmpeg')[0])
-    else:                   ffmpeg  = 'ffmpeg'
-    if resfiles('ffprobe'): ffprobe = os.path.join(res, resfiles('ffprobe')[0])
-    else:                   ffprobe = 'ffprobe'
+    try:    ffmpeg  = os.path.join(res, resfiles('ffmpeg')[0])
+    except: ffmpeg  = 'ffmpeg'
+    try:    ffprobe = os.path.join(res, resfiles('ffprobe')[0])
+    except: ffprobe = 'ffprobe'
 
     # Setting up AppleAAC encoder for each platforms
     oper = platform.uname()
