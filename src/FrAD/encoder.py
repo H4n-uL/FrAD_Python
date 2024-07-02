@@ -7,11 +7,11 @@ from .tools.headb import headb
 
 class encode:
     @staticmethod
-    def overlap(data: np.ndarray, prev: np.ndarray, olap: int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
+    def overlap(data: np.ndarray, prev: np.ndarray, olap: int, profile: int) -> tuple[np.ndarray, np.ndarray]:
         fsize = len(data) + len(prev)
-        olap = olap > 0 and (olap > 2 and (olap > 255 and 255 or olap) or 2) or 0
+        olap = olap != 0 and min(max(olap, 2), 255) or 0
         if prev.shape != np.array([]).shape: data = np.concatenate([prev, data])
-        if kwargs.get('profile') in [1, 2] and olap: prev = data[-fsize//olap:]
+        if profile in [1, 2] and olap: prev = data[-fsize//olap:]
         else: prev = np.array([])
         return data, prev
 
@@ -267,7 +267,7 @@ class encode:
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data, '>f8').astype(float).reshape(-1, channels) * gain
                     rlen = len(frame)
-                    frame, prev = encode.overlap(frame, prev, overlap, profile=profile)
+                    frame, prev = encode.overlap(frame, prev, overlap, profile)
                     flen = len(frame)
 
                     # Encoding

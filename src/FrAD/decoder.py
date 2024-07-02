@@ -63,7 +63,7 @@ class decode:
                 (frame[:len(prev), c] * fade_in) +\
                 (prev[:, c]           * fade_out)
         if asfh.profile in [1, 2] and asfh.overlap != 0:
-            asfh.overlap = asfh.overlap > 2 and (asfh.overlap > 255 and 255 or asfh.overlap) or 2
+            asfh.overlap = min(max(asfh.overlap, 2), 255)
             prev = frame[-len(frame)//asfh.overlap:]
             frame = frame[:-len(prev)]
         else: prev = np.array([])
@@ -244,7 +244,7 @@ class decode:
                             terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"})')
                             terminal(f'{depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and"B"or"L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
-                            terminal(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}')
+                            terminal(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}{asfh.profile == 1 and f", Overlap: 1/{asfh.overlap}"}')
                             terminal(f'{len(frame)} sample{len(frame)!=1 and"s"or""}, {asfh.frmbytes} Byte{(asfh.frmbytes!=1)*"s"} per frame')
                             terminal(f'{bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps per-frame, {bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps average')
                         else:

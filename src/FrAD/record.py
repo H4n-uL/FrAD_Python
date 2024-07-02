@@ -91,7 +91,7 @@ class recorder:
                     # Overlap
                     if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
                     data = record.read(rlen)[0]
-                    if overlap: data, prev = encode.overlap(data, prev, overlap, fsize=fsize, chnl=channels, profile=profile)
+                    if overlap: data, prev = encode.overlap(data, prev, overlap, profile)
                     frame, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, srate=srate, level=loss_level)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
