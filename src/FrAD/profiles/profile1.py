@@ -21,14 +21,14 @@ class p1:
         return (int(hex_str[0], base=16) > 7 and 'f' or '0') + hex_str
 
     @staticmethod
-    def analogue(pcm: np.ndarray, bits: int, channels: int, kwargs) -> tuple[bytes, int, int, int]:
+    def analogue(pcm: np.ndarray, bits: int, channels: int, **kwargs) -> tuple[bytes, int, int, int]:
         # DCT
         pcm = np.pad(pcm, ((0, min((x for x in p1.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
         dlen = len(pcm)
         freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
         # Quantisation
-        freqs, pns = p1tools.quant(freqs, channels, dlen, kwargs)
+        freqs, pns = p1tools.quant(freqs, channels, dlen, **kwargs)
 
         # Ravelling and packing
         pns_glm = p1tools.exp_golomb_rice_encode(np.frombuffer(np.array(pns.T/(2**(bits-1))).astype('>f2').tobytes(), dtype=f'>i2'))
@@ -41,7 +41,7 @@ class p1:
         return frad, bits, channels, p1.depths.index(bits)
 
     @staticmethod
-    def digital(frad: bytes, fb: int, channels: int, kwargs) -> np.ndarray:
+    def digital(frad: bytes, fb: int, channels: int, **kwargs) -> np.ndarray:
         bits = p1.depths[fb]
 
         # Inflating
@@ -57,7 +57,7 @@ class p1:
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
 
         # Dequantisation
-        freqs = p1tools.dequant(freqs, channels, thres, kwargs)
+        freqs = p1tools.dequant(freqs, channels, thres, **kwargs)
 
         # Inverse DCT and stacking
         return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in freqs]).T)/(2**(bits-1))

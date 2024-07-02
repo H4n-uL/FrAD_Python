@@ -43,7 +43,7 @@ class pns:
             freqs[pns.getbinrng(freqs_shape, srate, i)] = mapped_freqs[i]
         return freqs
 
-def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np.ndarray, np.ndarray]:
+def quant(freqs: np.ndarray, channels: int, dlen: int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
     alpha = 0.8
 
     const_factor = 1.25**kwargs['level'] / 19 + 0.5
@@ -59,7 +59,7 @@ def quant(freqs: np.ndarray, channels: int, dlen: int, kwargs: dict) -> tuple[np
 
     return np.array(pns_sgnl), np.array(mask)
 
-def dequant(pns_sgnl: np.ndarray, channels: int, masks: np.ndarray, kwargs: dict) -> np.ndarray:
+def dequant(pns_sgnl: np.ndarray, channels: int, masks: np.ndarray, **kwargs) -> np.ndarray:
     masks = np.where(np.isnan(masks) | np.isinf(masks), 0, masks)
     return np.array([pns_sgnl[c] * pns.mappingfromopus(masks[c], len(pns_sgnl[c]), kwargs['srate']) for c in range(channels)])
 

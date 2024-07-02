@@ -9,7 +9,7 @@ class fourier:
 
     @staticmethod
     def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> tuple[bytes, int, int, int]:
-        if profile == 1: return p1.analogue(pcm, bits, channels, kwargs)
+        if profile == 1: return p1.analogue(pcm, bits, channels, **kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'
@@ -42,7 +42,7 @@ class fourier:
 
     @staticmethod
     def digital(frad: bytes, fb: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> np.ndarray:
-        if profile == 1: return p1.digital(frad, fb, channels, kwargs)
+        if profile == 1: return p1.digital(frad, fb, channels, **kwargs)
 
         be = not little_endian
         endian = be and '>' or '<'
