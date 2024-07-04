@@ -151,5 +151,6 @@ class methods:
             if printed: terminal('\x1b[1A\x1b[2K'*3, end='')
             terminal(f'{method} speed: {(bps/10**(lgb*3)):.3f} {['','k','M','G','T'][lgb]}B/s{mult and f", X{mult:.3f}" or ""}')
             terminal(f'elapsed: {methods.tformat(elapsed_time)}, ETA {methods.tformat(eta)}')
-            terminal(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
+            if percent > 100: terminal(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}▒ {percent:.3f}% completed")
+            else: terminal(f"[{'█'*prgbar}{' '*(cli_width-prgbar)}] {percent:.3f}% completed")
         return True
