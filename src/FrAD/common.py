@@ -79,7 +79,8 @@ class methods:
         if sign in (b'fRad', b'\xff\xd0\xd2\x97'):
             raise Exception('This is an already encoded Fourier Analogue file.')
 
-    def crc16_ansi(data):
+    @staticmethod
+    def crc16_ansi(data: bytes):
         crc = 0
         for byte in data:
             crc = (crc >> 8) ^ variables.crc16t_ansi[(crc ^ byte) & 0xff]
