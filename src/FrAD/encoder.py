@@ -16,7 +16,7 @@ class encode:
         return data, prev
 
     @staticmethod
-    def write_frame(file: io.BufferedWriter, frame: bytes, chnl: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> None:
+    def write_frame(file: io.BufferedWriter, frame: bytes, chnl: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> int:
         profile, isecc, _, _ = headb.decode_pfb(pfb)
         if not isecc: ecc_list = (0, 0)
         data = bytes(
@@ -48,7 +48,7 @@ class encode:
         if len(frame) >= variables.FRM_MAXSZ: data += struct.pack('>Q', len(frame))
         data += frame
         file.write(data)
-        return None
+        return len(data)
 
     @staticmethod
     def get_info(file_path) -> tuple[int, int, str, int]:
@@ -271,7 +271,7 @@ class encode:
                     flen = len(frame)
 
                     # Encoding
-                    frame, bit_depth_frame, channels_frame, bits_pfb = \
+                    frame, bits_pfb, channels_frame = \
                         fourier.analogue(frame, bits, channels, little_endian, profile=profile, srate=srate, level=loss_level)
 
                     # Applying ECC
@@ -279,19 +279,21 @@ class encode:
 
                     # EFloat Byte
                     pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bits_pfb)
-                    encode.write_frame(file, frame, channels_frame, srate, pfb, (ecc_dsize, ecc_codesize), flen, olap=overlap)
+                    frmlen = encode.write_frame(file, frame, channels_frame, srate, pfb, (ecc_dsize, ecc_codesize), flen, olap=overlap)
 
                     # Verbose block
                     if verbose:
-                        sample_size = bit_depth_frame // 8 * channels
-                        total_bytes += rlen * sample_size
+                        total_bytes += frmlen
                         total_samples += rlen
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
-                        mult = bps / srate / sample_size
-                        printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), bps=bps, mult=mult, time=elapsed_time)
+                        mult = total_samples / elapsed_time / srate
+                        printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), tbytes=total_bytes, bps=bps, mult=mult, time=elapsed_time)
 
             process.terminate()
+            bps = total_bytes / (duration / srate) * 8
+            bps_log = int(math.log(bps, 1000))
+            terminal(f'Estimated bitrate: {bps/10**(3*bps_log):.3f} {['', 'k', 'M', 'G', 'T'][bps_log]}bps')
         except KeyboardInterrupt:
             terminal('Aborting...')
             sys.exit(0)
