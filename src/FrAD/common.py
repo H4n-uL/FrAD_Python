@@ -46,7 +46,7 @@ class variables:
     arch = platform.machine().lower()
     if oper.system == 'Windows':
         AppleAAC_win = os.path.join(res, 'AppleAAC.Win.tar.gz')
-        aac = os.path.join(res, 'AppleAAC.Windows')
+        aac = os.path.join(res, 'AppleAAC.exe')
         if os.path.isfile(AppleAAC_win) and not os.path.isfile(aac): tarfile.open(AppleAAC_win, 'r:gz').extractall(path=res)
     elif oper.system == 'Darwin':  aac = 'afconvert'
     else:                          aac = None
