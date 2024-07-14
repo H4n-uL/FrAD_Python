@@ -8,7 +8,7 @@ class fourier:
     float_dr = {12: 5, 16: 5, 24: 8, 32: 8, 48: 11, 64: 11, 128: 15}
 
     @staticmethod
-    def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> tuple[bytes, int, int, int]:
+    def analogue(pcm: np.ndarray, bits: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> tuple[bytes, int, int]:
         if profile == 1: return p1.analogue(pcm, bits, channels, **kwargs)
 
         be = not little_endian
@@ -38,7 +38,7 @@ class fourier:
             frad = bytes.fromhex(hexa)
         else: raise Exception('Illegal bits value.')
 
-        return frad, bits, channels, fourier.depths.index(bits)
+        return frad, fourier.depths.index(bits), channels
 
     @staticmethod
     def digital(frad: bytes, fb: int, channels: int, little_endian: bool, *, profile: int = 0, **kwargs) -> np.ndarray:

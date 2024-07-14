@@ -21,7 +21,7 @@ class p1:
         return (int(hex_str[0], base=16) > 7 and 'f' or '0') + hex_str
 
     @staticmethod
-    def analogue(pcm: np.ndarray, bits: int, channels: int, **kwargs) -> tuple[bytes, int, int, int]:
+    def analogue(pcm: np.ndarray, bits: int, channels: int, **kwargs) -> tuple[bytes, int, int]:
         # DCT
         pcm = np.pad(pcm, ((0, min((x for x in p1.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
         dlen = len(pcm)
@@ -38,7 +38,7 @@ class p1:
         # Deflating
         frad = zlib.compress(frad, level=9)
 
-        return frad, bits, channels, p1.depths.index(bits)
+        return frad, p1.depths.index(bits), channels
 
     @staticmethod
     def digital(frad: bytes, fb: int, channels: int, **kwargs) -> np.ndarray:
