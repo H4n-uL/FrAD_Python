@@ -279,11 +279,11 @@ class encode:
 
                     # EFloat Byte
                     pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bits_pfb)
-                    frmlen = encode.write_frame(file, frame, channels_frame, srate, pfb, (ecc_dsize, ecc_codesize), flen, olap=overlap)
+                    frame_length_tot = encode.write_frame(file, frame, channels_frame, srate, pfb, (ecc_dsize, ecc_codesize), flen, olap=overlap)
 
                     # Verbose block
+                    total_bytes += frame_length_tot
                     if verbose:
-                        total_bytes += frmlen
                         total_samples += rlen
                         elapsed_time = time.time() - start_time
                         bps = total_bytes / elapsed_time
