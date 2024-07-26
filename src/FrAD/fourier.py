@@ -15,7 +15,7 @@ class fourier:
         endian = be and '>' or '<'
 
         # DCT
-        freqs = np.array([dct(pcm[:, i]) for i in range(channels)])
+        freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)])
 
         # Overflow check & Increasing bit depth
         while np.max(np.abs(freqs)) > 2**(2**fourier.float_dr[bits]):
@@ -66,4 +66,4 @@ class fourier:
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
 
         # Inverse DCT and stacking
-        return np.ascontiguousarray(np.array([idct(chnl) for chnl in freqs]).T)
+        return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T)

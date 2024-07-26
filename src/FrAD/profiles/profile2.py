@@ -3,7 +3,7 @@ import numpy as np
 from .tools import p1tools
 import struct, zlib
 
-class p1:
+class p2:
     srates = (96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000)
     smpls = {128: [128 * 2**i for i in range(8)], 144: [144 * 2**i for i in range(8)], 192: [192 * 2**i for i in range(8)]}
     smpls_li = tuple([item for sublist in smpls.values() for item in sublist])
@@ -23,9 +23,9 @@ class p1:
     @staticmethod
     def analogue(pcm: np.ndarray, bits: int, channels: int, **kwargs) -> tuple[bytes, int, int]:
         # DCT
-        pcm = np.pad(pcm, ((0, min((x for x in p1.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
+        pcm = np.pad(pcm, ((0, min((x for x in p2.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
         dlen = len(pcm)
-        freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * (2**(bits-1))
+        freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
 
         # Quantisation
         freqs, pns = p1tools.quant(freqs, channels, dlen, **kwargs)
@@ -38,11 +38,11 @@ class p1:
         # Deflating
         frad = zlib.compress(frad, level=9)
 
-        return frad, p1.depths.index(bits), channels
+        return frad, p2.depths.index(bits), channels
 
     @staticmethod
     def digital(frad: bytes, fb: int, channels: int, **kwargs) -> np.ndarray:
-        bits = p1.depths[fb]
+        bits = p2.depths[fb]
 
         # Inflating
         frad = zlib.decompress(frad)
@@ -60,4 +60,4 @@ class p1:
         freqs = p1tools.dequant(freqs, channels, thres, **kwargs)
 
         # Inverse DCT and stacking
-        return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T) / (2**(bits-1))
+        return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in freqs]).T)/(2**(bits-1))
