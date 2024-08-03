@@ -44,7 +44,7 @@ def quant(freqs: np.ndarray, channels: int, dlen: int, **kwargs) -> tuple[np.nda
 
     const_factor = 1.25**kwargs['level'] / 19 + 0.5
 
-    # Perceptual Noise Substitution
+    # Psychoacoustic Masking
     pns_sgnl = []
     mask = []
     for c in range(channels):
