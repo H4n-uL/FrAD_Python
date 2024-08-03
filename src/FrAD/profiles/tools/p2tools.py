@@ -66,7 +66,7 @@ class tns:
             if np.all(lpcqs[i] == 0): return tns_freqs
             lpcdeq = tns.dequantize_lpc(lpcqs[i])
             freqs[i] = signal.lfilter([1], lpcdeq, tns_freqs[i])
-        
+
         return freqs
 
 class pns:
@@ -109,10 +109,10 @@ class pns:
                 pns_freqs[i][cutoff_index:] = pns.generate_noise(n - cutoff_index, noise_floor)
 
                 if pns.predgain(freqs[i], pns_freqs[i]) < pns.MIN_PRED: high_freq_energy = 0
-            
+
             pns_freqs[i] = np.around(pns_freqs[i])
             high_freq_energies.append(high_freq_energy)
-        
+
         return pns_freqs, np.array(high_freq_energies)
 
     @staticmethod
