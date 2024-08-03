@@ -34,7 +34,7 @@ class encode:
                 struct.pack('>I', fsize) +
                 struct.pack('>I', zlib.crc32(frame))
             )
-        elif profile == 1:
+        elif profile in [1, 2]:
             data += (
                 headb.encode_css_prf1(chnl, srate, fsize) +
                 struct.pack('>B', kwargs.get('olap', 0))
@@ -180,7 +180,8 @@ class encode:
         if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
 
         segmax = {0: 2**32-1,
-                    1: max(variables.p1.smpls_li)}
+                    1: max(variables.p1.smpls_li),
+                    2: max(variables.p2.smpls_li)}
         if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
@@ -256,7 +257,7 @@ class encode:
 
                     # Getting required read length
                     rlen = fsize
-                    if profile == 1:
+                    if profile in [1, 2]:
                         rlen = min((x-len(prev) for x in variables.p1.smpls_li if x >= fsize))
                         if rlen <= 0: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x-len(prev) >= fsize))
 

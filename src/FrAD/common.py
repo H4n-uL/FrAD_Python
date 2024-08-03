@@ -20,10 +20,12 @@ class variables:
 
     from .fourier import fourier
     from .profiles.profile1 import p1
+    from .profiles.profile2 import p2
 
     bit_depths = (
         fourier.depths,
-        p1.depths
+        p1.depths,
+        p2.depths
     )
 
     # Temporary files for metadata processing / stream repairing

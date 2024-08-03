@@ -27,7 +27,7 @@ class ASFH:
             self.fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
             self.crc = fhead[0x1c:0x20]                                # 0x1c-4B: ISO 3309 CRC32 of Audio Data
 
-        if self.profile == 1:
+        if self.profile in [1, 2]:
             fhead += file.read(3)
             self.chnl, self.srate, self.fsize = headb.decode_css_prf1(fhead[0x9:0xb])
             self.overlap = struct.unpack('>B', fhead[0xb:0xc])[0]      # 0x0b: Overlap rate
@@ -244,7 +244,7 @@ class decode:
                             terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"})')
                             terminal(f'{depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and"B"or"L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
-                            terminal(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}{asfh.profile == 1 and asfh.overlap != 0 and f", Overlap: 1/{asfh.overlap}" or ", Overlap: disabled" or ""}')
+                            terminal(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}{asfh.profile in [1, 2] and asfh.overlap != 0 and f", Overlap: 1/{asfh.overlap}" or ", Overlap: disabled" or ""}')
                             terminal(f'{len(frame)} sample{len(frame)!=1 and"s"or""}, {asfh.frmbytes} Byte{(asfh.frmbytes!=1)*"s"}({bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps) per frame')
                             terminal(f'{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps average')
                         else:
