@@ -52,7 +52,7 @@ class p2:
 
         # Dequantisation
         tns_freqs = p2tools.pns.synthesis(freqs, pns_data)
-        rev_freqs = p2tools.tns.synthesis(freqs, lpc)
+        rev_freqs = p2tools.tns.synthesis(tns_freqs, lpc)
 
         # Inverse DCT and stacking
         return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in rev_freqs]).T)/(2**(bits-1))
