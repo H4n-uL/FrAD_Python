@@ -15,7 +15,6 @@ class p2:
     def analogue(pcm: np.ndarray, bits: int, channels: int, **kwargs) -> tuple[bytes, int, int]:
         # DCT
         pcm = np.pad(pcm, ((0, min((x for x in p2.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
-        dlen = len(pcm)
         freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * (2**(bits-1))
 
         # Quantisation

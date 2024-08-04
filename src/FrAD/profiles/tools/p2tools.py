@@ -71,7 +71,7 @@ class tns:
 class pns:
     MIN_PRED = np.log10(2) * 20
     NOISE_FLOOR = -60
-    HIGH_FREQ_CUTOFF = 0.7
+    HIGH_FREQ_CUTOFF = 0.9
 
     @staticmethod
     def calc_band_energy(freqs):
