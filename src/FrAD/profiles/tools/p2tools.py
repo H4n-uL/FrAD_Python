@@ -1,6 +1,5 @@
 import numpy as np
-from scipy import fft, signal
-from typing import Optional, Tuple
+from scipy import signal
 
 bitstr2bytes = lambda bstr: bytes(int(bstr[i:i+8].ljust(8, '0'), 2) for i in range(0, len(bstr), 8))
 bytes2bitstr = lambda b: ''.join(f'{byte:08b}' for byte in b)
