@@ -16,7 +16,7 @@ class p2:
         # DCT
         pcm = np.pad(pcm, ((0, min((x for x in p2.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
         dlen = len(pcm)
-        freqs = np.array([dct(pcm[:, i]*(2**(bits-1))) for i in range(channels)]) / dlen
+        freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * (2**(bits-1))
 
         # Quantisation
         tns_freqs, lpc = p2tools.tns.analysis(freqs)
@@ -55,4 +55,4 @@ class p2:
         rev_freqs = p2tools.tns.synthesis(tns_freqs, lpc)
 
         # Inverse DCT and stacking
-        return np.ascontiguousarray(np.array([idct(chnl*len(chnl)) for chnl in rev_freqs]).T)/(2**(bits-1))
+        return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in rev_freqs]).T) / (2**(bits-1))
