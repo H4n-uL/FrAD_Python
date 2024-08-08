@@ -35,7 +35,8 @@
     {"key": "ファイルサポート",                 "type": "base64", "value": "5pyA5aSnMjU2IFRpQuOBvuOBp+OCteODneODvOODiA=="},
     {"key": "未対応文字なし",                  "type": "string", "value": "Unicodeにあるどの文字でも互換性があります！"},
     {"key": "重複キーサポート",                 "type": "string", "value": "キーが重複するようにすると？"},
-    {"key": "重複キーサポート",                 "type": "string", "value": "パンパカパーン！"}
+    {"key": "重複キーサポート",                 "type": "string", "value": "パンパカパーン！"},
+    {"key": "",                             "type": "string", "value": "キーなしのメタデータもサポート"}
 ]
 ```
 

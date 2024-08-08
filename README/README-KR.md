@@ -35,7 +35,8 @@
     {"key": "파일 지원",            "type": "base64", "value": "7LWc64yAIDI1NlRpQuq5jOyngCDsp4Dsm5A="},
     {"key": "미지원 글자 없음",       "type": "string", "value": "유니코드에 있는 어떤 글자라도 호환됩니다!"},
     {"key": "중복 키 지원",          "type": "string", "value": "중복 키를 넣으면?"},
-    {"key": "중복 키 지원",          "type": "string", "value": "짠!"}
+    {"key": "중복 키 지원",          "type": "string", "value": "짠!"},
+    {"key": "",                   "type": "string", "value": "키 없는 메타데이터도 지원"}
 ]
 ```
 
