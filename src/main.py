@@ -186,8 +186,8 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
     if kwargs.get('image') is not None:
         img = open(kwargs['image'], 'rb').read()
 
-    profile = kwargs.get('profile', 0)
-    if profile > 7 or profile < 0: profile = 0
+    prf: int = kwargs.get('profile', 4)
+    profile: int = (prf > 7 or prf < 0) and 4 or prf
     loss_level = kwargs.get('loss-level', 0)
 
     if action in encode_opt:
@@ -262,19 +262,19 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
         update.fetch_git(os.path.dirname(__file__))
 
     elif action in ['help']:
-        terminal(
+        print(
 '''               Fourier Analogue-in-Digital Master encoder/decoder
                              Original Author - HaמuL
 ''')
-        if   file_path in encode_opt:     terminal(encode_help)
-        elif file_path in decode_opt:     terminal(decode_help)
-        elif file_path in play_opt:       terminal(play_help)
-        elif file_path in record_opt:     terminal(record_help)
-        elif file_path in meta_opt:       terminal(meta_help)
-        elif file_path in repack_ecc_opt: terminal(repack_ecc_help)
-        elif file_path in update_opt:     terminal(update_help)
+        if   file_path in encode_opt:     print(encode_help)
+        elif file_path in decode_opt:     print(decode_help)
+        elif file_path in play_opt:       print(play_help)
+        elif file_path in record_opt:     print(record_help)
+        elif file_path in meta_opt:       print(meta_help)
+        elif file_path in repack_ecc_opt: print(repack_ecc_help)
+        elif file_path in update_opt:     print(update_help)
         else:
-            terminal(
+            print(
 '''------------------------------- Available actions ------------------------------
 
     encode | Encode any audio formats to FrAD (alias: enc)
@@ -283,8 +283,22 @@ def main(action: str, file_path: str | None, metaopt: str | None, kwargs: dict):
     record | Direct Software FrAD recording   (alias: rec)
     repack | Enable/Repack ECC protection     (alias: ecc)
     meta   | Edit metadata on FrAD            (alias: metadata)
-    update | Update FrAD codec from Github''')
-        terminal()
+    update | Update FrAD codec from Github
+    help   | Show this help message
+
+------------------------------ Available profiles ------------------------------
+
+    Profile 0 - DCT Archiving, Recommended for extreme environments
+    Profile 1 - Compact file size, Low complexity
+    Profile 2 - In development
+    Profile 3 - (Reserved)
+    Profile 4 - PCM Archiving, Recommended for general use
+    Profile 5 - (Reserved)
+    Profile 6 - (Reserved)
+    Profile 7 - (Reserved)
+    
+    Type `fourier help [action]` to get help for specific action.''')
+        print()
     else:
         terminal(f'Invalid action "{action}", type `fourier help` to get help.')
         sys.exit(1)

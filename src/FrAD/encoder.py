@@ -24,7 +24,7 @@ class encode:
             struct.pack('>I', min(len(frame), variables.FRM_MAXSZ)) +
             pfb
         )
-        if profile == 0:
+        if profile in [0, 4]:
             data += (
                 struct.pack('>B', chnl - 1) +
                 struct.pack('>B', ecc_list[0]) +
@@ -179,10 +179,7 @@ class encode:
         except: terminal(f'Invalid bit depth {bits} for Profile {profile}'); sys.exit(1)
         if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
 
-        segmax = {0: 2**32-1,
-                    1: max(variables.p1.smpls_li),
-                    2: max(variables.p2.smpls_li)}
-        if fsize > segmax[profile]: terminal(f'Sample size cannot exceed {segmax}.'); sys.exit(1)
+        if fsize > variables.segmax[profile]: terminal(f'Sample size cannot exceed {variables.segmax[profile]}.'); sys.exit(1)
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
         duration = 0
@@ -217,7 +214,7 @@ class encode:
         # Setting file extension
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
         if not out.lower().endswith(('.frad', '.dsin', '.fra', '.dsn')):
-            if profile == 0:
+            if profile in [0, 4]:
                 if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.fra'
                 else: out += '.frad'
             else:

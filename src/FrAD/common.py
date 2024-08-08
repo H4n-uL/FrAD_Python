@@ -21,12 +21,22 @@ class variables:
     from .fourier import fourier
     from .profiles.profile1 import p1
     from .profiles.profile2 import p2
+    from .profiles.profile4 import p4
 
     bit_depths = (
         fourier.depths,
         p1.depths,
-        p2.depths
+        p2.depths,
+        [],
+        p4.depths,
     )
+
+    segmax = {
+        0: 2**32-1,
+        1: max(p1.smpls_li),
+        2: max(p2.smpls_li),
+        4: 2**32-1
+    }
 
     # Temporary files for metadata processing / stream repairing
     temp =      tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.frad').name

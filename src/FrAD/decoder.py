@@ -18,7 +18,7 @@ class ASFH:
         self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
 
-        if self.profile == 0:
+        if self.profile in [0, 4]:
             fhead += file.read(23)
             self.chnl = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
             self.ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]    # 0x0a:    ECC Data block size
@@ -139,8 +139,8 @@ class decode:
                 asfh.update(f)
                 data = f.read(asfh.frmbytes)
                 if fix_error:
-                    if ((asfh.profile == 0 and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
-                    or (asfh.profile in [1, 2] and asfh.ecc and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
+                    if ((asfh.profile in [0, 4] and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
+                    or  (asfh.profile in [1, 2] and asfh.ecc and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
                     ):
                         error_dir.append(str(framescount))
                         if not warned: warned = True; terminal("This file may had been corrupted. Please repack your file via 'ecc' option for the best music experience.")
@@ -202,7 +202,7 @@ class decode:
 
                     # Decoding ECC
                     if asfh.ecc:
-                        if fix_error and ((asfh.profile == 0      and zlib.crc32(data)         != struct.unpack('>I', asfh.crc)[0])
+                        if fix_error and ((asfh.profile in [0, 4] and zlib.crc32(data)         != struct.unpack('>I', asfh.crc)[0])
                             or            (asfh.profile in [1, 2] and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
                             ): data = ecc.decode(data, asfh.ecc_dsize, asfh.ecc_codesize)
                         else:  data = ecc.unecc( data, asfh.ecc_dsize, asfh.ecc_codesize)
@@ -250,7 +250,7 @@ class decode:
                         else:
                             if printed: terminal(RM_CLI, end='')
                             cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(asfh.chnl, f'{asfh.chnl} ch')
-                            terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)}, {asfh.profile==0 and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
+                            terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)}, {asfh.profile in [0, 4] and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
                         printed = True
                     else:
                         if verbose:
