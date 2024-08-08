@@ -37,7 +37,7 @@ Metadata JSON
     {"key": "File is also available",           "type": "base64", "value": "U3VwcG9ydHMgdXAgdG8gMjU2IFRpQg=="},
     {"key": "No unsupported characters",        "type": "string", "value": "All utf-8/base64 metadata is allowed!"},
     {"key": "Supports duplicate keys",          "type": "string", "value": "See what happens!"},
-    {"key": "Supports duplicate keys",          "type": "string", "value": "Voilà!"}
+    {"key": "Supports duplicate keys",          "type": "string", "value": "Voilà!"},
     {"key": "",                                 "type": "string", "value": "Also supports keyless metadata"}
 ]
 ```

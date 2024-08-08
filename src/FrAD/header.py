@@ -8,7 +8,7 @@ class header:
         meta, img = headb.parser(file_path)
         if meta:
             open(f'{output}.meta.json', 'w', encoding='utf-8').write('[\n    ')
-            meta = ', \n    '.join([json.dumps({'key': m[0], 'type': m[2], 'value': m[1]}, ensure_ascii=False) for m in meta])
+            meta = ',\n    '.join([json.dumps({'key': m[0], 'type': m[2], 'value': m[1]}, ensure_ascii=False) for m in meta])
             open(f'{output}.meta.json', 'a', encoding='utf-8').write(meta)
             open(f'{output}.meta.json', 'a').write('\n]')
         if img: open(f'{output}.meta.image', 'wb').write(img)
