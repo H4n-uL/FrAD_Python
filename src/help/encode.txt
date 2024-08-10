@@ -1,0 +1,52 @@
+------------------------------------ Encode ------------------------------------
+
+Encode your audio file to FrAD format preserving all metadata.
+
+Usage: fourier encode <path/to/audio.file> [kwargs...]
+
+Required settings:
+
+    --bits <bit depth>
+        Output bit depth (alias: b, bit)
+
+Optional settings:
+
+    --raw <dtype> <sample rate> <channels>
+        Input raw audio file with dtype, sample rate, and channels
+        (alias: r, pcm)
+
+    --ecc <data> <code>
+        Enable ECC and set size ratio in --ecc <data> <code>
+        (default: 96 24, alias: e, apply-ecc, enable-ecc)
+
+    --output <path/to/audio.frad>
+        Output file path (default: <input>.frad, alias: o, out, output-file)
+    --sample-rate <sample rate>
+        Output sample rate (alias: sr, srate)
+    --channels <channels>
+        Output channels (alias: ch, chnl, channel)
+
+    --fsize <frame size>
+        Samples per frame (default: 2048, alias: fr, frame-size)
+    --gain [<gain> dBFS | <amplitude>]
+        Gain level in dBFS or Amplitude (alias: g)
+    --little-endian
+        Little Endian Toggle (alias: le)
+
+    --profile <0-7>
+        FrAD Profile from 0 to 7 (default: 4, alias: prf)
+    --loss-level <Level>
+        Lossy compression level (default: 0, alias: lv, level)
+    --overlap <ratio>
+        Overlap ratio in 1/<ratio> (alias: olap)
+
+    --meta <key> <value>
+        Metadata in <key> <value> (default: pre-embedded, alias: m)
+    --jsonmeta <path/to/meta.json>
+        JSONMeta format file path to embed (alias: jm)
+        type `{frad} help jsonmeta` for JSONMeta format
+    --image <path/to/image.file>
+        Image file path to embed (default: pre-embedded, alias: img)
+
+    --verbose
+        Verbose output (alias: v)

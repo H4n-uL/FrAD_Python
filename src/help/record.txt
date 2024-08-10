@@ -1,0 +1,31 @@
+------------------------------------ Record ------------------------------------
+
+Capture audio stream and write directly to FrAD file.
+
+Usage: fourier record <path/to/audio.file> [kwargs...]
+
+Options:
+
+    --bits <bit depth>
+        Output bit depth (default: 24, alias: b, bit)
+    --sample-rate <sample rate>
+        Record sample rate (default: 48000, alias: sr, srate)
+
+    --ecc <data> <code>
+        Enable ECC and set size ratio in --ecc <data> <code>
+        (default: 96 24, alias: e, apply-ecc, enable-ecc)
+
+    --output <path/to/audio.frad>
+        Output file path (default: <input>.frad, alias: o, out, output-file)
+    --channels <channels>
+        Output channels (alias: ch, chnl, channel)
+
+    --little-endian
+        Little Endian Toggle (alias: le)
+
+    --profile <0-7>
+        FrAD Profile from 0 to 7 (default: 4, alias: prf)
+    --loss-level <Level>
+        Lossy compression level (default: 0, alias: lv, level)
+    --overlap <ratio>
+        Overlap ratio in 1/<ratio> (alias: olap)

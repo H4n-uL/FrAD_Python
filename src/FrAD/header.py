@@ -25,7 +25,6 @@ class header:
         if file_path is None: terminal('File path is required.'); sys.exit(1)
         add = kwargs.get('add', False)
         remove = kwargs.get('remove', False)
-        write_img = kwargs.get('write_img', False)
         remove_img = kwargs.get('remove_img', False)
         try:
             # Backup file
@@ -46,14 +45,12 @@ class header:
             # Making new header
             meta_old, img_old = headb.parser(file_path)
             if add:
-                img = img_old
+                if not img: img = img_old
                 if meta: meta = meta_old + meta
+                else: meta = meta_old
             elif remove:
                 img = img_old
                 if meta: meta = [mo for mo in meta_old if mo[0] not in meta]
-            elif write_img:
-                meta = meta_old
-                if img_old and not img: img = img_old
             elif remove_img: meta = meta_old; img = None
             head_new = headb.uilder(meta, img)
 

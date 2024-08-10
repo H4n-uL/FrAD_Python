@@ -3,7 +3,7 @@ import sys
 encode_opt = ['encode', 'enc']
 decode_opt = ['decode', 'dec']
 meta_opt = ['meta', 'metadata']
-repack_ecc_opt = ['ecc', 'repack']
+repair_opt = ['ecc', 'repair']
 play_opt = ['play']
 record_opt = ['record', 'rec']
 update_opt = ['update']
