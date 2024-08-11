@@ -147,7 +147,8 @@ class decode:
 
                 try: ddict[asfh.srate] += asfh.fsize
                 except: ddict[asfh.srate] = asfh.fsize
-                if asfh.profile in [1, 2] and asfh.overlap != 0: ddict[asfh.srate] -= asfh.fsize//asfh.overlap
+                if asfh.profile in [1, 2] and asfh.overlap != 0:
+                    ddict[asfh.srate] -= (asfh.fsize * (asfh.overlap - 1)) // asfh.overlap
 
                 dlen += asfh.frmbytes
                 framescount += 1
