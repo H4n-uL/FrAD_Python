@@ -245,7 +245,7 @@ class encode:
                 while True:
                     # profile = random.choice([0, 1, 4]) # Random profile test
                     # bits = random.choice(variables.bit_depths[profile]) # Random bit depth test
-                    # fsize = random.choice(variables.p1.smpls_li[:-1]) # Random spf test
+                    # fsize = random.choice(variables.p1.smpls_li) # Random spf test
                     # loss_level = random.choice(range(21)) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
                     # ecc_codesize = random.randrange(1, 254)
