@@ -63,8 +63,8 @@ class decode:
                 (frame[:len(prev), c] * fade_in) +\
                 (prev[:, c]           * fade_out)
         if asfh.profile in [1, 2] and asfh.overlap != 0:
-            asfh.overlap = min(max(asfh.overlap, 2), 255)
-            prev = frame[-len(frame)//asfh.overlap:]
+            olap = min(max(asfh.overlap, 2), 255)
+            prev = frame[(len(frame) * (olap - 1)) / olap:]
             frame = frame[:-len(prev)]
         else: prev = np.array([])
         return frame, prev
