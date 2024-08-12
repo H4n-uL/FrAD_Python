@@ -40,7 +40,6 @@ class subband:
             start = min(subband.getbinrng(freqs_shape, srate, i).start, len(freqs))
             end = min(subband.getbinrng(freqs_shape, srate, i+1).start, len(freqs))
             freqs[start:end] = np.linspace(mapped_freqs[i], mapped_freqs[i+1], end-start)
-        freqs[end:] = mapped_freqs[-1]
         return freqs
 
 def quant(x, alpha=0.75): return np.sign(x) * np.abs(x)**alpha
