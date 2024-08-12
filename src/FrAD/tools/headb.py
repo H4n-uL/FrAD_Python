@@ -1,4 +1,5 @@
 from ..common import variables, methods
+from ..profiles.prf import compact
 import base64, math, struct
 
 IMAGE =   b'\xf5'
@@ -42,10 +43,10 @@ class headb:
     @staticmethod
     def encode_css_prf1(channels: int, srate: int, fsize: int) -> bytes:
         chnl = (channels-1)<<10
-        srate = variables.p1.srates.index(srate) << 6
-        fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=0)
-        mult = next((key for key, values in variables.p1.smpls.items() if fsize in values), 0)
-        px = tuple(variables.p1.smpls).index(mult) << 4
+        srate = compact.srates.index(srate) << 6
+        fsize = min((x for x in compact.samples_li if x >= fsize), default=0)
+        mult = next((key for key, values in compact.samples.items() if fsize in values), 0)
+        px = tuple(compact.samples).index(mult) << 4
         fsize = int(math.log2(fsize / mult)) << 1
         return struct.pack('>H', chnl | srate | px | fsize)
 
@@ -53,7 +54,7 @@ class headb:
     def decode_css_prf1(css: bytes) -> tuple[int, int, int]:
         cssint = struct.unpack('>H', css)[0]
         channels = (cssint>>10) + 1                     # 0x09@0b111-6b: Channels
-        srate = variables.p1.srates[cssint>>6&0b1111] # 0x09@0b001-4b: Sample rate index
+        srate = compact.srates[cssint>>6&0b1111] # 0x09@0b001-4b: Sample rate index
         fsize_prefix = [128, 144, 192][cssint>>4&0b11]  # 0x0a@0b101-2b: Frame size prefix
         fsize = fsize_prefix * 2**(cssint>>1&0b111)     # 0x0a@0b011-3b: Frame size
         return channels, srate, fsize

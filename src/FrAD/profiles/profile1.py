@@ -1,13 +1,10 @@
 from scipy.fft import dct, idct
 import numpy as np
+from .prf import compact
 from .tools import p1tools
 import struct, zlib
 
 class p1:
-    srates = (96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000)
-    smpls = {128: [128 * 2**i for i in range(8)], 144: [144 * 2**i for i in range(8)], 192: [192 * 2**i for i in range(8)]}
-    smpls_li = tuple([item for sublist in smpls.values() for item in sublist])
-
     depths = (8, 12, 16, 24, 32, 48, 64)
     dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
     alpha = 0.8
@@ -24,7 +21,7 @@ class p1:
     @staticmethod
     def analogue(pcm: np.ndarray, bits: int, channels: int, **kwargs) -> tuple[bytes, int, int]:
         # DCT
-        pcm = np.pad(pcm, ((0, min((x for x in p1.smpls_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
+        pcm = np.pad(pcm, ((0, min((x for x in compact.samples_li if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
         dlen = len(pcm)
         freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * (2**(bits-1))
 

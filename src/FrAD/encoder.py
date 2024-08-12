@@ -1,4 +1,5 @@
 from .common import variables, methods, terminal
+from .profiles.prf import profiles, compact
 from .fourier import fourier
 import io, json, os, math, random, struct, subprocess, sys, time, traceback, zlib
 import numpy as np
@@ -11,7 +12,7 @@ class encode:
         fsize = len(data) + len(prev)
         olap = olap != 0 and min(max(olap, 2), 255) or 0
         if prev.shape != np.array([]).shape: data = np.concatenate([prev, data])
-        if profile in [1, 2] and olap: prev = data[-fsize//olap:]
+        if profile in profiles.COMPACT and olap: prev = data[-fsize//olap:]
         else: prev = np.array([])
         return data, prev
 
@@ -24,7 +25,7 @@ class encode:
             struct.pack('>I', min(len(frame), variables.FRM_MAXSZ)) +
             pfb
         )
-        if profile in [0, 4]:
+        if profile in profiles.LOSSLESS:
             data += (
                 struct.pack('>B', chnl - 1) +
                 struct.pack('>B', ecc_list[0]) +
@@ -34,7 +35,7 @@ class encode:
                 struct.pack('>I', fsize) +
                 struct.pack('>I', zlib.crc32(frame))
             )
-        elif profile in [1, 2]:
+        elif profile in profiles.COMPACT:
             data += (
                 headb.encode_css_prf1(chnl, srate, fsize) +
                 struct.pack('>B', kwargs.get('olap', 0))
@@ -196,10 +197,10 @@ class encode:
             duration = os.path.getsize(file_path) / methods.get_dtype(raw[0])[1] * ((new_srate or srate) / srate) / channels
 
         # Modifying new_srate for Profile 1
-        if profile in [1, 2]:
+        if profile in profiles.COMPACT:
             new_srate = min(new_srate or srate, 96000)
-            if not new_srate in variables.p1.srates: new_srate = 48000
-            fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
+            if not new_srate in compact.srates: new_srate = 48000
+            fsize = min((x for x in compact.samples_li if x >= fsize), default=2048)
 
         # Moulding FFmpeg command and initting read srates and channels
         cmd = encode.get_pcm_command(file_path, raw, new_srate, new_chnl)
@@ -214,7 +215,7 @@ class encode:
         # Setting file extension
         if out is None: out = os.path.basename(file_path).rsplit('.', 1)[0]
         if not out.lower().endswith(('.frad', '.dsin', '.fra', '.dsn')):
-            if profile in [0, 4]:
+            if profile in profiles.LOSSLESS:
                 if len(out) <= 8 and all(ord(c) < 128 for c in out): out += '.fra'
                 else: out += '.frad'
             else:
@@ -254,9 +255,9 @@ class encode:
 
                     # Getting required read length
                     rlen = fsize
-                    if profile in [1, 2]:
-                        rlen = min((x-len(prev) for x in variables.p1.smpls_li if x >= fsize))
-                        if rlen <= 0: rlen = min((x-len(prev) for x in variables.p1.smpls_li if x-len(prev) >= fsize))
+                    if profile in profiles.COMPACT:
+                        rlen = min((x-len(prev) for x in compact.samples_li if x >= fsize))
+                        if rlen <= 0: rlen = min((x-len(prev) for x in compact.samples_li if x-len(prev) >= fsize))
 
                     if process.stdout is None: raise FileNotFoundError('Broken pipe.')
                     data = process.stdout.read(rlen * 8 * channels) # Reading PCM

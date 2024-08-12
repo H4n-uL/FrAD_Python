@@ -2,6 +2,7 @@ from .common import variables, methods, terminal
 from .fourier import fourier
 from .header import header
 import numpy as np
+from .profiles.prf import profiles, compact
 import atexit, io, math, os, platform, shutil, struct,\
        subprocess, sys, tempfile, time, traceback, zlib
 import sounddevice as sd
@@ -18,7 +19,7 @@ class ASFH:
         self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
 
-        if self.profile in [0, 4]:
+        if self.profile in profiles.LOSSLESS:
             fhead += file.read(23)
             self.chnl = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
             self.ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]    # 0x0a:    ECC Data block size
@@ -27,7 +28,7 @@ class ASFH:
             self.fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
             self.crc = fhead[0x1c:0x20]                                # 0x1c-4B: ISO 3309 CRC32 of Audio Data
 
-        if self.profile in [1, 2]:
+        if self.profile in profiles.COMPACT:
             fhead += file.read(3)
             self.chnl, self.srate, self.fsize = headb.decode_css_prf1(fhead[0x9:0xb])
             self.overlap = struct.unpack('>B', fhead[0xb:0xc])[0]      # 0x0b: Overlap rate
@@ -62,7 +63,7 @@ class decode:
                 frame[:len(prev), c] = \
                 (frame[:len(prev), c] * fade_in) +\
                 (prev[:, c]           * fade_out)
-        if asfh.profile in [1, 2] and asfh.overlap != 0:
+        if asfh.profile in profiles.COMPACT and asfh.overlap != 0:
             olap = min(max(asfh.overlap, 2), 255)
             prev = frame[(len(frame) * (olap - 1)) // olap:]
             frame = frame[:-len(prev)]
@@ -132,22 +133,22 @@ class decode:
                 if fhead != variables.FRM_SIGN:
                     hq = f.read(1)
                     if not hq:
-                        if asfh.profile in [1, 2] and asfh.overlap != 0: ddict[asfh.srate] += asfh.fsize//asfh.overlap
+                        if asfh.profile in profiles.COMPACT and asfh.overlap != 0: ddict[asfh.srate] += asfh.fsize//asfh.overlap
                         break
                     fhead = fhead[1:]+hq
                     continue
                 asfh.update(f)
                 data = f.read(asfh.frmbytes)
                 if fix_error:
-                    if ((asfh.profile in [0, 4] and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
-                    or  (asfh.profile in [1, 2] and asfh.ecc and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
+                    if ((asfh.profile in profiles.LOSSLESS and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
+                    or  (asfh.profile in profiles.COMPACT and asfh.ecc and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
                     ):
                         error_dir.append(str(framescount))
                         if not warned: warned = True; terminal("This file may had been corrupted. Please repack your file via 'ecc' option for the best music experience.")
 
                 try: ddict[asfh.srate] += asfh.fsize
                 except: ddict[asfh.srate] = asfh.fsize
-                if asfh.profile in [1, 2] and asfh.overlap != 0:
+                if asfh.profile in profiles.COMPACT and asfh.overlap != 0:
                     ddict[asfh.srate] -= asfh.fsize - (asfh.fsize * (asfh.overlap - 1)) // asfh.overlap
 
                 dlen += asfh.frmbytes
@@ -203,8 +204,8 @@ class decode:
 
                     # Decoding ECC
                     if asfh.ecc:
-                        if fix_error and ((asfh.profile in [0, 4] and zlib.crc32(data)         != struct.unpack('>I', asfh.crc)[0])
-                            or            (asfh.profile in [1, 2] and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
+                        if fix_error and ((asfh.profile in profiles.LOSSLESS and zlib.crc32(data)         != struct.unpack('>I', asfh.crc)[0])
+                            or            (asfh.profile in profiles.COMPACT  and methods.crc16_ansi(data) != struct.unpack('>H', asfh.crc)[0])
                             ): data = ecc.decode(data, asfh.ecc_dsize, asfh.ecc_codesize)
                         else:  data = ecc.unecc( data, asfh.ecc_dsize, asfh.ecc_codesize)
 
@@ -245,13 +246,13 @@ class decode:
                             terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)} (Frame #{frameNo} / {framescount} Frame{(framescount!=1)*"s"})')
                             terminal(f'{depth}b@{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {not asfh.endian and"B"or"L"}E {asfh.chnl} channel{(asfh.chnl!=1)*"s"}')
                             lgf = int(math.log(bps, 1000))
-                            terminal(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}{asfh.profile in [1, 2] and asfh.overlap != 0 and f", Overlap: 1/{asfh.overlap}" or ", Overlap: disabled" or ""}')
+                            terminal(f'Profile {asfh.profile}, ECC{asfh.ecc and f": {asfh.ecc_dsize}/{asfh.ecc_codesize}" or " disabled"}{asfh.profile in profiles.COMPACT and asfh.overlap != 0 and f", Overlap: 1/{asfh.overlap}" or ", Overlap: disabled" or ""}')
                             terminal(f'{len(frame)} sample{len(frame)!=1 and"s"or""}, {asfh.frmbytes} Byte{(asfh.frmbytes!=1)*"s"}({bps/10**(lgf*3):.3f} {['','k','M','G','T'][lgf]}bps) per frame')
                             terminal(f'{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps average')
                         else:
                             if printed: terminal(RM_CLI, end='')
                             cq = {1:'Mono',2:'Stereo',4:'Quad',6:'5.1 Surround',8:'7.1 Surround'}.get(asfh.chnl, f'{asfh.chnl} ch')
-                            terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)}, {asfh.profile in [0, 4] and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
+                            terminal(f'{methods.tformat(t_sec)} / {methods.tformat(duration)}, {asfh.profile in profiles.LOSSLESS and f"{depth}b@"or f"{bpstot/frameNo/10**(lgv*3):.3f} {['','k','M','G','T'][lgv]}bps "}{asfh.srate/10**(lgs*3)} {['','k','M','G','T'][lgs]}Hz {cq}')
                         printed = True
                     else:
                         if verbose:

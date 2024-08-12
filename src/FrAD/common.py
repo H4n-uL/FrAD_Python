@@ -19,6 +19,7 @@ class variables:
     crc16t_ansi = [(lambda c: [c := (c >> 1) ^ 0xA001 if c & 0x0001 else c >> 1 for _ in range(8)][-1])(i) for i in range(256)]
 
     from .fourier import fourier
+    from .profiles.prf import compact
     from .profiles.profile1 import p1
     from .profiles.profile2 import p2
     from .profiles.profile4 import p4
@@ -33,8 +34,8 @@ class variables:
 
     segmax = {
         0: 2**32-1,
-        1: max(p1.smpls_li),
-        2: max(p2.smpls_li),
+        1: compact.max_sample,
+        2: compact.max_sample,
         4: 2**32-1
     }
 

@@ -3,6 +3,7 @@ from .common import variables, terminal
 from .encoder import encode
 import numpy as np
 import math, os, sys
+from .profiles.prf import profiles, compact
 import sounddevice as sd
 from .tools.ecc import ecc
 from .tools.headb import headb
@@ -33,12 +34,12 @@ class recorder:
         img = kwargs.get('img', None)
 
         if fsize > variables.segmax[profile]: terminal(f'Sample size cannot exceed {variables.segmax[profile]}.'); sys.exit(1)
-        if profile in [1, 2]: fsize = min((x for x in variables.p1.smpls_li if x >= fsize), default=2048)
+        if profile in profiles.COMPACT: fsize = min((x for x in compact.samples_li if x >= fsize), default=2048)
         if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit()
 
-        if profile in [1, 2]:
+        if profile in profiles.COMPACT:
             srate = min(srate, 96000)
-            if not srate in variables.p1.srates: srate = 48000
+            if not srate in compact.srates: srate = 48000
 
         if not isinstance(overlap, (int, float)): overlap = variables.overlap_rate
         elif overlap <= 0: overlap = 0
@@ -84,10 +85,10 @@ class recorder:
                     rlen = fsize
                     while rlen < len(prev): rlen += 128
                     # Overlap
-                    if profile in [1, 2] and len(prev) != 0: rlen -= len(prev)
+                    if profile in profiles.COMPACT and len(prev) != 0: rlen -= len(prev)
                     data = record.read(rlen)[0]
                     if overlap: data, prev = encode.overlap(data, prev, overlap, profile)
-                    frame, _, chnl, bf = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, srate=srate, level=loss_level)
+                    frame, bf, chnl = fourier.analogue(data, bit_depth, channels, little_endian, profile=profile, srate=srate, level=loss_level)
 
                     # Applying ECC (This will make encoding hundreds of times slower)
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
