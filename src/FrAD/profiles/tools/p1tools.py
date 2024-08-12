@@ -36,28 +36,15 @@ class subband:
     @staticmethod
     def mappingfromopus(mapped_freqs, freqs_shape, srate):
         freqs = np.zeros(freqs_shape)
-        for i in range(subbands): freqs[subband.getbinrng(freqs_shape, srate, i)] = mapped_freqs[i]
+        for i in range(subbands-1): 
+            start = min(subband.getbinrng(freqs_shape, srate, i).start, len(freqs))
+            end = min(subband.getbinrng(freqs_shape, srate, i+1).start, len(freqs))
+            freqs[start:end] = np.linspace(mapped_freqs[i], mapped_freqs[i+1], end-start)
+        freqs[end:] = mapped_freqs[-1]
         return freqs
 
-def quant(freqs: np.ndarray, channels: int, dlen: int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
-    alpha = 0.8
-
-    const_factor = 1.25**kwargs['level'] / 19 + 0.5
-
-    # Psychoacoustic Masking
-    pns_sgnl = []
-    mask = []
-    for c in range(channels):
-        thres = subband.mask_thres_MOS(
-            subband.mapping2opus(np.abs(freqs[c]),kwargs['srate']),alpha) * const_factor
-        mask.append(thres)
-        pns_sgnl.append(np.around(freqs[c] / subband.mappingfromopus(thres,dlen,kwargs['srate'])))
-
-    return np.array(pns_sgnl), np.array(mask)
-
-def dequant(pns_sgnl: np.ndarray, channels: int, masks: np.ndarray, **kwargs) -> np.ndarray:
-    masks = np.where(np.isnan(masks) | np.isinf(masks), 0, masks)
-    return np.array([pns_sgnl[c] * subband.mappingfromopus(masks[c], len(pns_sgnl[c]), kwargs['srate']) for c in range(channels)])
+def quant(x, alpha=0.75): return np.sign(x) * np.abs(x)**alpha
+def dequant(x, alpha=0.75): return np.sign(x) * np.abs(x)**(1/alpha)
 
 bitstr2bytes = lambda bstr: bytes(int(bstr[i:i+8].ljust(8, '0'), 2) for i in range(0, len(bstr), 8))
 bytes2bitstr = lambda b: ''.join(f'{byte:08b}' for byte in b)

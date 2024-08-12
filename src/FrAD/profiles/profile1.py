@@ -10,6 +10,7 @@ class p1:
 
     depths = (8, 12, 16, 24, 32, 48, 64)
     dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
+    alpha = 0.8
 
     @staticmethod
     def signext_24x(byte: bytes, bits, be):
@@ -27,13 +28,26 @@ class p1:
         dlen = len(pcm)
         freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * (2**(bits-1))
 
+        const_factor = 1.25**kwargs['level'] / 19 + 0.5
+
         # Quantisation
-        freqs, pns = p1tools.quant(freqs, channels, dlen, **kwargs)
+        mask_freqs = []
+        mask_thres = []
+        for c in range(channels):
+            mapping = p1tools.subband.mapping2opus(np.abs(freqs[c]), kwargs['srate'])
+            thres = p1tools.subband.mask_thres_MOS(mapping, p1.alpha) * const_factor
+            mask_thres.append(thres * 2**(16-bits))
+            div_factor = p1tools.subband.mappingfromopus(thres,dlen, kwargs['srate'])
+
+            masked = np.array(np.around(p1tools.quant(freqs[c] / div_factor)))
+            mask_freqs.append(masked.astype(int))
+
+        freqs, thres = np.array(mask_freqs), np.array(mask_thres).astype(int)
 
         # Ravelling and packing
-        pns_glm = p1tools.exp_golomb_rice_encode(np.frombuffer(np.array(pns.T/(2**(bits-1))).astype('>f2').tobytes(), dtype=f'>i2'))
-        frad: bytes = p1tools.exp_golomb_rice_encode(freqs.T.ravel().astype(int))
-        frad = struct.pack(f'>I', len(pns_glm)) + pns_glm + frad
+        thres_gol = p1tools.exp_golomb_rice_encode(thres.T.ravel())
+        freqs_gol = p1tools.exp_golomb_rice_encode(freqs.T.ravel())
+        frad = struct.pack(f'>I', len(thres_gol)) + thres_gol + freqs_gol
 
         # Deflating
         frad = zlib.compress(frad, level=9)
@@ -47,17 +61,17 @@ class p1:
         # Inflating
         frad = zlib.decompress(frad)
         thresbytes, frad = struct.unpack(f'>I', frad[:4])[0], frad[4:]
-        thres_int, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).astype(f'>i2').tobytes(), frad[thresbytes:]
-        thres = np.frombuffer(thres_int, dtype=f'>f2').reshape((-1, channels)).T * (2**(bits-1))
+        thres, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).reshape(-1, channels).T.astype(float) / (2**(16-bits)), frad[thresbytes:]
 
         # Unpacking and unravelling
         freqs: np.ndarray = p1tools.exp_golomb_rice_decode(frad).astype(float).reshape(-1, channels).T
 
         # Removing potential Infinities and Non-numbers
         freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
+        thres = np.where(np.isnan(thres) | np.isinf(thres), 0, thres)
 
         # Dequantisation
-        freqs = p1tools.dequant(freqs, channels, thres, **kwargs)
+        freqs = np.array([p1tools.dequant(freqs[c]) * p1tools.subband.mappingfromopus(thres[c], len(freqs[c]), kwargs['srate']) for c in range(channels)])
 
         # Inverse DCT and stacking
         return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T) / (2**(bits-1))
