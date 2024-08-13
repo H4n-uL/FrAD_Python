@@ -32,7 +32,7 @@ class p1:
         for c in range(channels):
             mapping = p1tools.subband.mapping_to_opus(np.abs(freqs[c]), kwargs['srate'])
             thres = p1tools.subband.mask_thres_mos(mapping, p1tools.spread_alpha) * const_factor
-            mask_thres.append(thres * 2**(16-bits))
+            mask_thres.append(thres * np.sqrt(3)**(16-bits))
 
             div_factor = p1tools.subband.mapping_from_opus(thres, dlen, kwargs['srate'])
             masked = np.array(np.around(p1tools.quant(freqs[c] / div_factor)))
@@ -57,7 +57,7 @@ class p1:
         # Inflating
         frad = zlib.decompress(frad)
         thresbytes, frad = struct.unpack(f'>I', frad[:4])[0], frad[4:]
-        thres, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).reshape(-1, channels).T.astype(float) / (2**(16-bits)), frad[thresbytes:]
+        thres, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).reshape(-1, channels).T.astype(float) / (np.sqrt(3)**(16-bits)), frad[thresbytes:]
 
         # Unpacking and unravelling
         freqs: np.ndarray = p1tools.exp_golomb_rice_decode(frad).astype(float).reshape(-1, channels).T
