@@ -15,7 +15,7 @@ def getsha1(file):
     return sha.hexdigest()
 
 def fetch_git(dir, gitdir='src', ref='main'):
-    url = os.path.join('https://api.github.com/repos/h4n-ul/Fourier_Analogue-in-Digital/contents', gitdir)
+    url = os.path.join('https://api.github.com/repos/H4n-uL/Fourier_Analogue-in-Digital/contents', gitdir)
     res = requests.get(url, params={'ref': ref})
 
     if res.status_code != 200:
