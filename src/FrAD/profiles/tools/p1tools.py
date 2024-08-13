@@ -14,11 +14,11 @@ quant_alpha = 0.75
 
 class subband:
     @staticmethod
-    def getbinrng(dlen: int, srate: int, subband_index: int) -> slice:
+    def get_bin_range(dlen: int, srate: int, subband_index: int) -> slice:
         return slice(rndint(dlen/(srate/2)*MOS[subband_index]), rndint(dlen/(srate/2)*MOS[subband_index+1]))
 
     @staticmethod
-    def mask_thres_MOS(freqs: np.ndarray, alpha: float) -> np.ndarray:
+    def mask_thres_mos(freqs: np.ndarray, alpha: float) -> np.ndarray:
         thres = np.zeros_like(freqs)
         for i in range(subbands):
             f = (MOS[i] + MOS[i+1]) / 2
@@ -28,19 +28,19 @@ class subband:
         return thres
 
     @staticmethod
-    def mapping2opus(freqs: np.ndarray, srate):
+    def mapping_to_opus(freqs: np.ndarray, srate):
         mapped_freqs = np.zeros(subbands)
         for i in range(subbands):
-            subfreqs = freqs[subband.getbinrng(len(freqs), srate, i)]
+            subfreqs = freqs[subband.get_bin_range(len(freqs), srate, i)]
             if len(subfreqs) > 0: mapped_freqs[i] = np.sqrt(np.mean(subfreqs**2))
         return mapped_freqs
 
     @staticmethod
-    def mappingfromopus(mapped_freqs, freqs_shape, srate):
+    def mapping_from_opus(mapped_freqs, freqs_shape, srate):
         freqs = np.zeros(freqs_shape)
         for i in range(subbands-1): 
-            start = min(subband.getbinrng(freqs_shape, srate, i).start, len(freqs))
-            end = min(subband.getbinrng(freqs_shape, srate, i+1).start, len(freqs))
+            start = min(subband.get_bin_range(freqs_shape, srate, i).start, len(freqs))
+            end = min(subband.get_bin_range(freqs_shape, srate, i+1).start, len(freqs))
             freqs[start:end] = np.linspace(mapped_freqs[i], mapped_freqs[i+1], end-start)
         return freqs
 

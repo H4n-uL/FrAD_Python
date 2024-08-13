@@ -30,11 +30,11 @@ class p1:
         mask_freqs = []
         mask_thres = []
         for c in range(channels):
-            mapping = p1tools.subband.mapping2opus(np.abs(freqs[c]), kwargs['srate'])
-            thres = p1tools.subband.mask_thres_MOS(mapping, p1tools.spread_alpha) * const_factor
+            mapping = p1tools.subband.mapping_to_opus(np.abs(freqs[c]), kwargs['srate'])
+            thres = p1tools.subband.mask_thres_mos(mapping, p1tools.spread_alpha) * const_factor
             mask_thres.append(thres * 2**(16-bits))
 
-            div_factor = p1tools.subband.mappingfromopus(thres, dlen, kwargs['srate'])
+            div_factor = p1tools.subband.mapping_from_opus(thres, dlen, kwargs['srate'])
             masked = np.array(np.around(p1tools.quant(freqs[c] / div_factor)))
             mask_freqs.append(masked.astype(int))
 
@@ -67,7 +67,7 @@ class p1:
         thres = np.where(np.isnan(thres) | np.isinf(thres), 0, thres)
 
         # Dequantisation
-        freqs = np.array([p1tools.dequant(freqs[c]) * p1tools.subband.mappingfromopus(thres[c], len(freqs[c]), kwargs['srate']) for c in range(channels)])
+        freqs = np.array([p1tools.dequant(freqs[c]) * p1tools.subband.mapping_from_opus(thres[c], len(freqs[c]), kwargs['srate']) for c in range(channels)])
 
         # Inverse DCT and stacking
         return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T) / (2**(bits-1))
