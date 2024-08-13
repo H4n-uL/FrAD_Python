@@ -7,7 +7,6 @@ import struct, zlib
 class p1:
     depths = (8, 12, 16, 24, 32, 48, 64)
     dtypes = {64:'i8',48:'i8',32:'i4',24:'i4',16:'i2',12:'i2',8:'i1'}
-    alpha = 0.8
 
     @staticmethod
     def signext_24x(byte: bytes, bits, be):
@@ -32,14 +31,14 @@ class p1:
         mask_thres = []
         for c in range(channels):
             mapping = p1tools.subband.mapping2opus(np.abs(freqs[c]), kwargs['srate'])
-            thres = p1tools.subband.mask_thres_MOS(mapping, p1.alpha) * const_factor
+            thres = p1tools.subband.mask_thres_MOS(mapping, p1tools.spread_alpha) * const_factor
             mask_thres.append(thres * 2**(16-bits))
-            div_factor = p1tools.subband.mappingfromopus(thres,dlen, kwargs['srate'])
 
+            div_factor = p1tools.subband.mappingfromopus(thres, dlen, kwargs['srate'])
             masked = np.array(np.around(p1tools.quant(freqs[c] / div_factor)))
             mask_freqs.append(masked.astype(int))
 
-        freqs, thres = np.array(mask_freqs), np.array(mask_thres).astype(int)
+        freqs, thres = np.array(mask_freqs), np.array(mask_thres).round().astype(int)
 
         # Ravelling and packing
         thres_gol = p1tools.exp_golomb_rice_encode(thres.T.ravel())

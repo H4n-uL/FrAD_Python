@@ -9,6 +9,8 @@ MOS =  (0,     200,   400,   600,   800,   1000,  1200,  1400,
 
 subbands = len(MOS) - 1
 rndint = lambda x: int(x+0.5)
+spread_alpha = 0.8
+quant_alpha = 0.75
 
 class subband:
     @staticmethod
@@ -42,8 +44,8 @@ class subband:
             freqs[start:end] = np.linspace(mapped_freqs[i], mapped_freqs[i+1], end-start)
         return freqs
 
-def quant(x, alpha=0.75): return np.sign(x) * np.abs(x)**alpha
-def dequant(x, alpha=0.75): return np.sign(x) * np.abs(x)**(1/alpha)
+def quant(x): return np.sign(x) * np.abs(x)**quant_alpha
+def dequant(x): return np.sign(x) * np.abs(x)**(1/quant_alpha)
 
 bitstr2bytes = lambda bstr: bytes(int(bstr[i:i+8].ljust(8, '0'), 2) for i in range(0, len(bstr), 8))
 bytes2bitstr = lambda b: ''.join(f'{byte:08b}' for byte in b)
