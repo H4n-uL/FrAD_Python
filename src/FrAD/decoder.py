@@ -55,20 +55,20 @@ def cleanup():
 
 class decode:
     @staticmethod
-    def overlap(frame: np.ndarray, prev: np.ndarray, asfh: ASFH) -> tuple[np.ndarray, np.ndarray]:
-        if prev.shape != np.array([]).shape:
-            fade_in = np.linspace(0, 1, len(prev))
-            fade_out = np.linspace(1, 0, len(prev))
+    def overlap(frame: np.ndarray, overlap_fragment: np.ndarray, asfh: ASFH) -> tuple[np.ndarray, np.ndarray]:
+        if overlap_fragment.shape != np.array([]).shape:
+            fade_in = np.linspace(0, 1, len(overlap_fragment))
+            fade_out = np.linspace(1, 0, len(overlap_fragment))
             for c in range(asfh.chnl):
-                frame[:len(prev), c] = \
-                (frame[:len(prev), c] * fade_in) +\
-                (prev[:, c]           * fade_out)
+                frame[:len(overlap_fragment), c] = \
+                (frame[:len(overlap_fragment), c]  * fade_in) +\
+                (overlap_fragment[:, c] * fade_out)
+        next_overlap = np.array([])
         if asfh.profile in profiles.COMPACT and asfh.overlap != 0:
             olap = min(max(asfh.overlap, 2), 255)
-            prev = frame[(len(frame) * (olap - 1)) // olap:]
-            frame = frame[:-len(prev)]
-        else: prev = np.array([])
-        return frame, prev
+            next_overlap = frame[(len(frame) * (olap - 1)) // olap:]
+            frame = frame[:-len(next_overlap)]
+        return frame, next_overlap
 
     @staticmethod
     def write(frame: np.ndarray, playstream: sd.OutputStream, filestream: io.BufferedWriter, dtype: str, play: bool, ispipe: bool) -> None:
@@ -186,7 +186,7 @@ class decode:
                 bps = bpstot = 0
                 dlen = os.path.getsize(file_path) - head_len
                 start_time = time.time()
-                fhead, prev, frame = None, np.array([]), np.array([])
+                fhead, overlap_fragment, frame = None, np.array([]), np.array([])
 
     # ----------------------------- Main decode loop ----------------------------- #
                 while True:
@@ -194,7 +194,7 @@ class decode:
                     if fhead is None: fhead = f.read(4)
                     if fhead != variables.FRM_SIGN:
                         hq = f.read(1)
-                        if not hq: decode.write(prev, stdoutstrm, tempfstrm, dtype, play, ispipe); break
+                        if not hq: decode.write(overlap_fragment, stdoutstrm, tempfstrm, dtype, play, ispipe); break
                         fhead = fhead[1:]+hq
                         continue
 
@@ -215,15 +215,15 @@ class decode:
                     # if channels and sample rate changed
                     if channels != asfh.chnl or srate != asfh.srate:
                         channels, srate = asfh.chnl, asfh.srate
-                        decode.write(prev, stdoutstrm, tempfstrm, dtype, play, ispipe)
+                        decode.write(overlap_fragment, stdoutstrm, tempfstrm, dtype, play, ispipe)
                         if play: stdoutstrm = sd.OutputStream(samplerate=int(asfh.srate*speed), channels=asfh.chnl); stdoutstrm.start()
                         else:
-                            prev = np.array([])
+                            overlap_fragment = np.array([])
                             tempfstrm.close()
                             tempfstrm = open(tempfile.NamedTemporaryFile(prefix='frad_', delete=True, suffix='.pcm').name, 'wb')
                             filelist.append([tempfstrm.name, channels, srate])
 
-                    frame, prev = decode.overlap(frame, prev, asfh)
+                    frame, overlap_fragment = decode.overlap(frame, overlap_fragment, asfh)
 
                     # Write PCM Stream
                     decode.write(frame, stdoutstrm, tempfstrm, dtype, play, ispipe)

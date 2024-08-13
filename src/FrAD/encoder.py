@@ -8,13 +8,12 @@ from .tools.headb import headb
 
 class encode:
     @staticmethod
-    def overlap(data: np.ndarray, prev: np.ndarray, olap: int, profile: int) -> tuple[np.ndarray, np.ndarray]:
-        fsize = len(data) + len(prev)
+    def overlap(frame: np.ndarray, overlap_fragment: np.ndarray, olap: int, profile: int) -> tuple[np.ndarray, np.ndarray]:
         olap = olap != 0 and min(max(olap, 2), 255) or 0
-        if prev.shape != np.array([]).shape: data = np.concatenate([prev, data])
-        if profile in profiles.COMPACT and olap: prev = data[-fsize//olap:]
-        else: prev = np.array([])
-        return data, prev
+        if overlap_fragment.shape != np.array([]).shape: frame = np.concatenate([overlap_fragment, frame])
+        next_overlap = np.array([])
+        if profile in profiles.COMPACT and olap: next_overlap = frame[(len(frame) * (olap - 1)) // olap:]
+        return frame, next_overlap
 
     @staticmethod
     def write_frame(file: io.BufferedWriter, frame: bytes, chnl: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> int:
@@ -234,7 +233,7 @@ class encode:
         try:
             start_time = time.time()
             total_bytes, total_samples = 0, 0
-            prev = np.array([])
+            overlap_fragment = np.array([])
 
             # Open FFmpeg
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -256,8 +255,8 @@ class encode:
                     # Getting required read length
                     rlen = fsize
                     if profile in profiles.COMPACT:
-                        rlen = min((x-len(prev) for x in compact.samples_li if x >= fsize))
-                        if rlen <= 0: rlen = min((x-len(prev) for x in compact.samples_li if x-len(prev) >= fsize))
+                        rlen = min((x-len(overlap_fragment) for x in compact.samples_li if x >= fsize))
+                        if rlen <= 0: rlen = min((x-len(overlap_fragment) for x in compact.samples_li if x-len(overlap_fragment) >= fsize))
 
                     if process.stdout is None: raise FileNotFoundError('Broken pipe.')
                     data = process.stdout.read(rlen * 8 * channels) # Reading PCM
@@ -266,7 +265,7 @@ class encode:
                     # RAW PCM to Numpy
                     frame = np.frombuffer(data, '>f8').astype(float).reshape(-1, channels) * gain
                     rlen = len(frame)
-                    frame, prev = encode.overlap(frame, prev, overlap, profile)
+                    frame, overlap_fragment = encode.overlap(frame, overlap_fragment, overlap, profile)
                     flen = len(frame)
 
                     # Encoding
