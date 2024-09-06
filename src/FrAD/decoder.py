@@ -6,46 +6,10 @@ from .profiles.prf import profiles
 import atexit, io, math, os, platform, shutil, struct,\
        subprocess, sys, tempfile, time, traceback, zlib
 import sounddevice as sd
+from .tools.asfh import ASFH
 from .tools.ecc import ecc
-from .tools.headb import headb
 
 RM_CLI = '\x1b[1A\x1b[2K'
-
-class ASFH:
-    def __init__(self): pass
-
-    def update(self, file: io.BufferedReader) -> bool:
-        fhead = variables.FRM_SIGN + file.read(5)
-        self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
-        self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
-
-        if self.profile in profiles.LOSSLESS:
-            fhead += file.read(23)
-            self.chnl = struct.unpack('>B', fhead[0x9:0xa])[0] + 1     # 0x09:    Channels
-            self.ecc_dsize = struct.unpack('>B', fhead[0xa:0xb])[0]    # 0x0a:    ECC Data block size
-            self.ecc_codesize = struct.unpack('>B', fhead[0xb:0xc])[0] # 0x0b:    ECC Code size
-            self.srate = struct.unpack('>I', fhead[0xc:0x10])[0]       # 0x0c-4B: Sample rate
-            self.fsize = struct.unpack('>I', fhead[0x18:0x1c])[0]      # 0x18-4B: Samples in a frame per channel
-            self.crc = fhead[0x1c:0x20]                                # 0x1c-4B: ISO 3309 CRC32 of Audio Data
-
-        if self.profile in profiles.COMPACT:
-            fhead += file.read(3)
-            self.chnl, self.srate, self.fsize, force_flush = headb.decode_css_prf1(fhead[0x9:0xb])
-            if force_flush: return True
-            self.overlap = struct.unpack('>B', fhead[0xb:0xc])[0]      # 0x0b: Overlap rate
-            if self.overlap != 0: self.overlap += 1
-            if self.ecc == True:
-                fhead += file.read(4)
-                self.ecc_dsize = struct.unpack('>B', fhead[0xc:0xd])[0]
-                self.ecc_codesize = struct.unpack('>B', fhead[0xd:0xe])[0]
-                self.crc = fhead[0xe:0x10]                             # 0x0e-2B: ANSI CRC16 of Audio Data
-
-        if self.frmbytes == variables.FRM_MAXSZ:
-            fhead += file.read(8)
-            self.frmbytes = struct.unpack('>Q', fhead[-8:])[0]
-
-        self.headlen = len(fhead)
-        return False
 
 filelist = []
 

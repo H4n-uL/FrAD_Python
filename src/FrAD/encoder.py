@@ -3,6 +3,7 @@ from .profiles.prf import profiles, compact
 from .fourier import fourier
 import io, json, os, math, random, struct, subprocess, sys, time, traceback, zlib
 import numpy as np
+from .tools.asfh import ASFH
 from .tools.ecc import ecc
 from .tools.headb import headb
 
@@ -14,41 +15,6 @@ class encode:
         next_overlap = np.array([])
         if profile in profiles.COMPACT and olap: next_overlap = frame[(len(frame) * (olap - 1)) // olap:]
         return frame, next_overlap
-
-    @staticmethod
-    def write_frame(file: io.BufferedWriter, frame: bytes, chnl: int, srate: int, pfb: bytes, ecc_list: tuple[int, int], fsize: int, **kwargs) -> int:
-        profile, isecc, _, _ = headb.decode_pfb(pfb)
-        if not isecc: ecc_list = (0, 0)
-        data = bytes(
-            variables.FRM_SIGN +
-            struct.pack('>I', min(len(frame), variables.FRM_MAXSZ)) +
-            pfb
-        )
-        if profile in profiles.LOSSLESS:
-            data += (
-                struct.pack('>B', chnl - 1) +
-                struct.pack('>B', ecc_list[0]) +
-                struct.pack('>B', ecc_list[1]) +
-                struct.pack('>I', srate) +
-                b'\x00'*8 +
-                struct.pack('>I', fsize) +
-                struct.pack('>I', zlib.crc32(frame))
-            )
-        elif profile in profiles.COMPACT:
-            data += (
-                headb.encode_css_prf1(chnl, srate, fsize) +
-                struct.pack('>B', min(kwargs.get('olap', 0), 256) - 1)
-            )
-            if isecc:
-                data += (
-                    struct.pack('>B', ecc_list[0]) +
-                    struct.pack('>B', ecc_list[1]) +
-                    struct.pack('>H', methods.crc16_ansi(frame))
-                )
-        if len(frame) >= variables.FRM_MAXSZ: data += struct.pack('>Q', len(frame))
-        data += frame
-        file.write(data)
-        return len(data)
 
     @staticmethod
     def get_info(file_path) -> tuple[int, int, str, int]:
@@ -234,6 +200,7 @@ class encode:
             start_time = time.time()
             total_bytes, total_samples = 0, 0
             overlap_fragment = np.array([])
+            asfh = ASFH()
 
             # Open FFmpeg
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -277,7 +244,12 @@ class encode:
 
                     # EFloat Byte
                     pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bits_pfb)
-                    frame_length_tot = encode.write_frame(file, frame, channels_frame, srate, pfb, (ecc_dsize, ecc_codesize), flen, olap=overlap)
+
+                    asfh.float_bits, asfh.chnl, asfh.endian, asfh.profile = bits_pfb, channels_frame, little_endian, profile
+                    asfh.srate, asfh.fsize, asfh.overlap = srate, fsize, overlap
+                    asfh.ecc, asfh.ecc_dsize, ecc_codesize = apply_ecc, ecc_dsize, ecc_codesize
+
+                    frame_length_tot = asfh.write_frame(file, frame)
 
                     # Verbose block
                     total_bytes += frame_length_tot

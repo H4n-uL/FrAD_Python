@@ -41,14 +41,15 @@ class headb:
         return profile, ecc, little_endian, float_bits
 
     @staticmethod
-    def encode_css_prf1(channels: int, srate: int, fsize: int) -> bytes:
+    def encode_css_prf1(channels: int, srate: int, fsize: int, force_flush: bool) -> bytes:
         chnl = (channels-1)<<10
         srate = compact.srates.index(srate) << 6
         fsize = min((x for x in compact.samples_li if x >= fsize), default=0)
         mult = next((key for key, values in compact.samples.items() if fsize in values), 0)
         px = tuple(compact.samples).index(mult) << 4
         fsize = int(math.log2(fsize / mult)) << 1
-        return struct.pack('>H', chnl | srate | px | fsize)
+
+        return struct.pack('>H', chnl | srate | px | fsize | force_flush and 0b1 or 0b0)
 
     @staticmethod
     def decode_css_prf1(css: bytes) -> tuple[int, int, int, bool]:
