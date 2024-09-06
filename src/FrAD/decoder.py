@@ -2,7 +2,7 @@ from .common import variables, methods, terminal
 from .fourier import fourier
 from .header import header
 import numpy as np
-from .profiles.prf import profiles, compact
+from .profiles.prf import profiles
 import atexit, io, math, os, platform, shutil, struct,\
        subprocess, sys, tempfile, time, traceback, zlib
 import sounddevice as sd
@@ -14,11 +14,10 @@ RM_CLI = '\x1b[1A\x1b[2K'
 class ASFH:
     def __init__(self): pass
 
-    def update(self, file: io.BufferedReader):
+    def update(self, file: io.BufferedReader) -> bool:
         fhead = variables.FRM_SIGN + file.read(5)
         self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
-        self.flush = False
 
         if self.profile in profiles.LOSSLESS:
             fhead += file.read(23)
@@ -31,8 +30,8 @@ class ASFH:
 
         if self.profile in profiles.COMPACT:
             fhead += file.read(3)
-            if fhead[0x9: 0xb] == b'\x00\x00': self.flush = True
-            else: self.chnl, self.srate, self.fsize = headb.decode_css_prf1(fhead[0x9:0xb])
+            self.chnl, self.srate, self.fsize, force_flush = headb.decode_css_prf1(fhead[0x9:0xb])
+            if force_flush: return True
             self.overlap = struct.unpack('>B', fhead[0xb:0xc])[0]      # 0x0b: Overlap rate
             if self.overlap != 0: self.overlap += 1
             if self.ecc == True:
@@ -46,6 +45,7 @@ class ASFH:
             self.frmbytes = struct.unpack('>Q', fhead[-8:])[0]
 
         self.headlen = len(fhead)
+        return False
 
 filelist = []
 
@@ -141,8 +141,8 @@ class decode:
                     fhead = fhead[1:]+hq
                     continue
                 fhead = None
-                asfh.update(f)
-                if asfh.flush: continue
+                force_flush = asfh.update(f)
+                if force_flush: ddict[asfh.srate] += asfh.fsize//asfh.overlap; continue
                 data = f.read(asfh.frmbytes)
                 if fix_error:
                     if ((asfh.profile in profiles.LOSSLESS and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
@@ -204,8 +204,12 @@ class decode:
 
                     # Parsing ASFH & Reading Audio Stream Frame
                     fhead = None
-                    asfh.update(f)
-                    if asfh.flush: decode.write(overlap_fragment, stdoutstrm, tempfstrm, dtype, play, ispipe); continue
+                    force_flush = asfh.update(f)
+                    if force_flush:
+                        t_accr[srate*speed] += len(overlap_fragment)
+                        bytes_accr += asfh.headlen
+                        decode.write(overlap_fragment, stdoutstrm, tempfstrm, dtype, play, ispipe)
+                        continue
                     data: bytes = f.read(asfh.frmbytes)
 
                     # Decoding ECC

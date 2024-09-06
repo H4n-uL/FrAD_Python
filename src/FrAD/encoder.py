@@ -9,7 +9,7 @@ from .tools.headb import headb
 class encode:
     @staticmethod
     def overlap(frame: np.ndarray, overlap_fragment: np.ndarray, olap: int, profile: int) -> tuple[np.ndarray, np.ndarray]:
-        olap = olap != 0 and min(max(olap, 2), 255) or 0
+        olap = olap > 1 and min(max(olap, 2), 256) or 0
         if overlap_fragment.shape != np.array([]).shape: frame = np.concatenate([overlap_fragment, frame])
         next_overlap = np.array([])
         if profile in profiles.COMPACT and olap: next_overlap = frame[(len(frame) * (olap - 1)) // olap:]
