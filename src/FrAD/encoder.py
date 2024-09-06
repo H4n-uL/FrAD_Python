@@ -37,7 +37,7 @@ class encode:
         elif profile in profiles.COMPACT:
             data += (
                 headb.encode_css_prf1(chnl, srate, fsize) +
-                struct.pack('>B', kwargs.get('olap', 0))
+                struct.pack('>B', min(kwargs.get('olap', 0), 256) - 1)
             )
             if isecc:
                 data += (

@@ -35,10 +35,10 @@ class p1:
             mask_thres.append(thres * np.sqrt(3)**(16-bits))
 
             div_factor = p1tools.subband.mapping_from_opus(thres, dlen, kwargs['srate'])
-            masked = np.array(np.around(p1tools.quant(freqs[c] / div_factor)))
-            mask_freqs.append(masked.astype(int))
+            masked = np.array(p1tools.quant(freqs[c] / div_factor))
+            mask_freqs.append(masked)
 
-        freqs, thres = np.array(mask_freqs), np.array(mask_thres).round().astype(int)
+        freqs, thres = np.array(mask_freqs).round().astype(int), np.array(mask_thres).round().astype(int)
 
         # Ravelling and packing
         thres_gol = p1tools.exp_golomb_rice_encode(thres.T.ravel())

@@ -18,6 +18,7 @@ class ASFH:
         fhead = variables.FRM_SIGN + file.read(5)
         self.frmbytes = struct.unpack('>I', fhead[0x4:0x8])[0]        # 0x04-4B: Audio Stream Frame length
         self.profile, self.ecc, self.endian, self.float_bits = headb.decode_pfb(fhead[0x8:0x9]) # 0x08: EFloat Byte
+        self.flush = False
 
         if self.profile in profiles.LOSSLESS:
             fhead += file.read(23)
@@ -30,8 +31,10 @@ class ASFH:
 
         if self.profile in profiles.COMPACT:
             fhead += file.read(3)
-            self.chnl, self.srate, self.fsize = headb.decode_css_prf1(fhead[0x9:0xb])
+            if fhead[0x9: 0xb] == b'\x00\x00': self.flush = True
+            else: self.chnl, self.srate, self.fsize = headb.decode_css_prf1(fhead[0x9:0xb])
             self.overlap = struct.unpack('>B', fhead[0xb:0xc])[0]      # 0x0b: Overlap rate
+            if self.overlap != 0: self.overlap += 1
             if self.ecc == True:
                 fhead += file.read(4)
                 self.ecc_dsize = struct.unpack('>B', fhead[0xc:0xd])[0]
@@ -65,7 +68,7 @@ class decode:
                 (overlap_fragment[:, c] * fade_out)
         next_overlap = np.array([])
         if asfh.profile in profiles.COMPACT and asfh.overlap != 0:
-            olap = min(max(asfh.overlap, 2), 255)
+            olap = min(max(asfh.overlap, 2), 256)
             next_overlap = frame[(len(frame) * (olap - 1)) // olap:]
             frame = frame[:-len(next_overlap)]
         return frame, next_overlap
@@ -137,7 +140,9 @@ class decode:
                         break
                     fhead = fhead[1:]+hq
                     continue
+                fhead = None
                 asfh.update(f)
+                if asfh.flush: continue
                 data = f.read(asfh.frmbytes)
                 if fix_error:
                     if ((asfh.profile in profiles.LOSSLESS and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
@@ -153,7 +158,6 @@ class decode:
 
                 dlen += asfh.frmbytes
                 framescount += 1
-                fhead = None
 
             # show error frames
             if error_dir != []: terminal(f'Corrupt frames: {", ".join(error_dir)}')
@@ -199,7 +203,9 @@ class decode:
                         continue
 
                     # Parsing ASFH & Reading Audio Stream Frame
+                    fhead = None
                     asfh.update(f)
+                    if asfh.flush: decode.write(overlap_fragment, stdoutstrm, tempfstrm, dtype, play, ispipe); continue
                     data: bytes = f.read(asfh.frmbytes)
 
                     # Decoding ECC
@@ -236,7 +242,7 @@ class decode:
                     t_sec = sum([t_accr[k] / k for k in t_accr])
                     bytes_accr += asfh.frmbytes + asfh.headlen
                     if play:
-                        bps = (((asfh.frmbytes+len(fhead)) * 8) * asfh.srate / len(frame))
+                        bps = (((asfh.frmbytes+asfh.headlen) * 8) * asfh.srate / len(frame))
                         bpstot += bps
                         depth = variables.bit_depths[asfh.profile][asfh.float_bits]
                         lgs = int(math.log(asfh.srate, 1000))
@@ -262,7 +268,6 @@ class decode:
                             printed = methods.logging(3, 'Decode', printed, percent=(bytes_accr*100/dlen), tbytes=bytes_accr, bps=bps, mult=mult, time=elapsed_time)
 #
 # ------------------------------- End verbose block ------------------------------ #
-                    fhead = None
 
                 stdoutstrm.stop()
                 stdoutstrm.close()
