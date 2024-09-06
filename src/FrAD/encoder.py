@@ -106,7 +106,7 @@ class encode:
     @staticmethod
     def enc(file_path: str, bits: int, **kwargs):
         # FrAD data specification
-        fsize: int = kwargs.get('fsize', 2048)
+        frame_size: int = kwargs.get('fsize', 2048)
         little_endian: bool = kwargs.get('le', False)
         profile: int = kwargs.get('prf', 0)
         loss_level: int = kwargs.get('lv', 0)
@@ -145,7 +145,7 @@ class encode:
         except: terminal(f'Invalid bit depth {bits} for Profile {profile}'); sys.exit(1)
         if not 20 >= loss_level >= 0: terminal(f'Invalid compression level: {loss_level} Lossy compression level should be between 0 and 20.'); sys.exit(1)
 
-        if fsize > variables.segmax[profile]: terminal(f'Sample size cannot exceed {variables.segmax[profile]}.'); sys.exit(1)
+        if frame_size > variables.segmax[profile]: terminal(f'Sample size cannot exceed {variables.segmax[profile]}.'); sys.exit(1)
 
 # ------------------------------ Pre-Encode settings ----------------------------- #
         duration = 0
@@ -165,7 +165,7 @@ class encode:
         if profile in profiles.COMPACT:
             new_srate = min(new_srate or srate, 96000)
             if not new_srate in compact.srates: new_srate = 48000
-            fsize = min((x for x in compact.samples_li if x >= fsize), default=2048)
+            frame_size = min((x for x in compact.samples_li if x >= frame_size), default=2048)
 
         # Moulding FFmpeg command and initting read srates and channels
         cmd = encode.get_pcm_command(file_path, raw, new_srate, new_chnl)
@@ -212,7 +212,7 @@ class encode:
                 while True:
                     # profile = random.choice([0, 1, 4]) # Random profile test
                     # bits = random.choice(variables.bit_depths[profile]) # Random bit depth test
-                    # fsize = random.choice(variables.p1.smpls_li) # Random spf test
+                    # frame_size = random.choice(variables.p1.smpls_li) # Random spf test
                     # loss_level = random.choice(range(21)) # Random lossy level test
                     # apply_ecc = random.choice([True, False]) # Random ECC test
                     # ecc_codesize = random.randrange(1, 254)
@@ -220,10 +220,10 @@ class encode:
                     # overlap = random.choice(range(2, 256)) # Random overlap test
 
                     # Getting required read length
-                    rlen = fsize
+                    rlen = frame_size
                     if profile in profiles.COMPACT:
-                        rlen = min((x-len(overlap_fragment) for x in compact.samples_li if x >= fsize))
-                        if rlen <= 0: rlen = min((x-len(overlap_fragment) for x in compact.samples_li if x-len(overlap_fragment) >= fsize))
+                        rlen = min((x-len(overlap_fragment) for x in compact.samples_li if x >= frame_size))
+                        if rlen <= 0: rlen = min((x-len(overlap_fragment) for x in compact.samples_li if x-len(overlap_fragment) >= frame_size))
 
                     if process.stdout is None: raise FileNotFoundError('Broken pipe.')
                     data = process.stdout.read(rlen * 8 * channels) # Reading PCM
@@ -233,7 +233,7 @@ class encode:
                     frame = np.frombuffer(data, '>f8').astype(float).reshape(-1, channels) * gain
                     rlen = len(frame)
                     frame, overlap_fragment = encode.overlap(frame, overlap_fragment, overlap, profile)
-                    flen = len(frame)
+                    fsize = len(frame)
 
                     # Encoding
                     frame, bits_pfb, channels_frame = \
