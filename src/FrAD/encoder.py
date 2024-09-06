@@ -228,10 +228,10 @@ class encode:
                     if process.stdout is None: raise FileNotFoundError('Broken pipe.')
                     data = process.stdout.read(rlen * 8 * channels) # Reading PCM
                     if not data: break                        # if no data, Break
-
-                    # RAW PCM to Numpy
                     frame = np.frombuffer(data, '>f8').astype(float).reshape(-1, channels) * gain
                     rlen = len(frame)
+
+                    # Overlap
                     frame, overlap_fragment = encode.overlap(frame, overlap_fragment, overlap, profile)
                     fsize = len(frame)
 
@@ -242,8 +242,6 @@ class encode:
                     # Applying ECC
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
-                    # EFloat Byte
-                    pfb = headb.encode_pfb(profile, apply_ecc, little_endian, bits_pfb)
 
                     asfh.float_bits, asfh.chnl, asfh.endian, asfh.profile = bits_pfb, channels_frame, little_endian, profile
                     asfh.srate, asfh.fsize, asfh.overlap = srate, fsize, overlap
