@@ -142,7 +142,7 @@ class decode:
                     continue
                 fhead = None
                 force_flush = asfh.update(f)
-                if force_flush: ddict[asfh.srate] += asfh.fsize//asfh.overlap; continue
+                if force_flush: continue
                 data = f.read(asfh.frmbytes)
                 if fix_error:
                     if ((asfh.profile in profiles.LOSSLESS and zlib.crc32(data) != struct.unpack('>I', asfh.crc)[0])
