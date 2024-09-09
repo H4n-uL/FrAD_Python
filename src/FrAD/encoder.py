@@ -214,15 +214,6 @@ class encode:
             open(out, 'wb').write(headb.uilder(meta, img))
             with open(out, 'ab') as file:
                 while True:
-                    # profile = random.choice([0, 1, 4]) # Random profile test
-                    # bits = random.choice(variables.bit_depths[profile]) # Random bit depth test
-                    # frame_size = random.choice(variables.p1.smpls_li) # Random spf test
-                    # loss_level = random.choice(range(21)) # Random lossy level test
-                    # apply_ecc = random.choice([True, False]) # Random ECC test
-                    # ecc_codesize = random.randrange(1, 254)
-                    # ecc_dsize = random.randrange(1, 255-ecc_codesize)
-                    # overlap = random.choice(range(2, 256)) # Random overlap test
-
                     # Getting required read length
                     rlen = frame_size
                     if profile in profiles.COMPACT:
