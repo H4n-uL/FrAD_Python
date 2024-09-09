@@ -54,10 +54,10 @@ class headb:
     @staticmethod
     def decode_css_prf1(css: bytes) -> tuple[int, int, int, bool]:
         cssint = struct.unpack('>H', css)[0]
-        channels = (cssint>>10) + 1                     # 0x09@0b111-6b: Channels
-        srate = compact.srates[cssint>>6&0b1111] # 0x09@0b001-4b: Sample rate index
-        fsize_prefix = [128, 144, 192][cssint>>4&0b11]  # 0x0a@0b101-2b: Frame size prefix
-        fsize = fsize_prefix * 2**(cssint>>1&0b111)     # 0x0a@0b011-3b: Frame size
+        channels = (cssint>>10) + 1                    # 0x09@0b111-6b: Channels
+        srate = compact.srates[cssint>>6&0b1111]       # 0x09@0b001-4b: Sample rate index
+        fsize_prefix = [128, 144, 192][cssint>>4&0b11] # 0x0a@0b101-2b: Frame size prefix
+        fsize = fsize_prefix * 2**(cssint>>1&0b111)    # 0x0a@0b011-3b: Frame size
         return channels, srate, fsize, cssint & 0b1
 
     @staticmethod
