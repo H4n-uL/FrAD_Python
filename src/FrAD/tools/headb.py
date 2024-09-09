@@ -49,7 +49,7 @@ class headb:
         px = tuple(compact.samples).index(mult) << 4
         fsize = int(math.log2(fsize / mult)) << 1
 
-        return struct.pack('>H', chnl | srate | px | fsize | (force_flush and 0b1 or 0b0))
+        return struct.pack('>H', chnl | srate | px | fsize | force_flush)
 
     @staticmethod
     def decode_css_prf1(css: bytes) -> tuple[int, int, int, bool]:

@@ -202,6 +202,10 @@ class encode:
             overlap_fragment = np.array([])
             asfh = ASFH()
 
+            asfh.endian, asfh.profile = little_endian, profile
+            asfh.srate, asfh.overlap = srate, overlap
+            asfh.ecc, asfh.ecc_dsize, ecc_codesize = apply_ecc, ecc_dsize, ecc_codesize
+
             # Open FFmpeg
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
@@ -242,11 +246,7 @@ class encode:
                     # Applying ECC
                     if apply_ecc: frame = ecc.encode(frame, ecc_dsize, ecc_codesize)
 
-
-                    asfh.float_bits, asfh.chnl, asfh.endian, asfh.profile = bits_pfb, channels_frame, little_endian, profile
-                    asfh.srate, asfh.fsize, asfh.overlap = srate, fsize, overlap
-                    asfh.ecc, asfh.ecc_dsize, ecc_codesize = apply_ecc, ecc_dsize, ecc_codesize
-
+                    asfh.float_bits, asfh.chnl, asfh.fsize = bits_pfb, channels_frame, fsize
                     frame_length_tot = asfh.write_frame(file, frame)
 
                     # Verbose block
@@ -257,6 +257,7 @@ class encode:
                         bps = total_bytes / elapsed_time
                         mult = total_samples / elapsed_time / srate
                         printed = methods.logging(3, 'Encode', printed, percent=(total_samples/duration*100), tbytes=total_bytes, bps=bps, mult=mult, time=elapsed_time)
+                asfh.flush(file)
 
             process.terminate()
             bps = total_bytes / (duration / srate) * 8
