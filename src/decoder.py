@@ -39,6 +39,7 @@ def decode(rfile: str, params: CliParams, play: bool):
     
     readfile = open(rfile, 'rb') if not rpipe else sys.stdin.buffer
     writefile = open(f"{wfile}.pcm", 'wb') if not wpipe and not play else sys.stdout.buffer
+    if play: params.loglevel = 0
 
     sink = sd.OutputStream(dtype='float32')
     decoder = Decoder(params.enable_ecc)
