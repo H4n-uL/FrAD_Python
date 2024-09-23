@@ -69,14 +69,14 @@ class Encoder:
     def set_loss_level(self, loss_level: float): self.loss_level = loss_level
     def set_overlap_ratio(self, overlap_ratio: int):
         if overlap_ratio != 0: overlap_ratio = max(2, min(256, overlap_ratio))
-        self.asfh.overlap = overlap_ratio
+        self.asfh.overlap_ratio = overlap_ratio
 
     def overlap(self, frame: np.ndarray) -> np.ndarray:
         if self.overlap_fragment.shape != EMPTY:
             frame = np.concatenate((self.overlap_fragment, frame), axis=0)
         next_overlap = np.array([])
-        if self.asfh.profile in profiles.COMPACT and self.asfh.overlap > 1:
-            frame_cutout = len(frame) * (self.asfh.overlap - 1) // self.asfh.overlap
+        if self.asfh.profile in profiles.COMPACT and self.asfh.overlap_ratio > 1:
+            frame_cutout = len(frame) * (self.asfh.overlap_ratio - 1) // self.asfh.overlap_ratio
             next_overlap = frame[frame_cutout:]
         self.overlap_fragment = next_overlap
         return frame

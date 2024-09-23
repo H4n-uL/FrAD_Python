@@ -37,8 +37,8 @@ class Repairer:
                 frad, self.buffer = self.buffer[:self.asfh.frmbytes], self.buffer[self.asfh.frmbytes:]
 
                 samples = 0
-                if self.asfh.overlap == 0 or self.asfh.profile in profiles.LOSSLESS: samples = self.asfh.fsize
-                else: samples = (self.asfh.fsize * (self.asfh.overlap - 1)) // self.asfh.overlap
+                if self.asfh.overlap_ratio == 0 or self.asfh.profile in profiles.LOSSLESS: samples = self.asfh.fsize
+                else: samples = (self.asfh.fsize * (self.asfh.overlap_ratio - 1)) // self.asfh.overlap_ratio
                 self.olap_len = self.asfh.fsize - samples
 
                 if self.asfh.ecc:

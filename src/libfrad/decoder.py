@@ -24,9 +24,8 @@ class Decoder:
                 for s, o in zip(sample, overlap_sample):
                     s = s * fade_in + o * fade_out
         next_overlap = np.array([])
-        if self.asfh.profile in profiles.COMPACT and self.asfh.overlap != 0:
-            overlap_ratio = self.asfh.overlap
-            frame_cutout = len(frame) * (overlap_ratio - 1) // overlap_ratio
+        if self.asfh.profile in profiles.COMPACT and self.asfh.overlap_ratio != 0:
+            frame_cutout = len(frame) * (self.asfh.overlap_ratio - 1) // self.asfh.overlap_ratio
             next_overlap = frame[frame_cutout:]
             frame = frame[:frame_cutout]
         self.overlap_fragment = next_overlap

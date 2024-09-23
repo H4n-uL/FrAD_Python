@@ -46,7 +46,7 @@ class ASFH:
         self.channels, self.srate, self.fsize = 0, 0, 0
 
         self.ecc, self.ecc_dsize, self.ecc_codesize = False, 0, 0
-        self.profile, self.overlap = 0, 0
+        self.profile, self.overlap_ratio = 0, 0
         self.crc = b''
 
     def criteq(self, other: 'ASFH') -> bool:
@@ -60,7 +60,7 @@ class ASFH:
 
         if self.profile in profiles.COMPACT:
             fhead += encode_css_prf1(self.channels, self.srate, self.fsize, False)
-            fhead += struct.pack('B', max(self.overlap - 1, 0))
+            fhead += struct.pack('B', max(self.overlap_ratio - 1, 0))
             if self.ecc:
                 fhead += struct.pack('BB', self.ecc_dsize, self.ecc_codesize)
                 fhead += crc16_ansi(frad).to_bytes(2, 'big')
@@ -111,8 +111,8 @@ class ASFH:
             self.channels, self.srate, self.fsize, force_flush = decode_css_prf1(self.buffer[9:11])
             if force_flush: return 'ForceFlush', buffer
 
-            self.overlap = self.buffer[11]
-            if self.overlap != 0: self.overlap += 1
+            self.overlap_ratio = self.buffer[11]
+            if self.overlap_ratio != 0: self.overlap_ratio += 1
 
             if self.ecc:
                 x, buffer = self.fill_buffer(buffer, 16)
