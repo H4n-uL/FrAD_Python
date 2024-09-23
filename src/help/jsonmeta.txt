@@ -1,0 +1,25 @@
+----------------------------------- JSONMeta -----------------------------------
+
+JSONMeta format is a JSON style metadata format for FrAD audio files.
+
+Format:
+
+[
+    {
+        "key": "Metadata key",
+        "type": "string",
+        "value": "utf-8 value"
+    },
+    {
+        "key": "Another key",
+        "type": "base64",
+        "value": "YmluYXJ5IHZhbHVlIChlbmNvZGVkIGluIGJhc2U2NCk="
+    }
+]
+
+Features:
+
+    - UTF-8 string metadata without any restrictions
+    - Base64 encoded binary metadata (up to 256 TiB)
+    - Supports duplicate keys
+    - Supports empty keys or values
