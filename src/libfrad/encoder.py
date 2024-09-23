@@ -114,6 +114,7 @@ class Encoder:
             if self.asfh.ecc: frad = ecc.encode(frad, self.asfh.ecc_dsize, self.asfh.ecc_codesize)
             self.asfh.bit_depth_index, self.asfh.channels, self.asfh.fsize, self.asfh.srate = bit_depth_index, channels, fsize, srate
             ret += self.asfh.write(frad)
+            if flush: self.asfh.force_flush()
 
             self.streaminfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
 
