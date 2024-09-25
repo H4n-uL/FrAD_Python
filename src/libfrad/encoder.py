@@ -7,6 +7,7 @@ from libfrad.tools.asfh import ASFH
 from libfrad.tools.stream import StreamInfo
 import sys
 from libfrad.backend.pcmformat import ff_format_to_numpy_type
+# import random
 
 EMPTY = np.array([]).shape
 
@@ -86,6 +87,17 @@ class Encoder:
         ret = b''
 
         while True:
+            # self.asfh.profile = random.choice(AVAILABLE)
+            # self.bit_depth = random.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[self.asfh.profile])))
+            # self.set_frame_size(
+            #     random.choice(compact.SAMPLES_LI) if self.asfh.profile in profiles.COMPACT
+            #     else random.randint(128, 32768)
+            # )
+            # self.set_loss_level(random.uniform(0.5, 5.0))
+            # ecc_data = random.randint(1, 255)
+            # self.set_ecc(random.random() < 0.5, (ecc_data, random.randint(0, 255 - ecc_data)))
+            # self.set_overlap_ratio(random.randint(2, 256))
+
             rlen = self.fsize
             if self.asfh.profile in profiles.COMPACT:
                 li_val = min(filter(lambda x: x >= self.fsize, compact.SAMPLES_LI))
