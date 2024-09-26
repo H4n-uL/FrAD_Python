@@ -35,7 +35,7 @@ def format_speed(n: float) -> str:
 
 def logging(loglevel: int, log: StreamInfo, linefeed: bool):
     if loglevel == 0: return
-    print(f'size={format_bytes(log.total_size)}B time={format_time(log.get_duration())} bitrate={format_bytes(log.get_bitrate())}bits/s speed={format_speed(log.get_speed())}x    ', end='\r', file=sys.stderr)
+    print(f'size={format_bytes(log.get_total_size())}B time={format_time(log.get_duration())} bitrate={format_bytes(log.get_bitrate())}bits/s speed={format_speed(log.get_speed())}x    ', end='\r', file=sys.stderr)
     if linefeed: print(file=sys.stderr)
 
 def check_overwrite(writefile: str, overwrite: bool):

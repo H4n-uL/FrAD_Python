@@ -56,10 +56,10 @@ def decode(rfile: str, params: CliParams, play: bool):
         logging(params.loglevel, decoder.streaminfo, False)
 
         if critical_info_modified and not wpipe:
-            no += 1
-            wfile = f'{wfile_prim}.{no}.pcm'; x = time.time()
+            no += 1; wfile = f'{wfile_prim}.{no}.pcm'
+            decoder.streaminfo.block()
             check_overwrite(wfile, params.overwrite)
-            decoder.streaminfo.start_time += time.time() - x
+            decoder.streaminfo.unblock()
             writefile = open(wfile, 'wb')
 
     pcm, srate, _ = decoder.flush()

@@ -3,6 +3,7 @@ import time
 class StreamInfo:
     def __init__(self):
         self.start_time = time.time()
+        self.t_block = None
         self.total_size = 0
         self.duration = {}
         self.bitrate = {}
@@ -24,3 +25,11 @@ class StreamInfo:
         encoding_time = time.time() - self.start_time
         total_duration = sum([v / k for k, v in self.duration.items()])
         return total_duration / encoding_time if encoding_time > 0 else 0
+    
+    def get_total_size(self) -> int: return self.total_size
+    
+    def block(self): self.t_block = time.time()
+    def unblock(self):
+        if self.t_block is not None:
+            self.start_time += time.time() - self.t_block
+            self.t_block = None
