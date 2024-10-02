@@ -35,7 +35,7 @@ def set_files(rfile: str, wfile: str, profile: int, overwrite: bool) -> tuple[io
 def encode(input: str, params: CliParams):
     if input == '': print("Input file must be given"); exit(1)
 
-    encoder = Encoder(params.profile, 'f64be')
+    encoder = Encoder(params.profile, params.pcm)
     if params.srate == 0: print("Sample rate should be set except zero"); exit(1)
     if params.channels == 0: print("Channel count should be set except zero"); exit(1)
 

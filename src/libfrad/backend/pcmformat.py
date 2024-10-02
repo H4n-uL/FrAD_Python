@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 def ff_format_to_numpy_type(x: str) -> np.dtype:
 
@@ -25,3 +26,7 @@ def ff_format_to_numpy_type(x: str) -> np.dtype:
         case 'f32le': return np.dtype('<f4')
         case 'f64be': return np.dtype('>f8')
         case 'f64le': return np.dtype('<f8')
+
+        case _:
+            print(f'Invalid format: {x}', file=sys.stderr)
+            exit(1)
