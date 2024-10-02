@@ -15,6 +15,9 @@ def get_scale_factors(bits: int) -> tuple[float, float]:
 def finite(arr: np.ndarray) -> np.ndarray:
     return np.where(np.isnan(arr) | np.isinf(arr), 0, arr)
 
+def untrim(arr: np.ndarray, fsize: int, channels: int) -> np.ndarray:
+    return np.pad(arr, (0, max(0, (fsize*channels)-len(arr))), 'constant')
+
 @staticmethod
 def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple[bytes, int, int, int]:
     pcm_factor, thres_factor = get_scale_factors(bits)
@@ -59,17 +62,17 @@ def digital(fradc: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.
     try: frad = zlib.decompress(fradc)
     except: return np.zeros((fsize, channels))
     thresbytes, frad = struct.unpack(f'>I', frad[:4])[0], frad[4:]
-    thres, frad = p1tools.exp_golomb_rice_decode(frad[:thresbytes]).reshape(-1, channels).T.astype(float) / thres_factor, frad[thresbytes:]
+    thres_gol, frad = frad[:thresbytes], frad[thresbytes:]
 
     # Unpacking and unravelling
-    freqs: np.ndarray = p1tools.exp_golomb_rice_decode(frad).astype(float).reshape(-1, channels).T
+    thres_flat = untrim(p1tools.exp_golomb_rice_decode(thres_gol).astype(float) / thres_factor, fsize, channels)
+    freqs_flat = untrim(p1tools.exp_golomb_rice_decode(frad).astype(float), fsize, channels)
 
-    # Removing potential Infinities and Non-numbers
-    freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
-    thres = np.where(np.isnan(thres) | np.isinf(thres), 0, thres)
+    thresholds = thres_flat.reshape(-1, channels).T
+    freqs_masked = freqs_flat.reshape(-1, channels).T
 
     # Dequantisation
-    freqs = np.array([p1tools.dequant(freqs[c]) * p1tools.subband.mapping_from_opus(thres[c], len(freqs[c]), srate) for c in range(channels)])
+    freqs = np.array([p1tools.dequant(freqs_masked[c]) * p1tools.subband.mapping_from_opus(thresholds[c], fsize, srate) for c in range(channels)])
 
     # Inverse DCT and stacking
     return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T) / pcm_factor
