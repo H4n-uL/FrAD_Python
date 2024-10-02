@@ -51,18 +51,18 @@ def decode(rfile: str, params: CliParams, play: bool):
         buf = readfile.read(32768)
         if not buf and decoder.is_empty(): break
 
-        pcm, srate, critical_info_modified = decoder.process(buf)
-        sink = write(play, writefile, sink, pcm, pcm_fmt, srate)
+        decoded = decoder.process(buf)
+        sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, decoded.srate)
         logging(params.loglevel, decoder.streaminfo, False)
 
-        if critical_info_modified and not wpipe:
+        if decoded.crit and not wpipe:
             no += 1; wfile = f'{wfile_prim}.{no}.pcm'
             decoder.streaminfo.block()
             check_overwrite(wfile, params.overwrite)
             decoder.streaminfo.unblock()
             writefile = open(wfile, 'wb')
 
-    pcm, srate, _ = decoder.flush()
-    sink = write(play, writefile, sink, pcm, pcm_fmt, srate)
+    decoded = decoder.flush()
+    sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, decoded.srate)
     logging(params.loglevel, decoder.streaminfo, True)
     if play: sink.close()

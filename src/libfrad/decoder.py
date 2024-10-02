@@ -8,6 +8,13 @@ import zlib
 
 EMPTY = np.array([]).shape
 
+class DecodeResult:
+    def __init__(self, pcm: list[np.ndarray], srate: int, frames: int, crit: bool):
+        self.pcm = np.concatenate(pcm) if pcm else np.array([])
+        self.srate = srate
+        self.frames = frames
+        self.crit = crit
+
 class Decoder:
     def __init__(self, fix_error: bool = False):
         self.asfh = ASFH()
@@ -34,9 +41,9 @@ class Decoder:
     def is_empty(self) -> bool:
         return len(self.buffer) < len(common.FRM_SIGN)
 
-    def process(self, stream: bytes) -> tuple[np.ndarray, int, bool]:
+    def process(self, stream: bytes) -> DecodeResult:
         self.buffer += stream
-        ret = []
+        ret, frames, crit = [], 0, False
 
         while True:
             if self.asfh.all_set:
@@ -58,6 +65,7 @@ class Decoder:
                 samples = len(pcm)
 
                 ret.append(pcm)
+                frames += 1
                 self.asfh.clear()
                 self.streaminfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
             else:
@@ -77,22 +85,21 @@ class Decoder:
                             srate, chnl = self.info.srate, self.info.channels
                             self.info = self.asfh
                             if srate or chnl:
-                                ret.extend(self.flush()[0])
-                                return np.concatenate(ret), self.asfh.srate, True
+                                ret.append(self.flush().pcm)
+                                crit = True; break
                             
                     case 'ForceFlush':
-                        ret.extend(self.flush()[0])
+                        ret.append(self.flush().pcm)
                         break
 
                     case 'Incomplete':
                         break
+        
+        return DecodeResult(ret, self.asfh.srate, frames, crit)
 
-        if not ret: return np.array([]), self.asfh.srate, False
-        return np.concatenate(ret), self.asfh.srate, False
-
-    def flush(self) -> tuple[np.ndarray, int, bool]:
+    def flush(self) -> DecodeResult:
         ret = self.overlap_fragment
         self.streaminfo.update(0, len(self.overlap_fragment), self.asfh.srate)
         self.overlap_fragment = np.array([])
         self.asfh.clear()
-        return ret, self.asfh.srate, False
+        return DecodeResult([ret], self.asfh.srate, 0, False)
