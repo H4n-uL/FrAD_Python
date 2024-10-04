@@ -42,7 +42,7 @@ def decode(rfile: str, params: CliParams, play: bool):
     writefile = open(wfile, 'wb') if not wpipe else sys.stdout.buffer
     if play: params.loglevel = 0
 
-    sink = sd.OutputStream(dtype='float32')
+    sink = sd.OutputStream(samplerate=48000, channels=1, dtype='float32')
     decoder = Decoder(params.enable_ecc)
     pcm_fmt = ff_format_to_numpy_type(params.pcm)
 
