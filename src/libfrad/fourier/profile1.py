@@ -46,6 +46,7 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
     thres_gol = p1tools.exp_golomb_rice_encode(thres.T.ravel())
     freqs_gol = p1tools.exp_golomb_rice_encode(freqs.T.ravel())
     frad = struct.pack(f'>I', len(thres_gol)) + thres_gol + freqs_gol
+    # frad = frad[:(4 + len(thres_gol) + int(len(freqs_gol) * 0.75))]
 
     # Deflating
     frad = zlib.compress(frad, level=9)
@@ -53,13 +54,12 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
     return frad, DEPTHS.index(bits), channels, srate
 
 @staticmethod
-def digital(fradc: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.ndarray:
+def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.ndarray:
     bits = DEPTHS[fb]
     pcm_factor, thres_factor = get_scale_factors(bits)
 
     # Inflating
-    frad = b''
-    try: frad = zlib.decompress(fradc)
+    try: frad = zlib.decompress(frad)
     except: return np.zeros((fsize, channels))
     thresbytes, frad = struct.unpack(f'>I', frad[:4])[0], frad[4:]
     thres_gol, frad = frad[:thresbytes], frad[thresbytes:]
