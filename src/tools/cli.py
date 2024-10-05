@@ -1,16 +1,5 @@
-# /**                                CLI Parser                                 */
-# /**
-#  * Copyright 2024 HaמuL
-#  * Description: Simple CLI parser for FrAD Executable
-#  */
+import base64, json
 
-# use frad::{Endian::{Big, Little}, PCMFormat};
-# use std::{collections::VecDeque, env::Args, fs::read_to_string, process::exit};
-
-# use base64::{prelude::BASE64_STANDARD, Engine};
-# use serde_json::{from_str, Value};
-
-# // CLI Options
 ENCODE_OPT = ['encode', 'enc']
 DECODE_OPT = ['decode', 'dec']
 REPAIR_OPT = ['repair', 'ecc']
@@ -26,29 +15,6 @@ META_REMOVE = 'remove'
 META_RMIMG = 'rm-img'
 META_OVERWRITE = 'overwrite'
 META_PARSE = 'parse'
-
-# // CLI Parameters
-# pub struct CliParams {
-#     pub output: String,
-#     pub pcm: PCMFormat,
-#     pub bits: i16,
-#     pub srate: u32,
-#     pub channels: i16,
-#     pub frame_size: u32,
-#     pub little_endian: bool,
-#     pub profile: u8,
-#     pub overlap_ratio: u16,
-#     pub losslevel: u8,
-#     pub enable_ecc: bool,
-#     pub ecc_ratio: [u8; 2],
-#     pub overwrite: bool,
-#     pub meta: Vec<(String, Vec<u8>)>,
-#     pub image_path: String,
-#     pub loglevel: u8,
-#     pub speed: f64,
-# }
-
-import base64, json
 
 class CliParams:
     def __init__(self):
