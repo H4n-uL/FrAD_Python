@@ -93,7 +93,7 @@ class Encoder:
             #     random.choice(compact.SAMPLES_LI) if self.asfh.profile in profiles.COMPACT
             #     else random.randint(128, 32768)
             # )
-            # self.set_loss_level(random.uniform(0.5, 5.0))
+            # self.set_loss_level(random.uniform(0.125, 10.0))
             # ecc_data = random.randint(1, 255)
             # self.set_ecc(random.random() < 0.5, (ecc_data, random.randint(0, 255 - ecc_data)))
             # self.set_overlap_ratio(random.randint(2, 256))
