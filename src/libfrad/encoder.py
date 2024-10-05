@@ -1,10 +1,10 @@
 import numpy as np
 from libfrad import fourier
-from libfrad.fourier import AVAILABLE, SEGMAX, BIT_DEPTHS
-from libfrad.fourier.prf import profiles, compact
+from libfrad.fourier import AVAILABLE, SEGMAX, BIT_DEPTHS, profiles
+from libfrad.fourier.profiles import compact
 from libfrad.tools import ecc
 from libfrad.tools.asfh import ASFH
-from libfrad.tools.stream import StreamInfo
+from libfrad.tools.process import ProcessInfo
 import sys
 from libfrad.backend.pcmformat import ff_format_to_numpy_type
 # import random
@@ -23,7 +23,7 @@ class Encoder:
         self.fsize = 0
         self.srate = 0
         self.overlap_fragment = np.array([])
-        self.streaminfo = StreamInfo()
+        self.procinfo = ProcessInfo()
 
         self.pcm_format = ff_format_to_numpy_type(pcm_format)
         self.loss_level = 0.5
@@ -128,7 +128,7 @@ class Encoder:
             ret += self.asfh.write(frad)
             if flush: self.asfh.force_flush()
 
-            self.streaminfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
+            self.procinfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
 
         return ret
     

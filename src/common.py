@@ -2,7 +2,7 @@ PIPEIN = ['pipe:', 'pipe:0', '-', '/dev/stdin', 'dev/fd/0']
 PIPEOUT = ['pipe:', 'pipe:1', '-', '/dev/stdout', 'dev/fd/1']
 
 import math, os, sys
-from libfrad import StreamInfo
+from libfrad import ProcessInfo
 
 def format_time(n: float) -> str:
     if n < 0.0: return f'-{format_time(-n)}'
@@ -33,7 +33,7 @@ def format_speed(n: float) -> str:
     elif n >= 1.0: return f'{n:.2f}'
     else: return f'{n:.3f}'
 
-def logging(loglevel: int, log: StreamInfo, linefeed: bool):
+def logging(loglevel: int, log: ProcessInfo, linefeed: bool):
     if loglevel == 0: return
     print(f'size={format_bytes(log.get_total_size())}B time={format_time(log.get_duration())} bitrate={format_bytes(log.get_bitrate())}bits/s speed={format_speed(log.get_speed())}x    ', end='\r', file=sys.stderr)
     if linefeed: print(file=sys.stderr)

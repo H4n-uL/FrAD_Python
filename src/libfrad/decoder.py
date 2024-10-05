@@ -1,9 +1,9 @@
 import numpy as np
 from libfrad import fourier, common
-from libfrad.fourier.prf import profiles
+from libfrad.fourier import profiles
 from libfrad.tools import ecc
 from libfrad.tools.asfh import ASFH
-from libfrad.tools.stream import StreamInfo
+from libfrad.tools.process import ProcessInfo
 import zlib
 
 EMPTY = np.array([]).shape
@@ -21,7 +21,7 @@ class Decoder:
         self.info = ASFH()
         self.buffer = b''
         self.overlap_fragment = np.array([])
-        self.streaminfo = StreamInfo()
+        self.procinfo = ProcessInfo()
         self.fix_error = fix_error
 
     def overlap(self, frame: np.ndarray) -> np.ndarray:
@@ -38,8 +38,8 @@ class Decoder:
         self.overlap_fragment = next_overlap
         return frame
 
-    def is_empty(self) -> bool:
-        return len(self.buffer) < len(common.FRM_SIGN)
+    def is_empty(self) -> bool: return len(self.buffer) < len(common.FRM_SIGN)
+    def get_asfh(self) -> ASFH: return self.asfh
 
     def process(self, stream: bytes) -> DecodeResult:
         self.buffer += stream
@@ -67,7 +67,7 @@ class Decoder:
                 ret.append(pcm)
                 frames += 1
                 self.asfh.clear()
-                self.streaminfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
+                self.procinfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
             else:
                 if not self.asfh.buffer[:len(common.FRM_SIGN)] == common.FRM_SIGN:
                     i = self.buffer.find(common.FRM_SIGN)
@@ -99,7 +99,7 @@ class Decoder:
 
     def flush(self) -> DecodeResult:
         ret = self.overlap_fragment
-        self.streaminfo.update(0, len(self.overlap_fragment), self.asfh.srate)
+        self.procinfo.update(0, len(self.overlap_fragment), self.asfh.srate)
         self.overlap_fragment = np.array([])
         self.asfh.clear()
         return DecodeResult([ret], self.asfh.srate, 0, False)

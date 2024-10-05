@@ -1,6 +1,4 @@
-from libfrad import Encoder, StreamInfo
-from libfrad.fourier.prf import profiles
-from libfrad.tools import head
+from libfrad import Encoder, ProcessInfo, profiles, head
 from common import PIPEIN, PIPEOUT, check_overwrite, logging
 from tools.cli import CliParams
 from typing import BinaryIO
@@ -54,11 +52,11 @@ def encode(input: str, params: CliParams):
     image = open(params.image_path, 'rb').read() if params.image_path != '' and os.path.exists(params.image_path) else b''
     wfile.write(head.builder(params.meta, image))
 
-    encoder.streaminfo = StreamInfo()
+    encoder.procinfo = ProcessInfo()
     while True:
         pcm_buf = rfile.read(32768)
         if not pcm_buf: break
         wfile.write(encoder.process(pcm_buf))
-        logging(params.loglevel, encoder.streaminfo, False)
+        logging(params.loglevel, encoder.procinfo, False)
     wfile.write(encoder.flush())
-    logging(params.loglevel, encoder.streaminfo, True)
+    logging(params.loglevel, encoder.procinfo, True)

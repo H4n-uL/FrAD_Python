@@ -1,8 +1,8 @@
 from libfrad import common
-from libfrad.fourier.prf import profiles
+from libfrad.fourier import profiles
 from libfrad.tools import ecc
 from libfrad.tools.asfh import ASFH
-from libfrad.tools.stream import StreamInfo
+from libfrad.tools.process import ProcessInfo
 import zlib
 import sys
 
@@ -19,7 +19,7 @@ class Repairer:
 
         self.asfh = ASFH()
         self.buffer = b''
-        self.streaminfo = StreamInfo()
+        self.procinfo = ProcessInfo()
 
         self.fix_error = True
         self.olap_len = 0
@@ -54,7 +54,7 @@ class Repairer:
 
                 ret += self.asfh.write(frad)
                 self.asfh.clear()
-                self.streaminfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
+                self.procinfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
             else:
                 if not self.asfh.buffer[:len(common.FRM_SIGN)] == common.FRM_SIGN:
                     i = self.buffer.find(common.FRM_SIGN)
@@ -71,7 +71,7 @@ class Repairer:
                     case 'Complete': continue
                             
                     case 'ForceFlush':
-                        self.streaminfo.update(0, self.olap_len, self.asfh.srate)
+                        self.procinfo.update(0, self.olap_len, self.asfh.srate)
                         ret += self.asfh.force_flush()
                         self.olap_len = 0
                         break

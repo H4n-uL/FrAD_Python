@@ -1,6 +1,5 @@
-class profiles:
-    LOSSLESS = [0, 4]
-    COMPACT = [1, 2]
+LOSSLESS = [0, 4]
+COMPACT = [1, 2]
 
 class compact:
     SRATES = (96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000)

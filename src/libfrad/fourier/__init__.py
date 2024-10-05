@@ -1,10 +1,10 @@
-from . import profile0, profile1, profile4, prf
+from . import profile0, profile1, profile4, profiles
 
 AVAILABLE = [0, 1, 4]
 
 SEGMAX = [
     0xFFFFFFFF, # Profile 0
-    prf.compact.MAX_SMPL, # Profile 1
+    profiles.compact.MAX_SMPL, # Profile 1
     0, # Profile 2
     0, # Profile 3
     0xFFFFFFFF, # Profile 4

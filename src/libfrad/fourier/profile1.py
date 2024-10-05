@@ -1,9 +1,8 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .prf import compact
+from .profiles import compact
 from .tools import p1tools
 import struct, zlib
-from .prf import compact
 
 DEPTHS = (8, 12, 16, 24, 32, 48, 64)
 

@@ -1,6 +1,6 @@
 import time
 
-class StreamInfo:
+class ProcessInfo:
     def __init__(self):
         self.start_time = time.time()
         self.t_block = None

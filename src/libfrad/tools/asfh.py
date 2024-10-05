@@ -1,5 +1,5 @@
 import math, struct
-from libfrad.fourier.prf import profiles, compact
+from libfrad.fourier.profiles import compact, COMPACT
 from libfrad.common import FRM_SIGN, crc16_ansi
 from zlib import crc32
 
@@ -58,7 +58,7 @@ class ASFH:
         fhead += struct.pack('>I', len(frad))
         fhead += encode_pfb(self.profile, self.ecc, self.endian, self.bit_depth_index)
 
-        if self.profile in profiles.COMPACT:
+        if self.profile in COMPACT:
             fhead += encode_css_prf1(self.channels, self.srate, self.fsize, False)
             fhead += struct.pack('B', max(self.overlap_ratio - 1, 0))
             if self.ecc:
@@ -82,7 +82,7 @@ class ASFH:
         fhead += b'\x00'*4
         fhead += encode_pfb(self.profile, self.ecc, self.endian, self.bit_depth_index)
 
-        if self.profile in profiles.COMPACT:
+        if self.profile in COMPACT:
             fhead += encode_css_prf1(self.channels, self.srate, self.fsize, True)
             fhead += b'\x00'
         else: return b''
@@ -105,7 +105,7 @@ class ASFH:
         self.frmbytes = struct.unpack('>I', self.buffer[4:8])[0]
         self.profile, self.ecc, self.endian, self.bit_depth_index = decode_pfb(self.buffer[8:9])
 
-        if self.profile in profiles.COMPACT:
+        if self.profile in COMPACT:
             x, buffer = self.fill_buffer(buffer, 12)
             if not x: return 'Incomplete', buffer
             self.channels, self.srate, self.fsize, force_flush = decode_css_prf1(self.buffer[9:11])

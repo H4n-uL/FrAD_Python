@@ -1,6 +1,5 @@
-from libfrad import Decoder
-from libfrad.backend.pcmformat import ff_format_to_numpy_type
-from common import PIPEIN, PIPEOUT, check_overwrite, logging
+from libfrad import Decoder, ASFH, ProcessInfo, BIT_DEPTHS, ff_format_to_numpy_type
+from common import PIPEIN, PIPEOUT, check_overwrite, format_bytes, format_time, format_speed
 from tools.cli import CliParams
 import io, os, sys, time
 import sounddevice as sd
@@ -18,6 +17,23 @@ def write(play: bool, writefile: io.BufferedWriter | BinaryIO, sink: sd.OutputSt
     else: writefile.write(pcm.astype(fmt).tobytes())
 
     return sink
+
+def logging_decode(loglevel: int, procinfo: ProcessInfo, linefeed: bool, asfh: ASFH):
+    # if loglevel == 0 { return; }
+    if loglevel == 0: return
+
+    out = []
+
+    out.append(f'size={format_bytes(procinfo.get_total_size())}B time={format_time(procinfo.get_duration())} bitrate={format_bytes(procinfo.get_bitrate())}bits/s speed={format_speed(procinfo.get_speed())}x    ')
+    if loglevel > 1: out.append(f'Profile {asfh.profile}, {BIT_DEPTHS[asfh.profile][asfh.bit_depth_index]}bits {asfh.channels}ch@{asfh.srate}Hz, ECC={"disabled" if not asfh.ecc else f"{asfh.ecc_dsize}/{asfh.ecc_codesize}"}    ')
+
+    line_count = len(out) - 1
+    print('\n'.join(out), end='', file=sys.stderr)
+
+    if linefeed: print(file=sys.stderr)
+    else:
+        for _ in range(line_count): print('\x1b[1A', end='', file=sys.stderr)
+        print('\r', end='', file=sys.stderr)
 
 def decode(rfile: str, params: CliParams, play: bool):
     wfile_prim = params.output
@@ -53,16 +69,16 @@ def decode(rfile: str, params: CliParams, play: bool):
 
         decoded = decoder.process(buf)
         sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, decoded.srate)
-        logging(params.loglevel, decoder.streaminfo, False)
+        logging_decode(params.loglevel, decoder.procinfo, False, decoder.get_asfh())
 
         if decoded.crit and not wpipe:
             no += 1; wfile = f'{wfile_prim}.{no}.pcm'
-            decoder.streaminfo.block()
+            decoder.procinfo.block()
             check_overwrite(wfile, params.overwrite)
-            decoder.streaminfo.unblock()
+            decoder.procinfo.unblock()
             writefile = open(wfile, 'wb')
 
     decoded = decoder.flush()
     sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, decoded.srate)
-    logging(params.loglevel, decoder.streaminfo, True)
+    logging_decode(params.loglevel, decoder.procinfo, True, decoder.get_asfh())
     if play: sink.close()

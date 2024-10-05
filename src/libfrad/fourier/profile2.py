@@ -1,6 +1,6 @@
 from scipy.fft import dct, idct
 import numpy as np
-from .prf import compact
+from .profiles import compact
 from .tools import p1tools, p2tools
 import struct, zlib
 

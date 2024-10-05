@@ -29,6 +29,6 @@ def repair(rfile: str, params: CliParams):
         if not buf and repairer.is_empty(): break
 
         writefile.write(repairer.process(buf))
-        logging(params.loglevel, repairer.streaminfo, False)
+        logging(params.loglevel, repairer.procinfo, False)
     writefile.write(repairer.flush())
-    logging(params.loglevel, repairer.streaminfo, True)
+    logging(params.loglevel, repairer.procinfo, True)
