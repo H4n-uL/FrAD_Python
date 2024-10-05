@@ -67,7 +67,7 @@ class Encoder:
         self.asfh.ecc_dsize, self.asfh.ecc_codesize = ecc_ratio
 
     def set_little_endian(self, little_endian: bool): self.asfh.endian = little_endian
-    def set_loss_level(self, loss_level: float): self.loss_level = loss_level
+    def set_loss_level(self, loss_level: float): self.loss_level = max(abs(loss_level), 0.125)
     def set_overlap_ratio(self, overlap_ratio: int):
         if overlap_ratio != 0: overlap_ratio = max(2, min(256, overlap_ratio))
         self.asfh.overlap_ratio = overlap_ratio

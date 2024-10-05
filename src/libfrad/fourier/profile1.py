@@ -22,8 +22,7 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
     pcm_factor, thres_factor = get_scale_factors(bits)
     # DCT
     pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES_LI if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
-    srate = compact.get_valid_srate(srate)
-    dlen, channels = len(pcm), len(pcm[0])
+    srate, loss_level, dlen, channels = compact.get_valid_srate(srate), max(abs(loss_level), 0.125), len(pcm), len(pcm[0])
     freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * pcm_factor
 
     # Quantisation
