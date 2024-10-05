@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+default_install_path=$HOME/bin
+
 if ! command -v python3 &> /dev/null
 then
     echo "Python3 not installed, Please install Python3."
@@ -22,9 +24,9 @@ if [ "$FOURIER_PATH/FrAD-Codec/main.py" ]; then
     esac
 fi
 
-read -p "Installation path(Default is $HOME): " FOURIER_PATH
+read -p "Installation path(Default is $default_install_path): " FOURIER_PATH
 if [ -z "$FOURIER_PATH" ]; then
-    FOURIER_PATH=$HOME
+    FOURIER_PATH=$default_install_path
 fi
 export FOURIER_PATH
 
