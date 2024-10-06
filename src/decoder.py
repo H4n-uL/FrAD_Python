@@ -19,7 +19,6 @@ def write(play: bool, writefile: io.BufferedWriter | BinaryIO, sink: sd.OutputSt
     return sink
 
 def logging_decode(loglevel: int, procinfo: ProcessInfo, linefeed: bool, asfh: ASFH):
-    # if loglevel == 0 { return; }
     if loglevel == 0: return
 
     out = []
@@ -62,9 +61,11 @@ def decode(rfile: str, params: CliParams, play: bool):
     decoder = Decoder(params.enable_ecc)
     pcm_fmt = ff_format_to_numpy_type(params.pcm)
 
-    no = 0
+    frames, no = 0, 0
     while True:
-        buf = readfile.read(32768)
+        bufsize = 32768
+        if frames > 0 and play: bufsize = decoder.procinfo.get_total_size() // frames
+        buf = readfile.read(bufsize)
         if not buf and decoder.is_empty(): break
 
         decoded = decoder.process(buf)
@@ -77,6 +78,8 @@ def decode(rfile: str, params: CliParams, play: bool):
             check_overwrite(wfile, params.overwrite)
             decoder.procinfo.unblock()
             writefile = open(wfile, 'wb')
+
+        frames += decoded.frames
 
     decoded = decoder.flush()
     sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, decoded.srate)
