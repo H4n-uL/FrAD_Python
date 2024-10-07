@@ -15,7 +15,7 @@
 
 ## 外部リソース
 
-[Python](https://github.com/python/cpython), [FFmpeg](https://github.com/FFmpeg/FFmpeg), [QAAC](https://github.com/nu774/qaac), [QTFiles](https://github.com/AnimMouse/QTFiles), afconvert
+[Python](https://github.com/python/cpython)
 
 ### pipパッケージ
 
@@ -24,61 +24,23 @@
 3. reedsolo
 4. sounddevice
 
-## メタデータJSON例
-
-```json
-[
-    {"key": "KEY",                          "type": "string", "value": "VALUE"},
-    {"key": "AUTHOR",                       "type": "string", "value": "ハンウル"},
-    {"key": "キーとStringタイプのエンコーディング", "type": "string", "value": "UTF-8"},
-    {"key": "Base64 サポート",                "type": "base64", "value": "QmFzZTY044Gu5L6L"},
-    {"key": "ファイルサポート",                 "type": "base64", "value": "5pyA5aSnMjU2IFRpQuOBvuOBp+OCteODneODvOODiA=="},
-    {"key": "未対応文字なし",                  "type": "string", "value": "Unicodeにあるどの文字でも互換性があります！"},
-    {"key": "重複キーサポート",                 "type": "string", "value": "キーが重複するようにすると？"},
-    {"key": "重複キーサポート",                 "type": "string", "value": "パンパカパーン！"},
-    {"key": "",                             "type": "string", "value": "キーなしのメタデータもサポート"}
-]
-```
-
 ## 寄付方法
 
-リポジトリで新しいブランチを作成し、修正して、私にMergeリクエストで審査を受けてください。実はこいつはザコなので、大抵は全部通ります。
+### FrAD フォーマットへの貢献
 
-## 実施要件
+Issueを生成してフォーマットやエンコード/デコードロジックに関する問題を提起して対応方法を説明すると検討します。
 
-1. 必須実装
+### Master実装体への貢献
 
-    ```markdown
-    FrAD/
-        fourier
-        profiles/
-            profile1
-            tools/
-                p1tools
-        decoder
-        encoder
-        header
-        common
-        tools/
-            headb
-            ecc
-        repack
-    ```
+以下はコントリビューションの手順です。
 
-2. 選択実装
+1. リポジトリをフォークする
+2. 新しいブランチを作成する
+3. 修正を作成し、バグに苦しむ
+4. mainブランチにプッシュする
+5. このリポジトリでPull Requestを生成する
 
-    ```markdown
-    main
-    FrAD/
-        player
-        record
-        tools/
-            update
-            argparse
-        res/
-            AppleAAC.Win.tar.gz -> AppleAAC
-    ...と色々な雑多な機能たち
-    ```
+Pull Requestが生成されたら、検討後、フィードバックをしたり、mergeします。 実際、FrAD標準と互換性があれば、ほとんど問答無用でmergeします。
 
 ## 開発者情報
 

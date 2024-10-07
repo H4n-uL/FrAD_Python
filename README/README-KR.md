@@ -15,7 +15,7 @@
 
 ## 외부 리소스
 
-[Python](https://github.com/python/cpython), [FFmpeg](https://github.com/FFmpeg/FFmpeg), [QAAC](https://github.com/nu774/qaac), [QTFiles](https://github.com/AnimMouse/QTFiles), afconvert
+[Python](https://github.com/python/cpython)
 
 ### pip 패키지
 
@@ -24,61 +24,23 @@
 3. reedsolo
 4. sounddevice
 
-## 메타데이터 JSON 예시
-
-```json
-[
-    {"key": "키",                  "type": "string", "value": "값"},
-    {"key": "원작자",               "type": "string", "value": "한울"},
-    {"key": "키와 String타입 인코딩", "type": "string", "value": "UTF-8"},
-    {"key": "Base64 지원",         "type": "base64", "value": "QmFzZTY0IOyYiOyLnA=="},
-    {"key": "파일 지원",            "type": "base64", "value": "7LWc64yAIDI1NlRpQuq5jOyngCDsp4Dsm5A="},
-    {"key": "미지원 글자 없음",       "type": "string", "value": "유니코드에 있는 어떤 글자라도 호환됩니다!"},
-    {"key": "중복 키 지원",          "type": "string", "value": "중복 키를 넣으면?"},
-    {"key": "중복 키 지원",          "type": "string", "value": "짠!"},
-    {"key": "",                   "type": "string", "value": "키 없는 메타데이터도 지원"}
-]
-```
-
 ## 기여 방법
 
-레포지토리에서 새 브랜치를 만들고, 수정하고, 저에게 Merge 요청으로 심사를 받으시면 됩니다. 사실 FrAD 포맷 표준과 호환되기만 하면 웬만하면 다 통과됩니다.
+### FrAD 포맷에 대한 기여
 
-## 구현 요구 사항
+Issue를 생성하여 포맷이나 인코딩/디코딩 로직에 대한 문제를 제기하고 대응 방법을 설명하면 검토하도록 하겠습니다.
 
-1. 필수 구현
+### Master 구현체에 대한 기여
 
-    ```markdown
-    FrAD/
-        fourier
-        profiles/
-            profile1
-            tools/
-                p1tools
-        decoder
-        encoder
-        header
-        common
-        tools/
-            headb
-            ecc
-        repack
-    ```
+다음은 기여 절차입니다.
 
-2. 선택 구현
+1. 레포지토리 포크하기
+2. 새로운 브랜치 생성하기
+3. 수정 사항을 만들고 버그에 고통받기
+4. main 브랜치에 푸시하기
+5. 이 레포지토리로 Pull Request 생성하기
 
-    ```markdown
-    main
-    FrAD/
-        player
-        record
-        tools/
-            update
-            argparse
-        res/
-            AppleAAC.Win.tar.gz -> AppleAAC
-    ...과 온갖 잡다한 기능들
-    ```
+Pull Request가 생성되면 검토 후 피드백을 드리거나 merge 하도록 하겠습니다. 사실 FrAD 표준과 호환되면 대부분 덥썩 물어드립니다.
 
 ## 개발자 정보
 

@@ -15,7 +15,7 @@ Installation is still only supported on Unix-like OS.
 
 ## External Resources
 
-[Python](https://github.com/python/cpython), [FFmpeg](https://github.com/FFmpeg/FFmpeg), [QAAC](https://github.com/nu774/qaac), [QTFiles](https://github.com/AnimMouse/QTFiles), afconvert
+[Python](https://github.com/python/cpython)
 
 ### pip Packages
 
@@ -24,63 +24,23 @@ Installation is still only supported on Unix-like OS.
 3. reedsolo
 4. sounddevice
 
-## Metadata JSON example
-
-Metadata JSON
-
-```json
-[
-    {"key": "KEY",                              "type": "string", "value": "VALUE"},
-    {"key": "AUTHOR",                           "type": "string", "value": "H4n_uL"},
-    {"key": "Key & String value encoding type", "type": "string", "value": "UTF-8"},
-    {"key": "Base64 type Value",                "type": "base64", "value": "QmFzZTY0IEV4YW1wbGU="},
-    {"key": "File is also available",           "type": "base64", "value": "U3VwcG9ydHMgdXAgdG8gMjU2IFRpQg=="},
-    {"key": "No unsupported characters",        "type": "string", "value": "All utf-8/base64 metadata is allowed!"},
-    {"key": "Supports duplicate keys",          "type": "string", "value": "See what happens!"},
-    {"key": "Supports duplicate keys",          "type": "string", "value": "Voilà!"},
-    {"key": "",                                 "type": "string", "value": "Also supports keyless metadata"}
-]
-```
-
 ## How to contribute
 
-Simply create a new branch in the repository, make your changes, and submit a merge request to me for approval. Pretty much anything will pass if it conforms to the FrAD format standard.
+### Contributing to the FrAD format
 
-## Implementation requirements
+Create an Issue to raise issues with the format or encoding/decoding logic and describe how you would like to see it addressed, and we will review it.
 
-1. Essential
+### Contributions to the Master Implementation
 
-    ```markdown
-    FrAD/
-        fourier
-        profiles/
-            profile1
-            tools/
-                p1tools
-        decoder
-        encoder
-        header
-        common
-        tools/
-            headb
-            ecc
-        repack
-    ```
+Here's how to contribute
 
-2. Optional
+1. fork the repository
+2. create a new branch
+3. make a fix and suffer through the bugs
+4. push to the main branch
+5. create a pull request to this repository
 
-    ```markdown
-    main
-    FrAD/
-        player
-        record
-        tools/
-            update
-            argparse
-        res/
-            AppleAAC.Win.tar.gz -> AppleAAC
-    ...and all the other stuff
-    ```
+Once the pull request is created, we'll review it and give you feedback or merge it - in fact, if it's compatible with the FrAD standard, we almost always merge it.
 
 ## Developer information
 
