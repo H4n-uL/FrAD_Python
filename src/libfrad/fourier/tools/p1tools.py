@@ -73,7 +73,6 @@ def exp_golomb_rice_decode(dbytes: bytes):
 
         codeword, data = data[:(m*2)+k+1], data[(m*2)+k+1:]
         n = int(codeword, 2) - 2**k
-        n = (n%2==1) and ((n+1)//2) or (-n//2)
-        decoded.append(n)
+        decoded.append((n+1)//2 if n%2==1 else -n//2)
 
     return np.array(decoded)
