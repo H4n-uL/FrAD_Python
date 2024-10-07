@@ -58,6 +58,7 @@ def decode(rfile: str, params: CliParams, play: bool):
     if play: params.loglevel = 0
 
     sink = sd.OutputStream(samplerate=48000, channels=1, dtype='float32')
+    params.speed = params.speed if params.speed > 0 else 1.0
     decoder = Decoder(params.enable_ecc)
     pcm_fmt = ff_format_to_numpy_type(params.pcm)
 
@@ -69,7 +70,7 @@ def decode(rfile: str, params: CliParams, play: bool):
         if not buf and decoder.is_empty(): break
 
         decoded = decoder.process(buf)
-        sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, decoded.srate)
+        sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, int(decoded.srate * params.speed))
         logging_decode(params.loglevel, decoder.procinfo, False, decoder.get_asfh())
 
         if decoded.crit and not wpipe:
@@ -82,6 +83,6 @@ def decode(rfile: str, params: CliParams, play: bool):
         frames += decoded.frames
 
     decoded = decoder.flush()
-    sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, decoded.srate)
+    sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, int(decoded.srate * params.speed))
     logging_decode(params.loglevel, decoder.procinfo, True, decoder.get_asfh())
     if play: sink.close()
