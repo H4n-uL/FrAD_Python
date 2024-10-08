@@ -19,7 +19,7 @@ def decode(data: bytes, ecc_dsize: int, ecc_codesize: int, repair: bool) -> byte
     for chunk in split_data(data, blocksize):
         if repair:
             try: decoded_chunk.append(bytes(rs.decode(chunk)[0]))
-            except ReedSolomonError as _: decoded_chunk.append(b'\x00'*ecc_dsize)
+            except ReedSolomonError as _: decoded_chunk.append(b'\x00'*(len(chunk)-ecc_codesize))
         else: decoded_chunk.append(chunk[:len(chunk)-ecc_codesize])
 
     return b''.join(decoded_chunk)
