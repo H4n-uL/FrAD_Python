@@ -1,4 +1,4 @@
-from libfrad.tools import head
+from libfrad import head
 from tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
 import json, os, tempfile
 
