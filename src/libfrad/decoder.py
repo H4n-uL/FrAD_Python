@@ -26,11 +26,11 @@ class Decoder:
 
     def overlap(self, frame: np.ndarray) -> np.ndarray:
         if self.overlap_fragment.shape != EMPTY:
-            fade = np.linspace(0, 1, len(self.overlap_fragment))
+            olap_len = len(self.overlap_fragment)
+            fade_in = np.hanning(olap_len * 2)[:olap_len]
             for c in range(self.asfh.channels):
-                frame[:len(self.overlap_fragment), c] = \
-                (frame[:len(self.overlap_fragment), c] * fade) +\
-                (self.overlap_fragment[:, c] * fade[::-1])
+                frame[:olap_len, c] = \
+                frame[:olap_len, c] * fade_in + self.overlap_fragment[:, c] * fade_in[::-1]
 
         next_overlap = np.array([])
         if self.asfh.profile in profiles.COMPACT and self.asfh.overlap_ratio != 0:
