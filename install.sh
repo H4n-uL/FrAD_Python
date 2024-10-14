@@ -40,6 +40,6 @@ for rcfile in `ls -a ~ | egrep '^(.*sh_profile|.*shrc)$'`; do
     echo "alias fourier='python3 \$FOURIER_PATH/FrAD-Codec/main.py'" >> ~/$rcfile
 done
 
-python3 -m pip install -r $FOURIER_PATH/FrAD-Codec/requirements.txt -q  || { echo "Failed installing pip packages."; exit 1; }
+python3 -m pip install -r $FOURIER_PATH/FrAD-Codec/requirements.txt -q --break-system-packages || { echo "Failed installing pip packages."; exit 1; }
 
 echo "Installation completed. Please restart your shell to apply changes."
