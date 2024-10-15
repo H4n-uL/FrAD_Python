@@ -1,12 +1,12 @@
 import numpy as np
 from libfrad import fourier
+from libfrad.backend.pcmformat import ff_format_to_numpy_type
 from libfrad.fourier import AVAILABLE, SEGMAX, BIT_DEPTHS, profiles
 from libfrad.fourier.profiles import compact
 from libfrad.tools import ecc
 from libfrad.tools.asfh import ASFH
 from libfrad.tools.process import ProcessInfo
 import sys
-from libfrad.backend.pcmformat import ff_format_to_numpy_type
 # import random
 
 EMPTY = np.array([]).shape

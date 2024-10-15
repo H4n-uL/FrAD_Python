@@ -1,5 +1,6 @@
 import numpy as np
 from libfrad import fourier, common
+from libfrad.backend import hanning_in_overlap
 from libfrad.fourier import profiles
 from libfrad.tools import ecc
 from libfrad.tools.asfh import ASFH
@@ -27,7 +28,7 @@ class Decoder:
     def overlap(self, frame: np.ndarray) -> np.ndarray:
         if self.overlap_fragment.shape != EMPTY:
             olap_len = len(self.overlap_fragment)
-            fade_in = np.hanning(olap_len * 2)[:olap_len]
+            fade_in = hanning_in_overlap(olap_len)
             for c in range(self.asfh.channels):
                 frame[:olap_len, c] = \
                 frame[:olap_len, c] * fade_in + self.overlap_fragment[:, c] * fade_in[::-1]
