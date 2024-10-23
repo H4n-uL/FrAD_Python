@@ -3,13 +3,32 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "frad-py"
+name = "frad"
 version = "0.0.0"
 authors = [{name = "HaמuL"}]
+dependencies = [
+    "numpy",
+    "scipy",
+    "reedsolo",
+    "sounddevice",
+]
 
 [tool.setuptools]
-package-dir = { "frad_py" = "src", "libfrad" = "src/libfrad" }
-packages = [ "frad_py", "libfrad" ]
+package-dir = { "frad" = "src", "libfrad" = "src/libfrad" }
+packages = [
+    "frad",
+    "frad.tools",
+    "frad.help",
+    
+    "libfrad",
+    "libfrad.backend",
+    "libfrad.fourier",
+    "libfrad.fourier.tools",
+    "libfrad.tools"
+]
+
+[tool.setuptools.package-data]
+"frad.help" = ["*.txt"]
 
 [project.scripts]
-frad-py = "frad_py.main:main"
+frad-py = "frad.main:main"

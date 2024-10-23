@@ -1,4 +1,9 @@
-from .tools import cli
+try:
+    from .tools import cli
+    from . import encoder, decoder, repairer, header
+except ImportError:
+    from tools import cli
+    import encoder, decoder, repairer, header
 import os, sys
 
 PATH_ABSOLUTE = os.path.dirname(os.path.abspath(__file__))
@@ -10,21 +15,11 @@ def main():
     executable = os.path.basename(sys.argv[0])
     ACTION, METAACTION, INPUT, PARAMS = cli.parse(sys.argv)
 
-    if ACTION in cli.ENCODE_OPT:
-        from . import encoder
-        encoder.encode(INPUT, PARAMS)
-    elif ACTION in cli.DECODE_OPT:
-        from . import decoder
-        decoder.decode(INPUT, PARAMS, False)
-    elif ACTION in cli.PLAY_OPT:
-        from . import decoder
-        decoder.decode(INPUT, PARAMS, True)
-    elif ACTION in cli.REPAIR_OPT:
-        from . import repairer
-        repairer.repair(INPUT, PARAMS)
-    elif ACTION in cli.METADATA_OPT:
-        from . import header
-        header.modify(INPUT, METAACTION, PARAMS)
+    if ACTION in cli.ENCODE_OPT:     encoder.encode(INPUT, PARAMS)
+    elif ACTION in cli.DECODE_OPT:   decoder.decode(INPUT, PARAMS, False)
+    elif ACTION in cli.PLAY_OPT:     decoder.decode(INPUT, PARAMS, True)
+    elif ACTION in cli.REPAIR_OPT:   repairer.repair(INPUT, PARAMS)
+    elif ACTION in cli.METADATA_OPT: header.modify(INPUT, METAACTION, PARAMS)
     elif ACTION in cli.HELP_OPT:
         print(BANNER)
         helpname = 'general'

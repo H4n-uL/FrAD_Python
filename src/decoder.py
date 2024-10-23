@@ -1,6 +1,10 @@
-from .libfrad import Decoder, ASFH, ProcessInfo, BIT_DEPTHS, ff_format_to_numpy_type
-from .common import PIPEIN, PIPEOUT, check_overwrite, format_bytes, format_time, format_speed
-from .tools.cli import CliParams
+from libfrad import Decoder, ASFH, ProcessInfo, BIT_DEPTHS, ff_format_to_numpy_type
+try:
+    from .common import PIPEIN, PIPEOUT, check_overwrite, format_bytes, format_time, format_speed
+    from .tools.cli import CliParams
+except ImportError:
+    from common import PIPEIN, PIPEOUT, check_overwrite, format_bytes, format_time, format_speed
+    from tools.cli import CliParams
 import io, os, sys, time
 import sounddevice as sd
 from typing import BinaryIO
