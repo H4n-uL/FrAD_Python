@@ -1,10 +1,10 @@
 import numpy as np
-from libfrad import fourier, common
-from libfrad.backend import hanning_in_overlap
-from libfrad.fourier import profiles
-from libfrad.tools import ecc
-from libfrad.tools.asfh import ASFH
-from libfrad.tools.process import ProcessInfo
+from . import fourier, common
+from .backend import hanning_in_overlap
+from .fourier import profiles
+from .tools import ecc
+from .tools.asfh import ASFH
+from .tools.process import ProcessInfo
 import zlib
 
 EMPTY = np.array([]).shape

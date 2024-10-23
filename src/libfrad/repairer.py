@@ -1,8 +1,8 @@
-from libfrad import common
-from libfrad.fourier import profiles
-from libfrad.tools import ecc
-from libfrad.tools.asfh import ASFH
-from libfrad.tools.process import ProcessInfo
+from . import common
+from .fourier import profiles
+from .tools import ecc
+from .tools.asfh import ASFH
+from .tools.process import ProcessInfo
 import zlib
 import sys
 

@@ -1,6 +1,6 @@
-from libfrad import Repairer
-from common import PIPEIN, PIPEOUT, check_overwrite, logging
-from tools.cli import CliParams
+from .libfrad import Repairer
+from .common import PIPEIN, PIPEOUT, check_overwrite, logging
+from .tools.cli import CliParams
 import os, sys
 
 def repair(rfile: str, params: CliParams):

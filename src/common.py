@@ -2,7 +2,7 @@ PIPEIN = ['pipe:', 'pipe:0', '-', '/dev/stdin', 'dev/fd/0']
 PIPEOUT = ['pipe:', 'pipe:1', '-', '/dev/stdout', 'dev/fd/1']
 
 import math, os, sys
-from libfrad import ProcessInfo
+from .libfrad import ProcessInfo
 
 def format_time(n: float) -> str:
     if n < 0.0: return f'-{format_time(-n)}'

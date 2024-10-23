@@ -1,4 +1,4 @@
-from libfrad.common import SIGNATURE
+from ..common import SIGNATURE
 
 COMMENT = b'\xfa\xaa'
 IMAGE = b'\xf5'

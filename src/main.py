@@ -1,5 +1,4 @@
-from tools import cli
-import encoder, decoder, repairer, header
+from .tools import cli
 import os, sys
 
 PATH_ABSOLUTE = os.path.dirname(os.path.abspath(__file__))
@@ -8,18 +7,23 @@ BANNER = \
 '                             Original Author - HaמuL\n'
 
 def main():
-    executable = f'python3 {os.path.basename(sys.argv[0])}' if sys.argv[0].endswith('.py') else sys.argv[0]
+    executable = os.path.basename(sys.argv[0])
     ACTION, METAACTION, INPUT, PARAMS = cli.parse(sys.argv)
 
     if ACTION in cli.ENCODE_OPT:
+        from . import encoder
         encoder.encode(INPUT, PARAMS)
     elif ACTION in cli.DECODE_OPT:
+        from . import decoder
         decoder.decode(INPUT, PARAMS, False)
     elif ACTION in cli.PLAY_OPT:
+        from . import decoder
         decoder.decode(INPUT, PARAMS, True)
     elif ACTION in cli.REPAIR_OPT:
+        from . import repairer
         repairer.repair(INPUT, PARAMS)
     elif ACTION in cli.METADATA_OPT:
+        from . import header
         header.modify(INPUT, METAACTION, PARAMS)
     elif ACTION in cli.HELP_OPT:
         print(BANNER)

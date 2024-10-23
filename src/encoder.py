@@ -1,6 +1,6 @@
-from libfrad import Encoder, ProcessInfo, profiles, head
-from common import PIPEIN, PIPEOUT, check_overwrite, logging
-from tools.cli import CliParams
+from .libfrad import Encoder, ProcessInfo, profiles, head
+from .common import PIPEIN, PIPEOUT, check_overwrite, logging
+from .tools.cli import CliParams
 from typing import BinaryIO
 import io, os, sys
 

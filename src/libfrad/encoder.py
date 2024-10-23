@@ -1,11 +1,11 @@
 import numpy as np
-from libfrad import fourier
-from libfrad.backend.pcmformat import ff_format_to_numpy_type
-from libfrad.fourier import AVAILABLE, SEGMAX, BIT_DEPTHS, profiles
-from libfrad.fourier.profiles import compact
-from libfrad.tools import ecc
-from libfrad.tools.asfh import ASFH
-from libfrad.tools.process import ProcessInfo
+from . import fourier
+from .backend.pcmformat import ff_format_to_numpy_type
+from .fourier import AVAILABLE, SEGMAX, BIT_DEPTHS, profiles
+from .fourier.profiles import compact
+from .tools import ecc
+from .tools.asfh import ASFH
+from .tools.process import ProcessInfo
 import sys
 # import random
 

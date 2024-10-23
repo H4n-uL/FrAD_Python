@@ -1,6 +1,6 @@
 import math, struct
-from libfrad.fourier.profiles import compact, COMPACT
-from libfrad.common import FRM_SIGN, crc16_ansi
+from ..fourier.profiles import compact, COMPACT
+from ..common import FRM_SIGN, crc16_ansi
 from zlib import crc32
 
 def encode_pfb(profile: int, isecc: bool, little_endian: bool, bits: int) -> bytes:

@@ -1,5 +1,5 @@
-from libfrad import head
-from tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
+from .libfrad import head
+from .tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
 import json, os, tempfile
 
 def modify(file: str, modtype: str, params: CliParams):
