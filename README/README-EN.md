@@ -6,12 +6,8 @@ Python implementation of [AAPM](https://mikhael-openworkspace.notion.site/Projec
 
 ## How to install
 
-1. Download the Git zip
-2. Install Python (3.11^)
-3. Execute install.sh
-4. Restart shell with source ~/.*shrc
-
-Installation is still only supported on Unix-like OS.
+1. download the library with Git clone
+2. install with `python3 -m pip install .`
 
 ## External Resources
 

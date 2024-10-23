@@ -6,12 +6,8 @@
 
 ## インストール方法
 
-1. Git zipをダウンロード
-2. Python(3.11^)をインストール
-3. install.sh を実行
-4. source ~/.*shrc でシェルを再実行
-
-インストールはまだUnix系OSだけサポートします。
+1. Git cloneでライブラリをダウンロード
+2. `python3 -m pip install .`でインストール
 
 ## 外部リソース
 

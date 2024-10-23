@@ -6,12 +6,8 @@
 
 ## 설치 방법
 
-1. Git zip 다운로드
-2. Python(3.11^) 설치
-3. install.sh 실행
-4. source ~/.*shrc로 shell 재실행
-
-설치는 아직 유닉스 계열 OS에서만 지원합니다.
+1. Git clone으로 라이브러리 다운로드
+2. `python3 -m pip install .`으로 설치
 
 ## 외부 리소스
 
