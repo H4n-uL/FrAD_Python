@@ -22,11 +22,17 @@ Python implementation of [AAPM](https://mikhael-openworkspace.notion.site/Projec
 
 ## How to contribute
 
-### Contributing to the FrAD format
+### Contributing to FrAD standard
 
-Create an Issue to raise issues with the format or encoding/decoding logic and describe how you would like to see it addressed, and we will review it.
+Here is how to contribute
 
-### Contributions to the Master Implementation
+1. if you notice a problem or something that could be improved
+2. outline how you would like to address it (feel free to leave it out)
+3. create an issue or email me directly.
+
+I'll review it and give you feedback or respond to the issue.
+
+### Contributions to Python Master
 
 Here's how to contribute
 
@@ -36,7 +42,7 @@ Here's how to contribute
 4. push to the main branch
 5. create a pull request to this repository
 
-Once the pull request is created, we'll review it and give you feedback or merge it - in fact, if it's compatible with the FrAD standard, we almost always merge it.
+Once the pull request is created, we'll review it and give you feedback or merge it - in fact, we almost always take it if it's compatible with FrAD standard.
 
 ## Developer information
 
