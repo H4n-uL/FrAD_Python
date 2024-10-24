@@ -8,7 +8,7 @@ import os, sys
 
 PATH_ABSOLUTE = os.path.dirname(os.path.abspath(__file__))
 BANNER = \
-'               Fourier Analogue-in-Digital Master encoder/decoder\n' + \
+'                    Fourier Analogue-in-Digital Python Master\n' + \
 '                             Original Author - HaמuL\n'
 
 def main():
@@ -34,7 +34,7 @@ def main():
         print(open(f'{PATH_ABSOLUTE}/help/{helpname}.txt', 'r').read().replace(b'{frad}'.decode(), executable))
         print()
     else:
-        print('Fourier Analogue-in-Digital Master encoder/decoder', file=sys.stderr)
+        print('Fourier Analogue-in-Digital Python Master', file=sys.stderr)
         print(f'Abstract syntax: {executable} [encode|decode|repair] <input> [kwargs...]', file=sys.stderr)
         print(f'type `{executable} help` to get help.', file=sys.stderr)
 
