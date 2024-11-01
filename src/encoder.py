@@ -14,7 +14,7 @@ def set_files(rfile: str, wfile: str, profile: int, overwrite: bool) -> tuple[io
     if rfile in PIPEIN: rpipe = True
     elif not os.path.exists(rfile): print("Input file doesn't exist"); exit(1)
     if wfile in PIPEOUT: wpipe = True
-    elif not rpipe and os.path.exists(wfile) and os.path.samefile(rfile, wfile): print("Input and wfile files cannot be the same"); exit(1)
+    elif not rpipe and os.path.exists(wfile) and os.path.samefile(rfile, wfile): print('Input and wfile files cannot be the same'); exit(1)
 
     if wfile == '':
         wfrf = os.path.basename(rfile)
@@ -22,10 +22,10 @@ def set_files(rfile: str, wfile: str, profile: int, overwrite: bool) -> tuple[io
 
     if not (wfile.endswith('.frad') or wfile.endswith('.dsin') or wfile.endswith('.fra') or wfile.endswith('.dsn')):
         if profile in profiles.LOSSLESS:
-            if len(wfile) <= 8: wfile = f"{wfile}.fra"
-            else: wfile = f"{wfile}.frad"
-        elif len(wfile) <= 8: wfile = f"{wfile}.dsn"
-        else: wfile = f"{wfile}.dsin"
+            if len(wfile) <= 8: wfile = f'{wfile}.fra'
+            else: wfile = f'{wfile}.frad'
+        elif len(wfile) <= 8: wfile = f'{wfile}.dsn'
+        else: wfile = f'{wfile}.dsin'
 
     check_overwrite(wfile, overwrite)
 
@@ -35,11 +35,11 @@ def set_files(rfile: str, wfile: str, profile: int, overwrite: bool) -> tuple[io
     return readfile, writefile
 
 def encode(input: str, params: CliParams):
-    if input == '': print("Input file must be given"); exit(1)
+    if input == '': print('Input file must be given', file=sys.stderr); exit(1)
 
     encoder = Encoder(params.profile, params.pcm)
-    if params.srate == 0: print("Sample rate should be set except zero"); exit(1)
-    if params.channels == 0: print("Channel count should be set except zero"); exit(1)
+    if params.srate == 0: print('Sample rate should be set except zero', file=sys.stderr); exit(1)
+    if params.channels == 0: print('Channel count should be set except zero', file=sys.stderr); exit(1)
 
     encoder.set_srate(params.srate)
     encoder.set_channels(params.channels)

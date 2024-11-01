@@ -40,12 +40,12 @@ def logging_decode(loglevel: int, procinfo: ProcessInfo, linefeed: bool, asfh: A
 
 def decode(rfile: str, params: CliParams, play: bool):
     wfile_prim = params.output
-    if rfile == '': print('Input file must be given'); exit(1)
+    if rfile == '': print('Input file must be given', file=sys.stderr); exit(1)
 
     rpipe, wpipe = False, False
 
     if rfile in PIPEIN: rpipe = True
-    elif not os.path.exists(rfile): print("Input file doesn't exist"); exit(1)
+    elif not os.path.exists(rfile): print("Input file doesn't exist", file=sys.stderr); exit(1)
     if wfile_prim in PIPEOUT or play: wpipe = True
     elif not (rpipe or play) and os.path.exists(wfile_prim) and os.path.samefile(rfile, wfile_prim): print('Input and Output files cannot be the same'); exit(1)
 

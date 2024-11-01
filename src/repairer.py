@@ -9,14 +9,14 @@ import os, sys
 
 def repair(rfile: str, params: CliParams):
     wfile = params.output
-    if rfile == '': print("Input file must be given"); exit(1)
+    if rfile == '': print('Input file must be given'); exit(1)
 
     rpipe, wpipe = False, False
 
     if rfile in PIPEIN: rpipe = True
     elif not os.path.exists(rfile): print("Input file doesn't exist"); exit(1)
     if wfile in PIPEOUT: wpipe = True
-    elif not rpipe and os.path.exists(wfile) and os.path.samefile(rfile, wfile): print("Input and wfile files cannot be the same"); exit(1)
+    elif not rpipe and os.path.exists(wfile) and os.path.samefile(rfile, wfile): print('Input and wfile files cannot be the same'); exit(1)
 
     if wfile == '':
         wfrf = os.path.basename(rfile).split('.')

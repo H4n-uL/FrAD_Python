@@ -4,8 +4,8 @@ except ImportError: from tools.cli import CliParams, META_ADD, META_OVERWRITE, M
 import json, os, tempfile
 
 def modify(file: str, modtype: str, params: CliParams):
-    if file == '': print("Input file must be given"); exit(1)
-    elif not os.path.exists(file): print("Input file does not exist"); exit(1)
+    if file == '': print('Input file must be given'); exit(1)
+    elif not os.path.exists(file): print('Input file does not exist'); exit(1)
 
     rfile = open(file, 'rb')
     he = rfile.read(64)
@@ -20,10 +20,10 @@ def modify(file: str, modtype: str, params: CliParams):
         json_ = []
         for key, data in meta_old:
             data_str = data.decode('utf-8')
-            itype = "string" if data_str.isascii() else "base64"
-            json_.append({"key": key, "type": itype, "value": data_str})
-        open(f"{file}.json", 'w').write(json.dumps(json_, indent=2))
-        if img_old: open(f"{file}.image", 'wb').write(img_old)
+            itype = 'string' if data_str.isascii() else 'base64'
+            json_.append({'key': key, 'type': itype, 'value': data_str})
+        open(f'{file}.json', 'w').write(json.dumps(json_, indent=2))
+        if img_old: open(f'{file}.image', 'wb').write(img_old)
         return
     
     temp = tempfile.NamedTemporaryFile()
@@ -51,7 +51,7 @@ def modify(file: str, modtype: str, params: CliParams):
         meta_new = params.meta
         img_new = img
 
-    else: print("Invalid modification type."); exit(1)
+    else: print('Invalid modification type.'); exit(1)
 
     head_new = head.builder(meta_new, img_new)
 
