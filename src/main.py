@@ -36,6 +36,6 @@ def main():
     else:
         print('Fourier Analogue-in-Digital Python Master', file=sys.stderr)
         print(f'Abstract syntax: {executable} [encode|decode|repair] <input> [kwargs...]', file=sys.stderr)
-        print(f'type `{executable} help` to get help.', file=sys.stderr)
+        print(f'Type `{executable} help` to get help.', file=sys.stderr)
 
 if __name__ == '__main__': main()
