@@ -69,15 +69,15 @@ def parse(args: list[str]):
     executable = args.pop(0)
     if not args: return ('', '', '', params)
 
-    action = args.pop(0)
+    action = args.pop(0).lower()
     metaaction = ''
     if action in METADATA_OPT:
-        metaaction = args.pop(0) if args else exit(f'Metadata action not specified, type `{executable} help meta` for available options.')
+        metaaction = args.pop(0).lower() if args else exit(f'Metadata action not specified, type `{executable} help meta` for available options.')
     if not args: return (action, '', '', params)
     input_file = args.pop(0)
 
     while args:
-        key = args.pop(0)
+        key = args.pop(0).lower()
 
         if key.startswith('-'):
             key = key[1:]

@@ -3,7 +3,7 @@ import sys
 
 def ff_format_to_numpy_type(x: str) -> np.dtype:
 
-    match x:
+    match x.lower():
         case 'u8': return np.dtype('u1')
         case 'u16be': return np.dtype('>u2')
         case 'u16le': return np.dtype('<u2')
