@@ -1,4 +1,4 @@
-from libfrad import head
+from libfrad import common, head
 try:                from .tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
 except ImportError: from tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
 import json, os, tempfile
@@ -9,7 +9,11 @@ def modify(file: str, modtype: str, params: CliParams):
 
     rfile = open(file, 'rb')
     he = rfile.read(64)
-    head_len = int.from_bytes(he[8:16], 'big')
+    head_len = 0
+    if he[0:4] == common.SIGNATURE: head_len = int.from_bytes(he[8:16], 'big')
+    elif he[0:4] == common.FRM_SIGN: pass
+    else: print('It seems this is not a valid FrAD file.'); exit(1)
+
     rfile.seek(0)
     head_old = rfile.read(head_len)
 
