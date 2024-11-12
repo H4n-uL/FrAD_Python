@@ -56,7 +56,7 @@ def decode(rfile: str, params: CliParams, play: bool):
 
     wfile = f'{wfile_prim}.pcm'
     if not wpipe: check_overwrite(wfile, params.overwrite)
-    
+
     readfile = open(rfile, 'rb') if not rpipe else sys.stdin.buffer
     writefile = open(wfile, 'wb') if not wpipe else sys.stdout.buffer
     if play: params.loglevel = 0

@@ -15,19 +15,19 @@ class ProcessInfo:
 
     def get_duration(self) -> float:
         return sum([v / k for k, v in self.duration.items()])
-    
+
     def get_bitrate(self) -> float:
         total_bits = sum(self.bitrate.values()) * 8
         total_duration = sum([v / k for k, v in self.duration.items()])
         return total_bits / total_duration if total_duration > 0 else 0
-    
+
     def get_speed(self) -> float:
         encoding_time = time.time() - self.start_time
         total_duration = sum([v / k for k, v in self.duration.items()])
         return total_duration / encoding_time if encoding_time > 0 else 0
-    
+
     def get_total_size(self) -> int: return self.total_size
-    
+
     def block(self): self.t_block = time.time()
     def unblock(self):
         if self.t_block is not None:

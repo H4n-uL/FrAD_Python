@@ -49,7 +49,7 @@ class Encoder:
 
     def set_bit_depth(self, bit_depth: int):
         if bit_depth == 0: print("Bit depth cannot be zero", file=sys.stderr); exit(1)
-        if bit_depth not in BIT_DEPTHS[self.asfh.profile]: 
+        if bit_depth not in BIT_DEPTHS[self.asfh.profile]:
             print(f"Invalid bit depth! Valid depths for profile {self.asfh.profile}: {list(filter(lambda x: x != 0, BIT_DEPTHS[self.asfh.profile]))}", file=sys.stderr)
             exit(1)
         self.bit_depth = bit_depth
@@ -81,7 +81,7 @@ class Encoder:
             next_overlap = frame[frame_cutout:]
         self.overlap_fragment = next_overlap
         return frame
-    
+
     def inner(self, stream: bytes, flush: bool) -> bytes:
         self.buffer += stream
         ret = b''
@@ -131,6 +131,6 @@ class Encoder:
             self.procinfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
 
         return ret
-    
+
     def process(self, stream: bytes) -> bytes: return self.inner(stream, False)
     def flush(self) -> bytes: return self.inner(b'', True)

@@ -29,10 +29,10 @@ def modify(file: str, modtype: str, params: CliParams):
         open(f'{file}.json', 'w').write(json.dumps(json_, indent=2))
         if img_old: open(f'{file}.image', 'wb').write(img_old)
         return
-    
+
     temp = tempfile.NamedTemporaryFile()
     temp.write(rfile.read())
-    
+
     img = b''
     if os.path.exists(params.image_path):
         img = open(params.image_path, 'rb').read()

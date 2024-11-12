@@ -51,7 +51,7 @@ class ASFH:
 
     def criteq(self, other: 'ASFH') -> bool:
         return self.channels == other.channels and self.srate == other.srate
-    
+
     def write(self, frad: bytes) -> bytes:
         fhead = FRM_SIGN
 
@@ -76,7 +76,7 @@ class ASFH:
         self.total_bytes = len(frad)
 
         return frad
-    
+
     def force_flush(self) -> bytes:
         fhead = FRM_SIGN
         fhead += b'\x00'*4
@@ -89,7 +89,7 @@ class ASFH:
 
         self.total_bytes = len(fhead)
         return fhead
-    
+
     def fill_buffer(self, buffer: bytes, target_size: int) -> tuple[bool, bytes]:
         if len(self.buffer) < target_size:
             cutout = target_size - len(self.buffer)
@@ -98,7 +98,7 @@ class ASFH:
             if len(self.buffer) < target_size: return False, buffer
         self.header_bytes = target_size
         return True, buffer
-    
+
     def read(self, buffer: bytes) -> tuple[str, bytes]:
         x, buffer = self.fill_buffer(buffer, 9)
         if not x: return 'Incomplete', buffer
@@ -137,7 +137,7 @@ class ASFH:
         self.total_bytes = self.header_bytes + self.frmbytes
         self.all_set = True
         return 'Complete', buffer
-    
+
     def clear(self):
         self.all_set = False
         self.buffer = b''

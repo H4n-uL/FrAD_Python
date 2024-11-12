@@ -38,7 +38,7 @@ class subband:
     @staticmethod
     def mapping_from_opus(mapped_freqs, freqs_shape, srate):
         freqs = np.zeros(freqs_shape)
-        for i in range(subbands-1): 
+        for i in range(subbands-1):
             start = min(subband.get_bin_range(freqs_shape, srate, i).start, len(freqs))
             end = min(subband.get_bin_range(freqs_shape, srate, i+1).start, len(freqs))
             freqs[start:end] = np.linspace(mapped_freqs[i], mapped_freqs[i+1], end-start)

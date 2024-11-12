@@ -19,7 +19,7 @@ packages = [
     "frad",
     "frad.tools",
     "frad.help",
-    
+
     "libfrad",
     "libfrad.backend",
     "libfrad.fourier",

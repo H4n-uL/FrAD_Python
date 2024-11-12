@@ -69,7 +69,7 @@ class Repairer:
                 header_result, self.buffer = self.asfh.read(self.buffer)
                 match header_result:
                     case 'Complete': continue
-                            
+
                     case 'ForceFlush':
                         self.procinfo.update(0, self.olap_len, self.asfh.srate)
                         ret += self.asfh.force_flush()
@@ -79,7 +79,7 @@ class Repairer:
                     case 'Incomplete': break
 
         return ret
-    
+
     def flush(self) -> bytes:
         ret = self.buffer
         self.buffer = b''

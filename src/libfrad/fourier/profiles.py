@@ -6,7 +6,7 @@ class compact:
     @staticmethod
     def get_valid_srate(srate: int) -> int:
         return min([x for x in compact.SRATES if x >= srate])
-    
+
     @staticmethod
     def get_srate_index(srate: int) -> int:
         return compact.SRATES.index(compact.get_valid_srate(srate))

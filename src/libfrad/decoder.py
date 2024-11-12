@@ -90,14 +90,14 @@ class Decoder:
                             if srate or chnl:
                                 ret.append(self.flush().pcm)
                                 crit = True; break
-                            
+
                     case 'ForceFlush':
                         ret.append(self.flush().pcm)
                         break
 
                     case 'Incomplete':
                         break
-        
+
         return DecodeResult(ret, self.asfh.srate, frames, crit)
 
     def flush(self) -> DecodeResult:
