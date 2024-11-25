@@ -46,7 +46,7 @@ class Decoder:
 
     def process(self, stream: bytes) -> DecodeResult:
         self.buffer += stream
-        ret, frames, crit = [], 0, False
+        ret_pcm, frames = [], 0
 
         while True:
             if self.asfh.all_set:
@@ -67,7 +67,7 @@ class Decoder:
                 pcm = self.overlap(pcm)
                 samples = len(pcm)
 
-                ret.append(pcm)
+                ret_pcm.append(pcm)
                 frames += 1
                 self.asfh.clear()
                 self.procinfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
@@ -88,17 +88,17 @@ class Decoder:
                             srate, chnl = self.info.srate, self.info.channels
                             self.info = self.asfh
                             if srate or chnl:
-                                ret.append(self.flush().pcm)
-                                crit = True; break
+                                ret_pcm.append(self.flush().pcm)
+                                return DecodeResult(ret_pcm, srate, frames, True)
 
                     case 'ForceFlush':
-                        ret.append(self.flush().pcm)
+                        ret_pcm.append(self.flush().pcm)
                         break
 
                     case 'Incomplete':
                         break
 
-        return DecodeResult(ret, self.asfh.srate, frames, crit)
+        return DecodeResult(ret_pcm, self.asfh.srate, frames, False)
 
     def flush(self) -> DecodeResult:
         ret = self.overlap_fragment
