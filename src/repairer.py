@@ -1,11 +1,19 @@
 from libfrad import Repairer
 try:
-    from .common import PIPEIN, PIPEOUT, check_overwrite, logging
+    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
     from .tools.cli import CliParams
+    from .tools.process import ProcessInfo
 except ImportError:
-    from common import PIPEIN, PIPEOUT, check_overwrite, logging
+    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
     from tools.cli import CliParams
-import os, sys
+    from tools.process import ProcessInfo
+import os, sys, time
+
+def logging_repair(loglevel: int, log: ProcessInfo, linefeed: bool):
+    if loglevel == 0: return
+    
+    print(f'size={format_si(log.get_total_size())}B speed={format_si(log.get_total_size() / (time.time() - log.start_time))}B/s    ', end='\r', file=sys.stderr)
+    if linefeed: print(file=sys.stderr)
 
 def repair(rfile: str, params: CliParams):
     wfile = params.output
@@ -28,11 +36,18 @@ def repair(rfile: str, params: CliParams):
     writefile = open(wfile, 'wb') if not wpipe else sys.stdout.buffer
 
     repairer = Repairer(params.ecc_ratio)
+    procinfo = ProcessInfo()
+
     while True:
         buf = readfile.read(32768)
         if not buf and repairer.is_empty(): break
 
-        writefile.write(repairer.process(buf))
-        logging(params.loglevel, repairer.procinfo, False)
-    writefile.write(repairer.flush())
-    logging(params.loglevel, repairer.procinfo, True)
+        repaired = repairer.process(buf)
+        procinfo.update(len(repaired), 0, 0)
+        writefile.write(repaired)
+        logging_repair(params.loglevel, procinfo, False)
+
+    repaired = repairer.flush()
+    procinfo.update(len(repaired), 0, 0)
+    writefile.write(repaired)
+    logging_repair(params.loglevel, procinfo, True)

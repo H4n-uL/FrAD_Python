@@ -2,7 +2,6 @@ from . import common
 from .fourier import profiles
 from .tools import ecc
 from .tools.asfh import ASFH
-from .tools.process import ProcessInfo
 import zlib
 import sys
 
@@ -19,7 +18,6 @@ class Repairer:
 
         self.asfh = ASFH()
         self.buffer = b''
-        self.procinfo = ProcessInfo()
 
         self.fix_error = True
         self.olap_len = 0
@@ -36,10 +34,10 @@ class Repairer:
                 if len(self.buffer) < self.asfh.frmbytes: break
                 frad, self.buffer = self.buffer[:self.asfh.frmbytes], self.buffer[self.asfh.frmbytes:]
 
-                samples = 0
-                if self.asfh.overlap_ratio == 0 or self.asfh.profile in profiles.LOSSLESS: samples = self.asfh.fsize
-                else: samples = (self.asfh.fsize * (self.asfh.overlap_ratio - 1)) // self.asfh.overlap_ratio
-                self.olap_len = self.asfh.fsize - samples
+                samples_real = 0
+                if self.asfh.overlap_ratio == 0 or self.asfh.profile in profiles.LOSSLESS: samples_real = self.asfh.fsize
+                else: samples_real = (self.asfh.fsize * (self.asfh.overlap_ratio - 1)) // self.asfh.overlap_ratio
+                self.olap_len = self.asfh.fsize - samples_real
 
                 if self.asfh.ecc:
                     repair = self.fix_error and (
@@ -54,7 +52,6 @@ class Repairer:
 
                 ret += self.asfh.write(frad)
                 self.asfh.clear()
-                self.procinfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
             else:
                 if not self.asfh.buffer[:len(common.FRM_SIGN)] == common.FRM_SIGN:
                     i = self.buffer.find(common.FRM_SIGN)
@@ -71,7 +68,6 @@ class Repairer:
                     case 'Complete': continue
 
                     case 'ForceFlush':
-                        self.procinfo.update(0, self.olap_len, self.asfh.srate)
                         ret += self.asfh.force_flush()
                         self.olap_len = 0
                         break

@@ -1,10 +1,12 @@
-from libfrad import Decoder, ASFH, ProcessInfo, BIT_DEPTHS, ff_format_to_numpy_type
+from libfrad import Decoder, ASFH, BIT_DEPTHS, ff_format_to_numpy_type
 try:
-    from .common import PIPEIN, PIPEOUT, check_overwrite, format_bytes, format_time, format_speed
+    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
     from .tools.cli import CliParams
+    from .tools.process import ProcessInfo
 except ImportError:
-    from common import PIPEIN, PIPEOUT, check_overwrite, format_bytes, format_time, format_speed
+    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
     from tools.cli import CliParams
+    from tools.process import ProcessInfo
 import io, os, sys, time
 import sounddevice as sd
 from typing import BinaryIO
@@ -27,7 +29,7 @@ def logging_decode(loglevel: int, procinfo: ProcessInfo, linefeed: bool, asfh: A
 
     out = []
 
-    out.append(f'size={format_bytes(procinfo.get_total_size())}B time={format_time(procinfo.get_duration())} bitrate={format_bytes(procinfo.get_bitrate())}bits/s speed={format_speed(procinfo.get_speed())}x    ')
+    out.append(f'size={format_si(procinfo.get_total_size())}B time={format_time(procinfo.get_duration())} bitrate={format_si(procinfo.get_bitrate())}bits/s speed={format_speed(procinfo.get_speed())}x    ')
     if loglevel > 1: out.append(f'Profile {asfh.profile}, {BIT_DEPTHS[asfh.profile][asfh.bit_depth_index]}bits {asfh.channels}ch@{asfh.srate}Hz, ECC={"disabled" if not asfh.ecc else f"{asfh.ecc_dsize}/{asfh.ecc_codesize}"}    ')
 
     line_count = len(out) - 1
@@ -63,30 +65,28 @@ def decode(rfile: str, params: CliParams, play: bool):
 
     sink = sd.OutputStream(samplerate=48000, channels=1, dtype='float32')
     params.speed = params.speed if params.speed > 0 else 1.0
-    decoder = Decoder(params.enable_ecc)
     pcm_fmt = ff_format_to_numpy_type(params.pcm)
 
-    frames, no = 0, 0
+    decoder = Decoder(params.enable_ecc)
+    no, procinfo = 0, ProcessInfo()
     while True:
-        bufsize = 32768
-        if frames > 0 and play: bufsize = decoder.procinfo.get_total_size() // frames
-        buf = readfile.read(bufsize)
+        buf = readfile.read(32768)
         if not buf and decoder.is_empty(): break
 
         decoded = decoder.process(buf)
+        procinfo.update(len(buf), len(decoded.pcm), decoder.get_asfh().srate)
         sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, int(decoded.srate * params.speed))
-        logging_decode(params.loglevel, decoder.procinfo, False, decoder.get_asfh())
+        logging_decode(params.loglevel, procinfo, False, decoder.get_asfh())
 
         if decoded.crit and not wpipe:
             no += 1; wfile = f'{wfile_prim}.{no}.pcm'
-            decoder.procinfo.block()
+            procinfo.block()
             check_overwrite(wfile, params.overwrite)
-            decoder.procinfo.unblock()
+            procinfo.unblock()
             writefile = open(wfile, 'wb')
 
-        frames += decoded.frames
-
     decoded = decoder.flush()
+    procinfo.update(0, len(decoded.pcm), decoder.get_asfh().srate)
     sink = write(play, writefile, sink, decoded.pcm, pcm_fmt, int(decoded.srate * params.speed))
-    logging_decode(params.loglevel, decoder.procinfo, True, decoder.get_asfh())
+    logging_decode(params.loglevel, procinfo, True, decoder.get_asfh())
     if play: sink.close()

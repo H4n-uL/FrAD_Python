@@ -4,7 +4,6 @@ from .backend import hanning_in_overlap
 from .fourier import profiles
 from .tools import ecc
 from .tools.asfh import ASFH
-from .tools.process import ProcessInfo
 import zlib
 
 EMPTY = np.array([]).shape
@@ -22,7 +21,6 @@ class Decoder:
         self.info = ASFH()
         self.buffer = b''
         self.overlap_fragment = np.array([])
-        self.procinfo = ProcessInfo()
         self.fix_error = fix_error
 
     def overlap(self, frame: np.ndarray) -> np.ndarray:
@@ -70,7 +68,6 @@ class Decoder:
                 ret_pcm.append(pcm)
                 frames += 1
                 self.asfh.clear()
-                self.procinfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
             else:
                 if not self.asfh.buffer[:len(common.FRM_SIGN)] == common.FRM_SIGN:
                     i = self.buffer.find(common.FRM_SIGN)
@@ -102,7 +99,6 @@ class Decoder:
 
     def flush(self) -> DecodeResult:
         ret = self.overlap_fragment
-        self.procinfo.update(0, len(self.overlap_fragment), self.asfh.srate)
         self.overlap_fragment = np.array([])
         self.asfh.clear()
         return DecodeResult([ret], self.asfh.srate, 0, False)

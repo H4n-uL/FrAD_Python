@@ -5,11 +5,15 @@ from .fourier import AVAILABLE, SEGMAX, BIT_DEPTHS, profiles
 from .fourier.profiles import compact
 from .tools import ecc
 from .tools.asfh import ASFH
-from .tools.process import ProcessInfo
 import sys
 # import random
 
 EMPTY = np.array([]).shape
+
+class EncodeResult:
+    def __init__(self, buf: bytes, samples: int):
+        self.buf = buf
+        self.samples = samples
 
 class Encoder:
     def __init__(self, profile: int, pcm_format: str):
@@ -23,20 +27,22 @@ class Encoder:
         self.fsize = 0
         self.srate = 0
         self.overlap_fragment = np.array([])
-        self.procinfo = ProcessInfo()
 
         self.pcm_format = ff_format_to_numpy_type(pcm_format)
         self.loss_level = 0.5
 
+    def get_channels(self) -> int: return self.channels
     def set_channels(self, channels: int):
         if channels == 0: print("Channel count cannot be zero", file=sys.stderr); exit(1)
         self.channels = channels
 
+    def get_frame_size(self) -> int: return self.fsize
     def set_frame_size(self, frame_size: int):
         if frame_size == 0: print("Frame size cannot be zero", file=sys.stderr); exit(1)
         if frame_size > SEGMAX[self.asfh.profile]: print(f"Samples per frame cannot exceed {SEGMAX[self.asfh.profile]}", file=sys.stderr); exit(1)
         self.fsize = frame_size
 
+    def get_srate(self) -> int: return self.srate
     def set_srate(self, srate: int):
         if srate == 0: print("Sample rate cannot be zero", file=sys.stderr); exit(1)
         if self.asfh.profile in profiles.COMPACT:
@@ -47,6 +53,7 @@ class Encoder:
             srate = x
         self.srate = srate
 
+    def get_bit_depth(self) -> int: return self.bit_depth
     def set_bit_depth(self, bit_depth: int):
         if bit_depth == 0: print("Bit depth cannot be zero", file=sys.stderr); exit(1)
         if bit_depth not in BIT_DEPTHS[self.asfh.profile]:
@@ -82,9 +89,9 @@ class Encoder:
         self.overlap_fragment = next_overlap
         return frame
 
-    def inner(self, stream: bytes, flush: bool) -> bytes:
+    def inner(self, stream: bytes, flush: bool) -> EncodeResult:
         self.buffer += stream
-        ret = b''
+        ret, samples = b'', 0
 
         while True:
             # self.asfh.profile = random.choice(AVAILABLE)
@@ -114,7 +121,7 @@ class Encoder:
             frame = np.frombuffer(pcm_bytes, self.pcm_format).reshape(-1, self.channels)
 
             if frame.size == 0: self.asfh.force_flush(); break
-            samples = len(frame)
+            samples += len(frame)
 
             frame = self.overlap(frame); fsize = len(frame)
             frad, bit_depth_index, channels, srate = None, 0, 0, 0
@@ -128,9 +135,7 @@ class Encoder:
             ret += self.asfh.write(frad)
             if flush: self.asfh.force_flush()
 
-            self.procinfo.update(self.asfh.total_bytes, samples, self.asfh.srate)
+        return EncodeResult(ret, samples)
 
-        return ret
-
-    def process(self, stream: bytes) -> bytes: return self.inner(stream, False)
-    def flush(self) -> bytes: return self.inner(b'', True)
+    def process(self, stream: bytes) -> EncodeResult: return self.inner(stream, False)
+    def flush(self) -> EncodeResult: return self.inner(b'', True)

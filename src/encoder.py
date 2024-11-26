@@ -1,10 +1,12 @@
-from libfrad import Encoder, ProcessInfo, profiles, head
+from libfrad import Encoder, profiles, head
 try:
-    from .common import PIPEIN, PIPEOUT, check_overwrite, logging
+    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
     from .tools.cli import CliParams
+    from .tools.process import ProcessInfo
 except ImportError:
-    from common import PIPEIN, PIPEOUT, check_overwrite, logging
+    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
     from tools.cli import CliParams
+    from tools.process import ProcessInfo
 from typing import BinaryIO
 import io, os, sys
 
@@ -34,6 +36,11 @@ def set_files(rfile: str, wfile: str, profile: int, overwrite: bool) -> tuple[io
 
     return readfile, writefile
 
+def logging_encode(loglevel: int, log: ProcessInfo, linefeed: bool):
+    if loglevel == 0: return
+    print(f'size={format_si(log.get_total_size())}B time={format_time(log.get_duration())} bitrate={format_si(log.get_bitrate())}bits/s speed={format_speed(log.get_speed())}x    ', end='\r', file=sys.stderr)
+    if linefeed: print(file=sys.stderr)
+
 def encode(input: str, params: CliParams):
     if input == '': print('Input file must be given', file=sys.stderr); exit(1)
 
@@ -56,11 +63,17 @@ def encode(input: str, params: CliParams):
     image = open(params.image_path, 'rb').read() if params.image_path != '' and os.path.exists(params.image_path) else b''
     wfile.write(head.builder(params.meta, image))
 
-    encoder.procinfo = ProcessInfo()
+    procinfo = ProcessInfo()
     while True:
         pcm_buf = rfile.read(32768)
         if not pcm_buf: break
-        wfile.write(encoder.process(pcm_buf))
-        logging(params.loglevel, encoder.procinfo, False)
-    wfile.write(encoder.flush())
-    logging(params.loglevel, encoder.procinfo, True)
+
+        encoded = encoder.process(pcm_buf)
+        procinfo.update(len(encoded.buf), encoded.samples, encoder.get_srate())
+        wfile.write(encoded.buf)
+        logging_encode(params.loglevel, procinfo, False)
+
+    encoded = encoder.flush()
+    procinfo.update(len(encoded.buf), encoded.samples, encoder.get_srate())
+    wfile.write(encoded.buf)
+    logging_encode(params.loglevel, procinfo, True)
