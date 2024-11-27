@@ -127,7 +127,7 @@ def parse(args: list[str]):
 
             elif key in ('speed', 'spd'):
                 params.speed = float(args.pop(0))
-            elif key in ('keys', 'key'):
+            elif key in ('keys', 'key', 'k'):
                 params.speed = 2 ** (float(args.pop(0)) / 12)
 
     return (action, metaaction, input_file, params)
