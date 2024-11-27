@@ -10,20 +10,21 @@ class ProcessInfo:
 
     def update(self, size: int, samples: int, srate: int):
         self.total_size += size
+        if srate == 0: return
         self.duration[srate] = self.duration.get(srate, 0) + samples
         self.bitrate[srate] = self.bitrate.get(srate, 0) + size
 
     def get_duration(self) -> float:
-        return sum([v / k for k, v in self.duration.items()])
+        return sum([v / k for k, v in self.duration.items() if k != 0])
 
     def get_bitrate(self) -> float:
         total_bits = sum(self.bitrate.values()) * 8
-        total_duration = sum([v / k for k, v in self.duration.items()])
+        total_duration = self.get_duration()
         return total_bits / total_duration if total_duration > 0 else 0
 
     def get_speed(self) -> float:
         encoding_time = time.time() - self.start_time
-        total_duration = sum([v / k for k, v in self.duration.items()])
+        total_duration = self.get_duration()
         return total_duration / encoding_time if encoding_time > 0 else 0
 
     def get_total_size(self) -> int: return self.total_size
