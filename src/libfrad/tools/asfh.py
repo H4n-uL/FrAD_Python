@@ -37,7 +37,7 @@ def decode_css_prf1(css: bytes) -> tuple[int, int, int, bool]:
 
 class ASFH:
     def __init__(self):
-        self.total_bytes, self.frmbytes = 0, 0
+        self.frmbytes = 0
         self.buffer = b''
         self.all_set = False
         self.header_bytes = 0
@@ -73,7 +73,6 @@ class ASFH:
             fhead += crc32(frad).to_bytes(4, 'big')
 
         frad = fhead + frad
-        self.total_bytes = len(frad)
 
         return frad
 
@@ -87,7 +86,6 @@ class ASFH:
             fhead += b'\x00'
         else: return b''
 
-        self.total_bytes = len(fhead)
         return fhead
 
     def fill_buffer(self, buffer: bytes, target_size: int) -> tuple[bool, bytes]:
@@ -134,7 +132,6 @@ class ASFH:
             if not x: return 'Incomplete', buffer
             self.frmbytes = struct.unpack('>Q', self.buffer[-8:])[0]
 
-        self.total_bytes = self.header_bytes + self.frmbytes
         self.all_set = True
         return 'Complete', buffer
 
