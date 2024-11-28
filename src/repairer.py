@@ -11,7 +11,6 @@ import os, sys, time
 
 def logging_repair(loglevel: int, log: ProcessInfo, linefeed: bool):
     if loglevel == 0: return
-    
     print(f'size={format_si(log.get_total_size())}B speed={format_si(log.get_total_size() / (time.time() - log.start_time))}B/s    ', end='\r', file=sys.stderr)
     if linefeed: print(file=sys.stderr)
 
