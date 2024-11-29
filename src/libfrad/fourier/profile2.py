@@ -14,7 +14,7 @@ def analogue(pcm: np.ndarray, bits: int, srate: int) -> tuple[bytes, int, int, i
     freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * (2**(bits-1))
 
     # Quantisation
-    tns_freqs, lpc = p2tools.tns.analysis(freqs)
+    tns_freqs, lpc = p2tools.tns_analysis(freqs)
 
     # Ravelling and packing
     lpc_bytes = p1tools.exp_golomb_rice_encode(lpc.T.ravel().astype(int))
@@ -42,7 +42,7 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
     freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
 
     # Dequantisation
-    rev_freqs = p2tools.tns.synthesis(freqs, lpc)
+    rev_freqs = p2tools.tns_synthesis(freqs, lpc)
 
     # Inverse DCT and stacking
     return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in rev_freqs]).T) / (2**(bits-1))
