@@ -127,6 +127,7 @@ class Encoder:
             frad, bit_depth_index, channels, srate = None, 0, 0, 0
             match self.asfh.profile:
                 case 1: frad, bit_depth_index, channels, srate = fourier.profile1.analogue(frame, self.bit_depth, self.srate, self.loss_level)
+                case 2: frad, bit_depth_index, channels, srate = fourier.profile2.analogue(frame, self.bit_depth, self.srate)
                 case 4: frad, bit_depth_index, channels, srate = fourier.profile4.analogue(frame, self.bit_depth, self.srate, self.asfh.endian)
                 case _: frad, bit_depth_index, channels, srate = fourier.profile0.analogue(frame, self.bit_depth, self.srate, self.asfh.endian)
 

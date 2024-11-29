@@ -59,6 +59,7 @@ class Decoder:
                 pcm = None
                 match self.asfh.profile:
                     case 1: pcm = fourier.profile1.digital(frad, self.asfh.bit_depth_index, self.asfh.channels, self.asfh.srate, self.asfh.fsize)
+                    case 2: pcm = fourier.profile2.digital(frad, self.asfh.bit_depth_index, self.asfh.channels, self.asfh.srate, self.asfh.fsize)
                     case 4: pcm = fourier.profile4.digital(frad, self.asfh.bit_depth_index, self.asfh.channels, self.asfh.endian)
                     case _: pcm = fourier.profile0.digital(frad, self.asfh.bit_depth_index, self.asfh.channels, self.asfh.endian)
 
