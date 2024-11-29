@@ -17,8 +17,8 @@ def analogue(pcm: np.ndarray, bits: int, srate: int) -> tuple[bytes, int, int, i
     tns_freqs, lpc = p2tools.tns.analysis(freqs)
 
     # Ravelling and packing
-    lpc_bytes = p1tools.exp_golomb_rice_encode(lpc.ravel().astype(int))
-    frad: bytes = p1tools.exp_golomb_rice_encode(tns_freqs.ravel().astype(int))
+    lpc_bytes = p1tools.exp_golomb_rice_encode(lpc.T.ravel().astype(int))
+    frad: bytes = p1tools.exp_golomb_rice_encode(tns_freqs.T.ravel().astype(int))
     frad = struct.pack(f'>I', len(lpc_bytes)) + lpc_bytes + frad
 
     # Deflating
@@ -33,10 +33,10 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
     # Inflating
     frad = zlib.decompress(frad)
     lpclen, frad = struct.unpack(f'>I', frad[:4])[0], frad[4:]
-    lpc, frad = p1tools.exp_golomb_rice_decode(frad[:lpclen]).reshape(channels, -1), frad[lpclen:]
+    lpc, frad = p1tools.exp_golomb_rice_decode(frad[:lpclen]).reshape(-1, channels).T, frad[lpclen:]
 
     # Unpacking
-    freqs: np.ndarray = p1tools.exp_golomb_rice_decode(frad).astype(float).reshape(channels, -1)
+    freqs: np.ndarray = p1tools.exp_golomb_rice_decode(frad).reshape(-1, channels).T.astype(float)
 
     # Removing potential Infinities and Non-numbers
     freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
