@@ -8,11 +8,9 @@ MAX_ORDER = 12
 COEF_RES = 4
 MIN_PRED = np.log10(2) * 20
 
-@staticmethod
 def calc_autocorr(signal):
     return np.correlate(signal, signal, mode='full')[len(signal)-1:len(signal)+MAX_ORDER]
 
-@staticmethod
 def levinson_durbin(autocorr):
     lpc = np.zeros(MAX_ORDER + 1)
     lpc[0] = 1.0
@@ -24,21 +22,17 @@ def levinson_durbin(autocorr):
         error *= 1 - reflection**2
     return lpc
 
-@staticmethod
 def quantise_lpc(lpc):
     scaled_lpc = lpc * ((1<<(COEF_RES-1)) - 1)
     lpcq = np.clip(np.round(scaled_lpc), -(1<<(COEF_RES-1)), (1<<(COEF_RES-1))-1).astype(int)
     return lpcq
 
-@staticmethod
 def dequantise_lpc(lpcq):
     return lpcq.astype(float) / ((1<<(COEF_RES-1)) - 1)
 
-@staticmethod
 def predgain(orig, prc):
     return 10 * np.log10(np.sum(np.abs(orig)**2) / np.sum(np.abs(orig - prc)**2))
 
-@staticmethod
 def tns_analysis(freqs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     tns_freqs = np.zeros_like(freqs)
     lpcqs = []
@@ -55,7 +49,6 @@ def tns_analysis(freqs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     return tns_freqs, np.array(lpcqs)
 
-@staticmethod
 def tns_synthesis(tns_freqs, lpcqs):
     freqs = np.zeros_like(tns_freqs)
     for i in range(len(tns_freqs)):
