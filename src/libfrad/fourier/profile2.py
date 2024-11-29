@@ -11,10 +11,11 @@ def analogue(pcm: np.ndarray, bits: int, srate: int) -> tuple[bytes, int, int, i
     # DCT
     pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES_LI if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
     srate, channels = compact.get_valid_srate(srate), len(pcm[0])
-    freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * (2**(bits-1))
+    freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)])
 
     # Quantisation
     tns_freqs, lpc = p2tools.tns_analysis(freqs)
+    tns_freqs = tns_freqs * 2**(bits-1)
 
     # Ravelling and packing
     lpc_bytes = p1tools.exp_golomb_rice_encode(lpc.T.ravel().astype(int))
@@ -39,10 +40,10 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
     freqs: np.ndarray = p1tools.exp_golomb_rice_decode(frad).reshape(-1, channels).T.astype(float)
 
     # Removing potential Infinities and Non-numbers
-    freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs)
+    freqs = np.where(np.isnan(freqs) | np.isinf(freqs), 0, freqs) / (2**(bits-1))
 
     # Dequantisation
     rev_freqs = p2tools.tns_synthesis(freqs, lpc)
 
     # Inverse DCT and stacking
-    return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in rev_freqs]).T) / (2**(bits-1))
+    return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in rev_freqs]).T)
