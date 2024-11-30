@@ -6,7 +6,6 @@ import struct, zlib
 
 DEPTHS = (8, 9, 10, 11, 12, 14, 16)
 
-@staticmethod
 def analogue(pcm: np.ndarray, bits: int, srate: int) -> tuple[bytes, int, int, int]:
     # DCT
     pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES_LI if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
@@ -27,7 +26,6 @@ def analogue(pcm: np.ndarray, bits: int, srate: int) -> tuple[bytes, int, int, i
 
     return frad, DEPTHS.index(bits), channels, srate
 
-@staticmethod
 def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.ndarray:
     bits = DEPTHS[fb]
 

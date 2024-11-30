@@ -14,7 +14,6 @@ def get_scale_factors(bits: int) -> tuple[float, float]:
 def untrim(arr: np.ndarray, fsize: int, channels: int) -> np.ndarray:
     return np.pad(arr, (0, max(0, (fsize*channels)-len(arr))), 'constant')
 
-@staticmethod
 def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple[bytes, int, int, int]:
     pcm_factor, thres_factor = get_scale_factors(bits)
     # DCT
@@ -47,7 +46,6 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
 
     return frad, DEPTHS.index(bits), channels, srate
 
-@staticmethod
 def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.ndarray:
     bits = DEPTHS[fb]
     pcm_factor, thres_factor = get_scale_factors(bits)
