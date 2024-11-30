@@ -12,37 +12,34 @@ rndint = lambda x: int(x+0.5)
 spread_alpha = 0.8
 quant_alpha = 0.75
 
-class subband:
-    @staticmethod
-    def get_bin_range(dlen: int, srate: int, subband_index: int) -> slice:
-        return slice(rndint(dlen/(srate/2)*MOS[subband_index]), rndint(dlen/(srate/2)*MOS[subband_index+1]))
+def get_bin_range(dlen: int, srate: int, subband_index: int) -> slice:
+    return slice(rndint(dlen/(srate/2)*MOS[subband_index]), rndint(dlen/(srate/2)*MOS[subband_index+1]))
 
-    @staticmethod
-    def mask_thres_mos(freqs: np.ndarray, alpha: float) -> np.ndarray:
-        thres = np.zeros_like(freqs)
-        for i in range(subbands):
-            f = (MOS[i] + MOS[i+1]) / 2
-            ABS = (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))
-            ABS = np.clip(ABS, None, 96)
-            thres[i] = np.maximum(freqs[i]**alpha, 10.0**((ABS-96)/20))
-        return thres
+def mask_thres_mos(freqs: np.ndarray, srate: int, bit_depth: int, alpha: float) -> np.ndarray:
+    freqs = np.abs(freqs)
+    pcm_scale = 1 << (bit_depth-1)
+    thres = np.zeros(subbands)
+    for i in range(subbands):
+        subfreqs = freqs[get_bin_range(len(freqs), srate, i)]
+        if len(subfreqs) == 0: break
 
-    @staticmethod
-    def mapping_to_opus(freqs: np.ndarray, srate):
-        mapped_freqs = np.zeros(subbands)
-        for i in range(subbands):
-            subfreqs = freqs[subband.get_bin_range(len(freqs), srate, i)]
-            if len(subfreqs) > 0: mapped_freqs[i] = np.sqrt(np.mean(subfreqs**2))
-        return mapped_freqs
+        f = (MOS[i] + MOS[i+1]) / 2
+        absolute_hearing_threshold = 10.0**(
+            (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))/20
+        ) / pcm_scale
 
-    @staticmethod
-    def mapping_from_opus(mapped_freqs, freqs_shape, srate):
-        freqs = np.zeros(freqs_shape)
-        for i in range(subbands-1):
-            start = min(subband.get_bin_range(freqs_shape, srate, i).start, len(freqs))
-            end = min(subband.get_bin_range(freqs_shape, srate, i+1).start, len(freqs))
-            freqs[start:end] = np.linspace(mapped_freqs[i], mapped_freqs[i+1], end-start)
-        return freqs
+        subfreqs = np.sqrt(np.mean(subfreqs**2))
+        thres[i] = np.maximum(subfreqs**alpha, np.min((absolute_hearing_threshold, pcm_scale)))
+
+    return thres
+
+def mapping_from_opus(mapped_thres, freqs_len, srate):
+    thres = np.zeros(freqs_len)
+    for i in range(subbands-1):
+        start = min(get_bin_range(freqs_len, srate, i).start, freqs_len)
+        end = min(get_bin_range(freqs_len, srate, i+1).start, freqs_len)
+        thres[start:end] = np.linspace(mapped_thres[i], mapped_thres[i+1], end-start)
+    return thres
 
 def quant(x): return np.sign(x) * np.abs(x)**quant_alpha
 def dequant(x): return np.sign(x) * np.abs(x)**(1/quant_alpha)

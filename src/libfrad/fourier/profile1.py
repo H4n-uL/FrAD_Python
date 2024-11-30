@@ -29,10 +29,9 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
     freqs_masked = []
     thresholds = []
     for c in range(channels):
-        mapping = p1tools.subband.mapping_to_opus(np.abs(freqs[c]), srate)
-        thres = p1tools.subband.mask_thres_mos(mapping, p1tools.spread_alpha) * loss_level
+        thres = p1tools.mask_thres_mos(freqs[c], srate, bits, p1tools.spread_alpha) * loss_level
 
-        div_factor = p1tools.subband.mapping_from_opus(thres, dlen, srate)
+        div_factor = p1tools.mapping_from_opus(thres, dlen, srate)
         chnl_masked = np.array(p1tools.quant(freqs[c] / div_factor))
 
         freqs_masked.append(finite(chnl_masked))
@@ -70,7 +69,7 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
     freqs_masked = freqs_flat.reshape(-1, channels).T
 
     # Dequantisation
-    freqs = np.array([p1tools.dequant(freqs_masked[c]) * p1tools.subband.mapping_from_opus(thresholds[c], fsize, srate) for c in range(channels)])
+    freqs = np.array([p1tools.dequant(freqs_masked[c]) * p1tools.mapping_from_opus(thresholds[c], fsize, srate) for c in range(channels)])
 
     # Inverse DCT and stacking
     return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T) / pcm_factor
