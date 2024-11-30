@@ -11,9 +11,6 @@ def get_scale_factors(bits: int) -> tuple[float, float]:
     thres_factor = np.sqrt(3)**(16-bits)
     return pcm_factor, thres_factor
 
-def finite(arr: np.ndarray) -> np.ndarray:
-    return np.where(np.isnan(arr) | np.isinf(arr), 0, arr)
-
 def untrim(arr: np.ndarray, fsize: int, channels: int) -> np.ndarray:
     return np.pad(arr, (0, max(0, (fsize*channels)-len(arr))), 'constant')
 
@@ -29,19 +26,19 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
     freqs_masked = []
     thresholds = []
     for c in range(channels):
-        thres = p1tools.mask_thres_mos(freqs[c], srate, bits, p1tools.spread_alpha) * loss_level
+        thres_channel, thres_divisor = p1tools.mask_thres_mos(freqs[c], srate, bits, loss_level, p1tools.spread_alpha)
+        div_factor = p1tools.mapping_from_opus(thres_divisor, dlen, srate)
+        div_factor = np.where(div_factor == 0, np.inf, div_factor)
 
-        div_factor = p1tools.mapping_from_opus(thres, dlen, srate)
-        chnl_masked = np.array(p1tools.quant(freqs[c] / div_factor))
+        freqs_masked.append(freqs[c] / div_factor)
+        thresholds.append(thres_channel)
 
-        freqs_masked.append(finite(chnl_masked))
-        thresholds.append(finite(thres * thres_factor))
-
-    freqs, thres = np.array(freqs_masked).round().astype(int), np.array(thresholds).round().astype(int)
+    freqs_flat = p1tools.quant(np.array(freqs_masked)).round().astype(int).T.ravel()
+    thres_flat = p1tools.quant(np.array(thresholds) * thres_factor).round().astype(int).T.ravel()
 
     # Ravelling and packing
-    thres_gol = p1tools.exp_golomb_rice_encode(thres.T.ravel())
-    freqs_gol = p1tools.exp_golomb_rice_encode(freqs.T.ravel())
+    thres_gol = p1tools.exp_golomb_rice_encode(thres_flat)
+    freqs_gol = p1tools.exp_golomb_rice_encode(freqs_flat)
     frad = struct.pack(f'>I', len(thres_gol)) + thres_gol + freqs_gol
     # frad = frad[:(4 + len(thres_gol) + int(len(freqs_gol) * 0.75))]
 
@@ -62,14 +59,16 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
     thres_gol, frad = frad[:thresbytes], frad[thresbytes:]
 
     # Unpacking and unravelling
-    thres_flat = untrim(p1tools.exp_golomb_rice_decode(thres_gol).astype(float) / thres_factor, fsize, channels)
-    freqs_flat = untrim(p1tools.exp_golomb_rice_decode(frad).astype(float), fsize, channels)
+    freqs_flat = p1tools.dequant(p1tools.exp_golomb_rice_decode(frad).astype(float))
+    thres_flat = p1tools.dequant(p1tools.exp_golomb_rice_decode(thres_gol).astype(float)) / thres_factor
+    freqs_flat = untrim(freqs_flat, fsize, channels)
+    thres_flat = untrim(thres_flat, fsize, channels)
 
     thresholds = thres_flat.reshape(-1, channels).T
     freqs_masked = freqs_flat.reshape(-1, channels).T
 
     # Dequantisation
-    freqs = np.array([p1tools.dequant(freqs_masked[c]) * p1tools.mapping_from_opus(thresholds[c], fsize, srate) for c in range(channels)])
+    freqs = np.array([freqs_masked[c] * p1tools.mapping_from_opus(thresholds[c], fsize, srate) for c in range(channels)])
 
     # Inverse DCT and stacking
     return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T) / pcm_factor
