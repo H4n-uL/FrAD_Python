@@ -25,8 +25,8 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
     freqs_masked = []
     thresholds = []
     for c in range(channels):
-        thres_channel, thres_divisor = p1tools.mask_thres_mos(freqs[c], srate, bits, loss_level, p1tools.spread_alpha)
-        div_factor = p1tools.mapping_from_opus(thres_divisor, dlen, srate)
+        thres_channel = p1tools.mask_thres_mos(freqs[c], srate, bits, loss_level, p1tools.spread_alpha)
+        div_factor = p1tools.mapping_from_opus(thres_channel, dlen, srate)
         div_factor = np.where(div_factor == 0, np.inf, div_factor)
 
         freqs_masked.append(freqs[c] / div_factor)
