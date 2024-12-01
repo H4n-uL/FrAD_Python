@@ -2,7 +2,14 @@ import numpy as np
 
 DEPTHS = (12, 16, 24, 32, 48, 64)
 DTYPES = {128:'f16',64:'f8',48:'f8',32:'f4',24:'f4',16:'f2',12:'f2'}
-FLOAT_DR = {12: 5, 16: 5, 24: 8, 32: 8, 48: 11, 64: 11, 128: 15}
+FLOAT_DR = (
+    np.finfo('f2').max,
+    np.finfo('f2').max,
+    np.finfo('f4').max,
+    np.finfo('f4').max,
+    np.finfo('f8').max,
+    np.finfo('f8').max
+)
 
 def analogue(pcm: np.ndarray, bits: int, srate: int, little_endian: bool) -> tuple[bytes, int, int, int]:
     be = not little_endian
@@ -10,7 +17,7 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, little_endian: bool) -> tup
     channels = len(pcm[0])
 
     # Overflow check & Increasing bit depth
-    while np.max(np.abs(pcm)) > 2**(2**FLOAT_DR[bits]):
+    while np.max(np.abs(pcm)) > FLOAT_DR[DEPTHS.index(bits)]:
         if bits == 128: raise Exception('Overflow with reaching the max bit depth.')
         bits = {12:16, 16:24, 24:32, 32:48, 48:64, 64:128}.get(bits, 128)
 
