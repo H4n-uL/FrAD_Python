@@ -1,6 +1,6 @@
 import numpy as np
 from . import fourier
-from .backend.pcmformat import ff_format_to_numpy_type
+from .backend.pcmformat import ff_format_to_numpy_type, to_f64
 from .fourier import AVAILABLE, SEGMAX, BIT_DEPTHS, profiles
 from .fourier.profiles import compact
 from .tools import ecc
@@ -120,6 +120,7 @@ class Encoder:
 
             pcm_bytes, self.buffer = self.buffer[:read_bytes], self.buffer[read_bytes:]
             frame = np.frombuffer(pcm_bytes, self.pcm_format).reshape(-1, self.channels)
+            frame = to_f64(frame, self.pcm_format)
 
             if frame.size == 0: self.asfh.force_flush(); break
             samples += len(frame)

@@ -30,3 +30,33 @@ def ff_format_to_numpy_type(x: str) -> np.dtype:
         case _:
             print(f'Invalid format: {x}', file=sys.stderr)
             exit(1)
+
+def to_f64(pcm: np.ndarray, pcm_format: np.dtype) -> np.ndarray:
+    if pcm_format in [np.float16, np.float32, np.float64]: return pcm
+
+    if pcm_format == np.int8: pcm = pcm.astype(np.float64) / 128
+    if pcm_format == np.int16: pcm = pcm.astype(np.float64) / 32768
+    if pcm_format == np.int32: pcm = pcm.astype(np.float64) / 2147483648
+    if pcm_format == np.int64: pcm = pcm.astype(np.float64) / 9223372036854775808
+
+    if pcm_format == np.uint8: pcm = (pcm.astype(np.float64) / 128) - 1
+    if pcm_format == np.uint16: pcm = (pcm.astype(np.float64) / 32768) - 1
+    if pcm_format == np.uint32: pcm = (pcm.astype(np.float64) / 2147483648) - 1
+    if pcm_format == np.uint64: pcm = (pcm.astype(np.float64) / 9223372036854775808) - 1
+
+    return pcm
+
+def from_f64(pcm: np.ndarray, pcm_format: np.dtype) -> np.ndarray:
+    if pcm_format in [np.float16, np.float32, np.float64]: return pcm
+
+    if pcm_format == np.int8: pcm = (pcm * 128).astype(np.int8)
+    if pcm_format == np.int16: pcm = (pcm * 32768).astype(np.int16)
+    if pcm_format == np.int32: pcm = (pcm * 2147483648).astype(np.int32)
+    if pcm_format == np.int64: pcm = (pcm * 9223372036854775808).astype(np.int64)
+
+    if pcm_format == np.uint8: pcm = ((pcm + 1) * 128).astype(np.uint8)
+    if pcm_format == np.uint16: pcm = ((pcm + 1) * 32768).astype(np.uint16)
+    if pcm_format == np.uint32: pcm = ((pcm + 1) * 2147483648).astype(np.uint32)
+    if pcm_format == np.uint64: pcm = ((pcm + 1) * 9223372036854775808).astype(np.uint64)
+
+    return pcm

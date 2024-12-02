@@ -1,4 +1,4 @@
-from libfrad import Decoder, ASFH, BIT_DEPTHS, ff_format_to_numpy_type
+from libfrad import Decoder, ASFH, BIT_DEPTHS, ff_format_to_numpy_type, from_f64
 try:
     from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
     from .tools.cli import CliParams
@@ -20,7 +20,7 @@ def write(play: bool, writefile: io.BufferedWriter | BinaryIO, sink: sd.OutputSt
         if sink.samplerate != srate or sink.channels != len(pcm[0]):
             sink.close(); sink = sd.OutputStream(samplerate=srate, channels=len(pcm[0]), dtype='float32'); sink.start()
         sink.write(pcm.astype('float32'))
-    else: writefile.write(pcm.astype(fmt).tobytes())
+    else: writefile.write(from_f64(pcm, fmt).astype(fmt).tobytes())
 
     return sink
 
