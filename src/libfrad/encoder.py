@@ -94,24 +94,26 @@ class Encoder:
         ret, samples = b'', 0
 
         while True:
-            # self.asfh.profile = random.choice(AVAILABLE)
-            # self.bit_depth = random.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[self.asfh.profile])))
+            # rng = random.Random()
+            # self.asfh.profile = rng.choice(AVAILABLE)
+            # self.bit_depth = rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[self.asfh.profile])))
             # self.set_frame_size(
-            #     random.choice(compact.SAMPLES_LI) if self.asfh.profile in profiles.COMPACT
-            #     else random.randint(128, 32768)
+            #     rng.choice(compact.SAMPLES_LI) if self.asfh.profile in profiles.COMPACT
+            #     else rng.randint(128, 32768)
             # )
-            # self.set_loss_level(random.uniform(0.125, 10.0))
-            # ecc_data = random.randint(1, 255)
-            # self.set_ecc(random.random() < 0.5, (ecc_data, random.randint(0, 255 - ecc_data)))
-            # self.set_overlap_ratio(random.randint(2, 256))
+            # self.set_loss_level(rng.uniform(0.125, 10.0))
+            # ecc_data = rng.randint(1, 255)
+            # self.set_ecc(rng.random() < 0.5, (ecc_data, rng.randint(0, 255 - ecc_data)))
+            # self.set_overlap_ratio(rng.randint(2, 256))
 
             rlen = self.fsize
             if self.asfh.profile in profiles.COMPACT:
                 li_val = min(filter(lambda x: x >= self.fsize, compact.SAMPLES_LI))
-                if li_val < len(self.overlap_fragment):
-                    rlen = min(filter(lambda x: x >= len(self.overlap_fragment), compact.SAMPLES_LI)) - len(self.overlap_fragment)
+                if li_val <= len(self.overlap_fragment):
+                    rlen = min(filter(lambda x: x > len(self.overlap_fragment), compact.SAMPLES_LI)) - len(self.overlap_fragment)
                 else:
                     rlen = li_val - len(self.overlap_fragment)
+            print(self.get_frame_size(), rlen, file=sys.stderr)
 
             bytes_per_sample = self.pcm_format.itemsize
             read_bytes = rlen * self.channels * bytes_per_sample
