@@ -17,5 +17,15 @@ class compact:
     def get_samples_from_value(key: int) -> int:
         return [k for k, v in compact.SAMPLES.items() if key in v][0]
 
-    SAMPLES_LI = tuple([item for sublist in SAMPLES.values() for item in sublist])
+    SAMPLES_LI = [
+          128,   144,   192,
+          256,   288,   384,
+          512,   576,   768,
+         1024,  1152,  1536,
+         2048,  2304,  3072,
+         4096,  4608,  6144,
+         8192,  9216, 12288,
+        16384, 18432, 24576
+    ]
+
     MAX_SMPL = max(SAMPLES_LI)
