@@ -113,7 +113,6 @@ class Encoder:
                     rlen = min(filter(lambda x: x > len(self.overlap_fragment), compact.SAMPLES_LI)) - len(self.overlap_fragment)
                 else:
                     rlen = li_val - len(self.overlap_fragment)
-            print(self.get_frame_size(), rlen, file=sys.stderr)
 
             bytes_per_sample = self.pcm_format.itemsize
             read_bytes = rlen * self.channels * bytes_per_sample
