@@ -122,7 +122,7 @@ class Encoder:
             frame = np.frombuffer(pcm_bytes, self.pcm_format).reshape(-1, self.channels)
             frame = to_f64(frame, self.pcm_format)
 
-            if frame.size == 0: self.asfh.force_flush(); break
+            if frame.size == 0: ret += self.asfh.force_flush(); break
             samples += len(frame)
 
             frame = self.overlap(frame); fsize = len(frame)
@@ -136,7 +136,7 @@ class Encoder:
             if self.asfh.ecc: frad = ecc.encode(frad, self.asfh.ecc_dsize, self.asfh.ecc_codesize)
             self.asfh.bit_depth_index, self.asfh.channels, self.asfh.fsize, self.asfh.srate = bit_depth_index, channels, fsize, srate
             ret += self.asfh.write(frad)
-            if flush: self.asfh.force_flush()
+            if flush: ret += self.asfh.force_flush()
 
         return EncodeResult(ret, samples)
 
