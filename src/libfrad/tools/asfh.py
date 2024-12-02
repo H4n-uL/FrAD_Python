@@ -82,7 +82,9 @@ class ASFH:
         fhead += encode_pfb(self.profile, self.ecc, self.endian, self.bit_depth_index)
 
         if self.profile in COMPACT:
-            fhead += encode_css_prf1(1, 96000, 128, True)
+            channels = 1
+            if self.channels > 1: channels = self.channels
+            fhead += encode_css_prf1(channels, self.srate, self.fsize, True)
             fhead += b'\x00'
         else: return b''
 
