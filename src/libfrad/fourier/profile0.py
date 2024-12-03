@@ -12,6 +12,7 @@ FLOAT_DR = (
     np.finfo('f8').max
 )
 def analogue(pcm: np.ndarray, bits: int, srate: int, little_endian: bool) -> tuple[bytes, int, int, int]:
+    if bits not in DEPTHS: bits = 16
     be = not little_endian
     endian = be and '>' or '<'
 

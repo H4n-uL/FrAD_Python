@@ -31,6 +31,11 @@ class Encoder:
         self.pcm_format = ff_format_to_numpy_type(pcm_format)
         self.loss_level = 0.5
 
+    def _set_profile(self, profile: int):
+        if profile not in AVAILABLE: print(f"Invalid profile! Available: {AVAILABLE}", file=sys.stderr); exit(1)
+        self.asfh.profile = profile
+        self.bit_depth = 0
+
     def get_channels(self) -> int: return self.channels
     def set_channels(self, channels: int):
         if channels == 0: print("Channel count cannot be zero", file=sys.stderr); exit(1)
@@ -50,7 +55,7 @@ class Encoder:
             if x != srate:
                 print(f"Invalid sample rate! Valid rates for profile {self.asfh.profile}: {compact.SRATES}", file=sys.stderr)
                 print(f"Auto-adjusting to: {x}", file=sys.stderr)
-            srate = x
+                srate = x
         self.srate = srate
 
     def get_bit_depth(self) -> int: return self.bit_depth
@@ -63,12 +68,10 @@ class Encoder:
 
     def set_ecc(self, ecc: bool, ecc_ratio: tuple[int, int]):
         self.asfh.ecc = ecc
-        if ecc_ratio[0] == 0:
-            print("ECC data size must not be zero", file=sys.stderr)
-            print("Setting ECC to default 96 24", file=sys.stderr)
-            ecc_ratio = (96, 24)
-        if ecc_ratio[0] + ecc_ratio[1] > 255:
-            print(f"ECC data size and check size must not exceed 255, given: {ecc_ratio[0]} and {ecc_ratio[1]}", file=sys.stderr)
+        dsize_zero, exceed_255 = ecc_ratio[0] == 0, ecc_ratio[0] + ecc_ratio[1] > 255
+        if dsize_zero or exceed_255:
+            if dsize_zero: print("ECC data size must not be zero", file=sys.stderr)
+            if exceed_255: print(f"ECC data size and check size must not exceed 255, given: {ecc_ratio[0]} and {ecc_ratio[1]}", file=sys.stderr)
             print("Setting ECC to default 96 24", file=sys.stderr)
             ecc_ratio = (96, 24)
         self.asfh.ecc_dsize, self.asfh.ecc_codesize = ecc_ratio
@@ -93,10 +96,13 @@ class Encoder:
         self.buffer += stream
         ret, samples = b'', 0
 
+        if self.channels == 0 or self.srate == 0:
+            return EncodeResult(ret, samples)
+
         while True:
             # rng = random.Random()
-            # self.asfh.profile = rng.choice(AVAILABLE)
-            # self.bit_depth = rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[self.asfh.profile])))
+            # self._set_profile(rng.choice(AVAILABLE))
+            # self.set_bit_depth(rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[self.asfh.profile]))))
             # self.set_frame_size(
             #     rng.choice(compact.SAMPLES_LI) if self.asfh.profile in profiles.COMPACT
             #     else rng.randint(128, 32768)

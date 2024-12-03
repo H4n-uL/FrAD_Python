@@ -15,6 +15,7 @@ def untrim(arr: np.ndarray, fsize: int, channels: int) -> np.ndarray:
     return np.pad(arr, (0, max(0, (fsize*channels)-len(arr))), 'constant')
 
 def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple[bytes, int, int, int]:
+    if bits not in DEPTHS: bits = 16
     pcm_factor, thres_factor = get_scale_factors(bits)
     # DCT
     pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES_LI if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
