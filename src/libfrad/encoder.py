@@ -31,11 +31,14 @@ class Encoder:
         self.pcm_format = ff_format_to_numpy_type(pcm_format)
         self.loss_level = 0.5
 
-    def _set_profile(self, profile: int):
+    def _set_profile(self, profile: int, srate: int, channels: int, bit_depth: int, frame_size: int):
         if profile not in AVAILABLE: print(f"Invalid profile! Available: {AVAILABLE}", file=sys.stderr); exit(1)
+
         self.asfh.profile = profile
-        self.bit_depth = 0
-        self.fsize = 0
+        self.set_srate(srate)
+        self.set_channels(channels)
+        self.set_bit_depth(bit_depth)
+        self.set_frame_size(frame_size)
 
     def get_channels(self) -> int: return self.channels
     def set_channels(self, channels: int):
@@ -102,11 +105,10 @@ class Encoder:
 
         while True:
             # rng = random.Random()
-            # self._set_profile(rng.choice(AVAILABLE))
-            # self.set_bit_depth(rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[self.asfh.profile]))))
-            # self.set_frame_size(
-            #     rng.choice(compact.SAMPLES_LI) if self.asfh.profile in profiles.COMPACT
-            #     else rng.randint(128, 32768)
+            # prf = rng.choice(AVAILABLE)
+            # self._set_profile(prf, self.srate, self.channels,
+            #     rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[prf]))),
+            #     rng.choice(compact.SAMPLES_LI) if prf in profiles.COMPACT else rng.randint(128, 32768)
             # )
             # self.set_loss_level(rng.uniform(0.125, 10.0))
             # ecc_data = rng.randint(1, 255)
