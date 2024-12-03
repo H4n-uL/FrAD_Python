@@ -20,7 +20,6 @@ class Repairer:
         self.buffer = b''
 
         self.fix_error = True
-        self.olap_len = 0
         self.ecc_ratio = ecc_ratio
         self.broken_frame = False
 
@@ -37,11 +36,6 @@ class Repairer:
                 self.broken_frame = False
                 if len(self.buffer) < self.asfh.frmbytes: break
                 frad, self.buffer = self.buffer[:self.asfh.frmbytes], self.buffer[self.asfh.frmbytes:]
-
-                samples_real = 0
-                if self.asfh.overlap_ratio == 0 or self.asfh.profile in profiles.LOSSLESS: samples_real = self.asfh.fsize
-                else: samples_real = (self.asfh.fsize * (self.asfh.overlap_ratio - 1)) // self.asfh.overlap_ratio
-                self.olap_len = self.asfh.fsize - samples_real
 
                 if self.asfh.ecc:
                     repair = self.fix_error and (
@@ -70,12 +64,7 @@ class Repairer:
                 header_result, self.buffer = self.asfh.read(self.buffer)
                 match header_result:
                     case 'Complete': continue
-
-                    case 'ForceFlush':
-                        ret += self.asfh.force_flush()
-                        self.olap_len = 0
-                        break
-
+                    case 'ForceFlush': ret += self.asfh.force_flush();  break
                     case 'Incomplete': break
 
         return ret
