@@ -22,15 +22,19 @@ class Repairer:
         self.fix_error = True
         self.olap_len = 0
         self.ecc_ratio = ecc_ratio
+        self.broken_frame = False
 
-    def is_empty(self) -> bool: return len(self.buffer) < len(common.FRM_SIGN)
+    def is_empty(self) -> bool: return len(self.buffer) < len(common.FRM_SIGN) or self.broken_frame
 
     def process(self, stream: bytes) -> bytes:
+        stream_empty = len(stream) == 0
         self.buffer += stream
         ret = b''
 
         while True:
             if self.asfh.all_set:
+                if stream_empty: self.broken_frame = True; break
+                self.broken_frame = False
                 if len(self.buffer) < self.asfh.frmbytes: break
                 frad, self.buffer = self.buffer[:self.asfh.frmbytes], self.buffer[self.asfh.frmbytes:]
 

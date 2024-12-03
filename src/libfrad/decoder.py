@@ -14,6 +14,7 @@ class DecodeResult:
         self.srate = srate
         self.frames = frames
         self.crit = crit
+        self.broken_frame = False
 
 class Decoder:
     def __init__(self, fix_error: bool = False):
@@ -39,15 +40,18 @@ class Decoder:
         self.overlap_fragment = next_overlap
         return frame
 
-    def is_empty(self) -> bool: return len(self.buffer) < len(common.FRM_SIGN)
+    def is_empty(self) -> bool: return len(self.buffer) < len(common.FRM_SIGN) or self.broken_frame
     def get_asfh(self) -> ASFH: return self.asfh
 
     def process(self, stream: bytes) -> DecodeResult:
+        stream_empty = len(stream) == 0
         self.buffer += stream
         ret_pcm, frames = [], 0
 
         while True:
             if self.asfh.all_set:
+                if stream_empty: self.broken_frame = True; break
+                self.broken_frame = False
                 if len(self.buffer) < self.asfh.frmbytes: break
                 frad, self.buffer = self.buffer[:self.asfh.frmbytes], self.buffer[self.asfh.frmbytes:]
                 if self.asfh.ecc:
