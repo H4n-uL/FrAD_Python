@@ -35,17 +35,12 @@ class Encoder:
         if profile not in AVAILABLE: print(f"Invalid profile! Available: {AVAILABLE}", file=sys.stderr); exit(1)
         self.asfh.profile = profile
         self.bit_depth = 0
+        self.fsize = 0
 
     def get_channels(self) -> int: return self.channels
     def set_channels(self, channels: int):
         if channels == 0: print("Channel count cannot be zero", file=sys.stderr); exit(1)
         self.channels = channels
-
-    def get_frame_size(self) -> int: return self.fsize
-    def set_frame_size(self, frame_size: int):
-        if frame_size == 0: print("Frame size cannot be zero", file=sys.stderr); exit(1)
-        if frame_size > SEGMAX[self.asfh.profile]: print(f"Samples per frame cannot exceed {SEGMAX[self.asfh.profile]}", file=sys.stderr); exit(1)
-        self.fsize = frame_size
 
     def get_srate(self) -> int: return self.srate
     def set_srate(self, srate: int):
@@ -57,6 +52,12 @@ class Encoder:
                 print(f"Auto-adjusting to: {x}", file=sys.stderr)
                 srate = x
         self.srate = srate
+
+    def get_frame_size(self) -> int: return self.fsize
+    def set_frame_size(self, frame_size: int):
+        if frame_size == 0: print("Frame size cannot be zero", file=sys.stderr); exit(1)
+        if frame_size > SEGMAX[self.asfh.profile]: print(f"Samples per frame cannot exceed {SEGMAX[self.asfh.profile]}", file=sys.stderr); exit(1)
+        self.fsize = frame_size
 
     def get_bit_depth(self) -> int: return self.bit_depth
     def set_bit_depth(self, bit_depth: int):
@@ -96,7 +97,7 @@ class Encoder:
         self.buffer += stream
         ret, samples = b'', 0
 
-        if self.channels == 0 or self.srate == 0:
+        if self.channels == 0 or self.srate == 0 or self.fsize == 0:
             return EncodeResult(ret, samples)
 
         while True:
