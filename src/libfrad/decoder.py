@@ -44,13 +44,12 @@ class Decoder:
     def get_asfh(self) -> ASFH: return self.asfh
 
     def process(self, stream: bytes) -> DecodeResult:
-        stream_empty = len(stream) == 0
         self.buffer += stream
         ret_pcm, frames = [], 0
 
         while True:
             if self.asfh.all_set:
-                if stream_empty: self.broken_frame = True; break
+                if len(stream) == 0: self.broken_frame = True; break
                 self.broken_frame = False
                 if len(self.buffer) < self.asfh.frmbytes: break
                 frad, self.buffer = self.buffer[:self.asfh.frmbytes], self.buffer[self.asfh.frmbytes:]
