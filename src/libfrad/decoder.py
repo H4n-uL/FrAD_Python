@@ -14,7 +14,6 @@ class DecodeResult:
         self.srate = srate
         self.frames = frames
         self.crit = crit
-        self.broken_frame = False
 
 class Decoder:
     def __init__(self, fix_error: bool = False):
@@ -23,6 +22,7 @@ class Decoder:
         self.buffer = b''
         self.overlap_fragment = np.array([])
         self.fix_error = fix_error
+        self.broken_frame = False
 
     def overlap(self, frame: np.ndarray) -> np.ndarray:
         if self.overlap_fragment.shape != EMPTY:
@@ -67,7 +67,6 @@ class Decoder:
                     case _: pcm = fourier.profile0.digital(frad, self.asfh.bit_depth_index, self.asfh.channels, self.asfh.endian)
 
                 pcm = self.overlap(pcm)
-                samples = len(pcm)
 
                 ret_pcm.append(pcm)
                 frames += 1
