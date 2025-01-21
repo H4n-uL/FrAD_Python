@@ -29,7 +29,7 @@ def logging_decode(loglevel: int, procinfo: ProcessInfo, linefeed: bool, asfh: A
 
     out = []
 
-    out.append(f'size={format_si(procinfo.get_total_size())}B time={format_time(procinfo.get_duration())} bitrate={format_si(procinfo.get_bitrate())}bits/s speed={format_speed(procinfo.get_speed())}x    ')
+    out.append(f'size={format_si(procinfo.get_total_size())}B time={format_time(procinfo.get_duration())} bitrate={format_si(procinfo.get_bitrate())}bit/s speed={format_speed(procinfo.get_speed())}x    ')
     if loglevel > 1: out.append(f'Profile {asfh.profile}, {BIT_DEPTHS[asfh.profile][asfh.bit_depth_index]}bits {asfh.channels}ch@{asfh.srate}Hz, ECC={"disabled" if not asfh.ecc else f"{asfh.ecc_dsize}/{asfh.ecc_codesize}"}    ')
 
     line_count = len(out) - 1

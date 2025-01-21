@@ -38,7 +38,7 @@ def set_files(rfile: str, wfile: str, profile: int, overwrite: bool) -> tuple[io
 
 def logging_encode(loglevel: int, log: ProcessInfo, linefeed: bool):
     if loglevel == 0: return
-    print(f'size={format_si(log.get_total_size())}B time={format_time(log.get_duration())} bitrate={format_si(log.get_bitrate())}bits/s speed={format_speed(log.get_speed())}x    ', end='\r', file=sys.stderr)
+    print(f'size={format_si(log.get_total_size())}B time={format_time(log.get_duration())} bitrate={format_si(log.get_bitrate())}bit/s speed={format_speed(log.get_speed())}x    ', end='\r', file=sys.stderr)
     if linefeed: print(file=sys.stderr)
 
 def encode(input: str, params: CliParams):
