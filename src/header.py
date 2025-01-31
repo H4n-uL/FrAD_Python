@@ -1,7 +1,11 @@
 from libfrad import common, head
-try:                from .tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
-except ImportError: from tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
-import json, os, tempfile
+try:
+    from .tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
+    from .common import get_file_stem
+except ImportError:
+    from tools.cli import CliParams, META_ADD, META_OVERWRITE, META_PARSE, META_REMOVE, META_RMIMG
+    from common import get_file_stem
+import base64, filetype, json, os, tempfile
 
 def modify(file: str, modtype: str, params: CliParams):
     if file == '': print('Input file must be given'); exit(1)
@@ -21,13 +25,19 @@ def modify(file: str, modtype: str, params: CliParams):
     meta_new, img_new = [], b''
 
     if modtype == META_PARSE:
-        json_ = []
+        json_list = []
         for key, data in meta_old:
-            data_str = data.decode('utf-8')
-            itype = 'string' if data_str.isascii() else 'base64'
-            json_.append({'key': key, 'type': itype, 'value': data_str})
-        open(f'{file}.json', 'w').write(json.dumps(json_, indent=2))
-        if img_old: open(f'{file}.image', 'wb').write(img_old)
+            try: data_str, itype = data.decode('utf-8'), 'string'
+            except: data_str, itype = base64.b64encode(data).decode('utf-8'), 'base64'
+            json_list.append({'key': key, 'type': itype, 'value': data_str})
+
+        wfile = get_file_stem(file)
+
+        open(f'{wfile}.json', 'w').write(json.dumps(json_list, ensure_ascii=False, indent=2))
+        if img_old:
+            try: ext = filetype.guess_extension(img_old)
+            except: ext = 'image'
+            open(f'{wfile}.{ext}', 'wb').write(img_old)
         return
 
     temp = tempfile.NamedTemporaryFile()
