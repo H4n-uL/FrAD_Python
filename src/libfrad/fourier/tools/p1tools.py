@@ -51,9 +51,9 @@ def exp_golomb_rice_encode(data: np.ndarray):
     k = dmax and int(np.ceil(np.log2(dmax))) or 0
     encoded = ''
     for n in data:
-        n = (n>0) and (2*n-1) or (-2*n)
-        binary_code = bin(n + 2**k)[2:]
-        m = len(binary_code) - (k+1)
+        n = ((n << 1) - 1) if (n > 0) else (-n << 1)
+        binary_code = bin(n + (1 << k))[2:]
+        m = len(binary_code) - (k + 1)
         encoded += ('0' * m + binary_code)
 
     return struct.pack('B', k) + bitstr2bytes(encoded)
@@ -66,8 +66,8 @@ def exp_golomb_rice_decode(dbytes: bytes):
         try: m = data.index('1')
         except: break
 
-        codeword, data = data[:(m*2)+k+1], data[(m*2)+k+1:]
-        n = int(codeword, 2) - 2**k
-        decoded.append((n+1)//2 if n%2==1 else -n//2)
+        codeword, data = data[:(m * 2) + k + 1], data[(m * 2) + k + 1:]
+        n = int(codeword, 2) - (1 << k)
+        decoded.append((n + 1) >> 1 if n & 1 == 1 else -(n >> 1))
 
     return np.array(decoded)
