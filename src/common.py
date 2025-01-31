@@ -3,6 +3,12 @@ PIPEOUT = ['pipe:', 'pipe:1', '-', '/dev/stdout', 'dev/fd/1']
 
 import math, os, sys
 
+def get_file_stem(file: str) -> str:
+    if file in PIPEIN or file in PIPEOUT: return 'pipe'
+    base = os.path.basename(file)
+    if (base.startswith('.') and base.count('.') == 1) or base.count('.') == 0: return base
+    return '.'.join(base.split('.')[:-1])
+
 def format_time(n: float) -> str:
     if n < 0.0: return f'-{format_time(-n)}'
     julian = int(n / 31557600.0); n = n % 31557600.0
