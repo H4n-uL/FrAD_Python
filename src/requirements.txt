@@ -1,6 +1,5 @@
 numpy
 scipy
 reedsolo
-base64
 filetype
 sounddevice
