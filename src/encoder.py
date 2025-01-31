@@ -1,10 +1,10 @@
 from libfrad import Encoder, profiles, head
 try:
-    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
+    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time, get_file_stem
     from .tools.cli import CliParams
     from .tools.process import ProcessInfo
 except ImportError:
-    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
+    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time, get_file_stem
     from tools.cli import CliParams
     from tools.process import ProcessInfo
 from typing import BinaryIO
@@ -18,10 +18,7 @@ def set_files(rfile: str, wfile: str, profile: int, overwrite: bool) -> tuple[io
     if wfile in PIPEOUT: wpipe = True
     elif not rpipe and os.path.exists(wfile) and os.path.samefile(rfile, wfile): print('Input and wfile files cannot be the same'); exit(1)
 
-    if wfile == '':
-        wfrf = os.path.basename(rfile)
-        wfile = '.'.join(wfrf.split('.')[:-1])
-
+    if wfile == '': wfile = get_file_stem(rfile)
     if not (wfile.endswith('.frad') or wfile.endswith('.dsin') or wfile.endswith('.fra') or wfile.endswith('.dsn')):
         if profile in profiles.LOSSLESS:
             if len(wfile) <= 8: wfile = f'{wfile}.fra'

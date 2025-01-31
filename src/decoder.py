@@ -1,10 +1,10 @@
 from libfrad import Decoder, ASFH, BIT_DEPTHS, ff_format_to_numpy_type, from_f64
 try:
-    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
+    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time, get_file_stem
     from .tools.cli import CliParams
     from .tools.process import ProcessInfo
 except ImportError:
-    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
+    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time, get_file_stem
     from tools.cli import CliParams
     from tools.process import ProcessInfo
 import io, os, sys, time
@@ -51,9 +51,7 @@ def decode(rfile: str, params: CliParams, play: bool):
     if wfile_prim in PIPEOUT or play: wpipe = True
     elif not (rpipe or play) and os.path.exists(wfile_prim) and os.path.samefile(rfile, wfile_prim): print('Input and Output files cannot be the same'); exit(1)
 
-    if wfile_prim == '':
-        wfrf = os.path.basename(rfile)
-        wfile_prim = '.'.join(wfrf.split('.')[:-1])
+    if wfile_prim == '': wfile_prim = get_file_stem(rfile)
     elif wfile_prim.endswith('.pcm'): wfile_prim = wfile_prim[:-4]
 
     wfile = f'{wfile_prim}.pcm'
