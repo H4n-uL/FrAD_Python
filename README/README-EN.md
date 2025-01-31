@@ -18,7 +18,9 @@ Python implementation of [AAPM](https://mikhael-openworkspace.notion.site/Projec
 1. numpy
 2. scipy
 3. reedsolo
-4. sounddevice
+4. base64
+5. filetype
+6. sounddevice
 
 ## How to contribute
 
