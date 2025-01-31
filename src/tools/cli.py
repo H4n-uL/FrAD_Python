@@ -31,6 +31,7 @@ class CliParams:
         self.enable_ecc = False
         self.ecc_ratio = (int(96), int(24))
         self.overwrite = False
+        self.overwrite_repair = False
         self.meta: list[tuple[str, bytes]] = []
         self.image_path = ''
         self.loglevel = 0
@@ -80,54 +81,34 @@ def parse(args: list[str]):
         key = args.pop(0).lower()
 
         if key.startswith('-'):
-            key = key[1:]
+            key = key.lstrip('-')
 
-            if key in ('output', 'out', 'o'):
-                params.output = args.pop(0)
-            elif key in ('pcm', 'format', 'fmt', 'f'):
-                params.pcm = args.pop(0)
+            if key in ('output', 'out', 'o'): params.output = args.pop(0)
+            elif key in ('pcm', 'format', 'fmt', 'f'): params.pcm = args.pop(0)
             elif key in ('ecc', 'enable-ecc', 'e'):
                 params.enable_ecc = True
-                if args and args[0].isnumeric():
-                    params.ecc_ratio = int(args.pop(0)), int(args.pop(0))
-            elif key in ('y', 'force'):
-                params.overwrite = True
-            elif key in ('bits', 'bit', 'b'):
-                params.bits = int(args.pop(0))
-            elif key in ('srate', 'sample-rate', 'sr'):
-                params.srate = int(args.pop(0))
-            elif key in ('chnl', 'channels', 'channel', 'ch'):
-                params.channels = int(args.pop(0))
-            elif key in ('frame-size', 'fsize', 'fr'):
-                params.frame_size = int(args.pop(0))
-            elif key in ('overlap-ratio', 'overlap', 'olap'):
-                params.overlap_ratio = int(args.pop(0))
-            elif key in ('le', 'little-endian'):
-                params.little_endian = True
-            elif key in ('profile', 'prf', 'p'):
-                params.profile = int(args.pop(0))
-            elif key in ('losslevel', 'level', 'lv'):
-                params.losslevel = int(args.pop(0))
+                if args and args[0].isnumeric(): params.ecc_ratio = int(args.pop(0)), int(args.pop(0))
+            elif key in ('y', 'force'): params.overwrite = True
+            elif key in ('overwrite', 'ow'): params.overwrite_repair = True
+            elif key in ('bits', 'bit', 'b'): params.bits = int(args.pop(0))
+            elif key in ('srate', 'sample-rate', 'sr'): params.srate = int(args.pop(0))
+            elif key in ('chnl', 'channels', 'channel', 'ch'): params.channels = int(args.pop(0))
+            elif key in ('frame-size', 'fsize', 'fr'): params.frame_size = int(args.pop(0))
+            elif key in ('overlap-ratio', 'overlap', 'olap'): params.overlap_ratio = int(args.pop(0))
+            elif key in ('le', 'little-endian'): params.little_endian = True
+            elif key in ('profile', 'prf', 'p'): params.profile = int(args.pop(0))
+            elif key in ('losslevel', 'level', 'lv'): params.losslevel = int(args.pop(0))
             elif key in ('tag', 'meta', 'm'):
-                value = args.pop(0)
-                if metaaction == META_REMOVE:
-                    params.meta.append((value, b''))
-                else:
-                    params.meta.append((value, args.pop(0).encode()))
-            elif key in ('jsonmeta', 'jm'):
-                params.set_meta_from_json(args.pop(0))
-            elif key in ('vorbismeta', 'vm'):
-                params.set_meta_from_vorbis(args.pop(0))
-            elif key in ('img', 'image'):
-                params.image_path = args.pop(0)
+                if metaaction == META_REMOVE: params.meta.append((args.pop(0), b''))
+                else: params.meta.append((args.pop(0), args.pop(0).encode()))
+            elif key in ('jsonmeta', 'jm'): params.set_meta_from_json(args.pop(0))
+            elif key in ('vorbismeta', 'vm'): params.set_meta_from_vorbis(args.pop(0))
+            elif key in ('img', 'image'): params.image_path = args.pop(0)
             elif key in ('log', 'v'):
-                if args and args[0].isnumeric():
-                    params.set_loglevel(args.pop(0))
+                if args and args[0].isnumeric(): params.set_loglevel(args.pop(0))
                 else: params.set_loglevel('1')
 
-            elif key in ('speed', 'spd'):
-                params.speed = float(args.pop(0))
-            elif key in ('keys', 'key', 'k'):
-                params.speed = 2 ** (float(args.pop(0)) / 12)
+            elif key in ('speed', 'spd'): params.speed = float(args.pop(0))
+            elif key in ('keys', 'key', 'k'): params.speed = 2 ** (float(args.pop(0)) / 12)
 
     return (action, metaaction, input_file, params)

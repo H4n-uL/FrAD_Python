@@ -1,10 +1,10 @@
 from libfrad import Repairer
 try:
-    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
+    from .common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time, get_file_stem
     from .tools.cli import CliParams
     from .tools.process import ProcessInfo
 except ImportError:
-    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time
+    from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time, get_file_stem
     from tools.cli import CliParams
     from tools.process import ProcessInfo
 import os, sys, time
@@ -26,8 +26,8 @@ def repair(rfile: str, params: CliParams):
     elif not rpipe and os.path.exists(wfile) and os.path.samefile(rfile, wfile): print('Input and wfile files cannot be the same'); exit(1)
 
     if wfile == '':
-        wfrf = os.path.basename(rfile).split('.')
-        wfile = f'{".".join(wfrf[:-1])}.recov.{wfrf[-1]}'
+        ext = rfile.split('.')[-1]
+        wfile = f'{get_file_stem(rfile)}.repaired.{ext}' if not rpipe else 'repaired.frad'
 
     check_overwrite(wfile, params.overwrite)
 
@@ -50,3 +50,5 @@ def repair(rfile: str, params: CliParams):
     procinfo.update(len(repaired), 0, 0)
     writefile.write(repaired)
     logging_repair(params.loglevel, procinfo, True)
+
+    if params.overwrite_repair and not (rpipe or wpipe): os.replace(wfile, rfile)
