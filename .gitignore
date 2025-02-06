@@ -1,41 +1,28 @@
-# System #
-**/.DS_Store
+#--------------- PYTHON ---------------#
 
-# Cache #
+## Cache ##
 **/__pycache__/
 
-# Music folder #
-music/*
+#------------ SYSTEM FILES ------------#
 
-# Music files #
+## macOS ##
+.DS_Store
+
+#----------- GENERATED FILES ----------#
+
+## FrAD files ##
 *.frad
 *.fra
 *.dsin
 *.dsn
 
-*.wav
-*.flac
-*.aac
-*.mp4
-*.ogg
-*.mp3
-*.opus
-*.wma
-
-*.dsd
-*.dff
-
-# RAW files #
-*.raw
+## RAW PCM files ##
 *.pcm
-*.swv
-*.bitstream
+*.raw
+
+## Metadata ##
+*.json
 
 # Artworks #
 *.png
 *.jpg
-
-# Metadata #
-*.json
-*.image
-*.meta
