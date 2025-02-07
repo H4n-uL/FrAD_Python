@@ -1,9 +1,11 @@
-try:
-    from .tools import cli
-    from . import encoder, decoder, repairer, header
-except ImportError:
-    from tools import cli
-    import encoder, decoder, repairer, header
+import signal
+def ctrlc(signum, frame): exit(1)
+signal.signal(signal.SIGINT, ctrlc)
+
+is_script = __name__ == '__main__'
+
+if is_script: from tools import cli
+else: from .tools import cli
 import os, sys
 
 PATH_ABSOLUTE = os.path.dirname(os.path.abspath(__file__))
@@ -15,11 +17,26 @@ def main():
     executable = os.path.basename(sys.argv[0])
     ACTION, METAACTION, INPUT, PARAMS = cli.parse(sys.argv)
 
-    if ACTION in cli.ENCODE_OPT:     encoder.encode(INPUT, PARAMS)
-    elif ACTION in cli.DECODE_OPT:   decoder.decode(INPUT, PARAMS, False)
-    elif ACTION in cli.PLAY_OPT:     decoder.decode(INPUT, PARAMS, True)
-    elif ACTION in cli.REPAIR_OPT:   repairer.repair(INPUT, PARAMS)
-    elif ACTION in cli.METADATA_OPT: header.modify(INPUT, METAACTION, PARAMS)
+    if ACTION in cli.ENCODE_OPT:
+        if is_script: import encoder
+        else:  from . import encoder
+        encoder.encode(INPUT, PARAMS)
+    elif ACTION in cli.DECODE_OPT:
+        if is_script: import decoder
+        else:  from . import decoder
+        decoder.decode(INPUT, PARAMS, False)
+    elif ACTION in cli.PLAY_OPT:
+        if is_script: import decoder
+        else:  from . import decoder
+        decoder.decode(INPUT, PARAMS, True)
+    elif ACTION in cli.REPAIR_OPT:
+        if is_script: import repairer
+        else:  from . import repairer
+        repairer.repair(INPUT, PARAMS)
+    elif ACTION in cli.METADATA_OPT:
+        if is_script: import header
+        else:  from . import header
+        header.modify(INPUT, METAACTION, PARAMS)
     elif ACTION in cli.HELP_OPT:
         print(BANNER)
         helpname = 'general'
@@ -38,4 +55,4 @@ def main():
         print(f'Abstract syntax: {executable} [encode|decode|repair] <input> [kwargs...]', file=sys.stderr)
         print(f'Type `{executable} help` to get help.', file=sys.stderr)
 
-if __name__ == '__main__': main()
+if is_script: main()
