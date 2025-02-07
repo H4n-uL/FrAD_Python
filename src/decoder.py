@@ -7,7 +7,7 @@ except ImportError:
     from common import PIPEIN, PIPEOUT, check_overwrite, format_si, format_speed, format_time, get_file_stem
     from tools.cli import CliParams
     from tools.process import ProcessInfo
-import io, os, sys, time
+import io, os, sys
 import sounddevice as sd
 from typing import BinaryIO
 import numpy as np
