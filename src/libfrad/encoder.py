@@ -16,22 +16,22 @@ class EncodeResult:
         self.samples = samples
 
 class Encoder:
-    def __init__(self, profile: int, pcm_format: str):
+    def __init__(self, profile: int, srate: int, channels: int, bit_depth: int, frame_size: int, pcm_format: str):
         if profile not in AVAILABLE: print(f"Invalid profile! Available: {AVAILABLE}", file=sys.stderr); exit(1)
 
         self.asfh = ASFH()
-        self.asfh.profile = profile
         self.buffer = b''
         self.bit_depth = 0
         self.channels = 0
         self.fsize = 0
         self.srate = 0
         self.overlap_fragment = np.array([])
-
         self.pcm_format = ff_format_to_numpy_type(pcm_format)
         self.loss_level = 0.5
 
-    def _set_profile(self, profile: int, srate: int, channels: int, bit_depth: int, frame_size: int):
+        self.set_profile(profile, srate, channels, bit_depth, frame_size)
+
+    def set_profile(self, profile: int, srate: int, channels: int, bit_depth: int, frame_size: int):
         if profile not in AVAILABLE: print(f"Invalid profile! Available: {AVAILABLE}", file=sys.stderr); exit(1)
 
         self.asfh.profile = profile
