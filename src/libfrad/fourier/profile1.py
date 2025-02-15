@@ -7,8 +7,8 @@ import struct, zlib
 DEPTHS = (8, 12, 16, 24, 32, 48, 64)
 
 def get_scale_factors(bits: int) -> tuple[float, float]:
-    pcm_factor = 2**(bits-1)
-    thres_factor = np.sqrt(3)**(16-bits)
+    pcm_factor = 2 ** (bits - 1)
+    thres_factor = 4 * (np.sqrt(1 / bits) * 4) ** 16
     return pcm_factor, thres_factor
 
 def untrim(arr: np.ndarray, fsize: int, channels: int) -> np.ndarray:

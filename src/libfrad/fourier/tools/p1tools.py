@@ -15,7 +15,6 @@ def get_bin_range(dlen: int, srate: int, subband_index: int) -> slice:
 
 def mask_thres_mos(freqs: np.ndarray, srate: int, bit_depth: int, loss_level: float, alpha: float) -> np.ndarray:
     freqs = np.abs(freqs)
-    pcm_scale = 1 << (bit_depth-1)
     thres = np.zeros(SUBBANDS)
     for i in range(SUBBANDS):
         subfreqs = freqs[get_bin_range(len(freqs), srate, i)]
@@ -24,7 +23,7 @@ def mask_thres_mos(freqs: np.ndarray, srate: int, bit_depth: int, loss_level: fl
         f = (MODIFIED_OPUS_SUBBANDS[i] + MODIFIED_OPUS_SUBBANDS[i+1]) / 2
         absolute_hearing_threshold = 10.0**(
             (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))/20
-        ) / pcm_scale
+        )
 
         sfq = np.sqrt(np.mean(subfreqs**2)) ** alpha
         thres[i] = np.maximum(sfq, min(absolute_hearing_threshold, 1.0)) * loss_level
