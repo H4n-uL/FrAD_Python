@@ -23,7 +23,7 @@ def analogue(pcm: np.ndarray, bits: int, srate: int) -> tuple[bytes, int, int, i
     frad = struct.pack(f'>I', len(lpc_bytes)) + lpc_bytes + frad
 
     # Deflating
-    frad = zlib.compress(frad)
+    frad = zlib.compress(frad, wbits=-15)
 
     return frad, DEPTHS.index(bits), channels, srate
 
@@ -31,7 +31,8 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
     bits = DEPTHS[fb]
 
     # Inflating
-    frad = zlib.decompress(frad)
+    try: frad = zlib.decompress(frad, wbits=-15)
+    except: return np.zeros((fsize, channels))
     lpclen, frad = struct.unpack(f'>I', frad[:4])[0], frad[4:]
     lpc, frad = p1tools.exp_golomb_rice_decode(frad[:lpclen]).reshape(-1, channels).T, frad[lpclen:]
 
