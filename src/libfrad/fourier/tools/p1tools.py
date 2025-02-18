@@ -22,7 +22,7 @@ def mask_thres_mos(freqs: np.ndarray, srate: int, bit_depth: int, loss_level: fl
 
         f = (MODIFIED_OPUS_SUBBANDS[i] + MODIFIED_OPUS_SUBBANDS[i+1]) / 2
         absolute_hearing_threshold = 10.0**(
-            (3.64*(f/1000.)**-0.8 - 6.5*np.exp(-0.6*(f/1000.-3.3)**2.) + 1e-3*((f/1000.)**4.))/20
+            (3.64 * (f / 1000.0) ** -0.8 - 6.5 * np.exp(-0.6 * (f / 1000.0 - 3.3) ** 2.0) + 1e-3 * ((f / 1000.0) ** 4.0)) / 20
         )
 
         sfq = np.sqrt(np.mean(subfreqs**2)) ** alpha
