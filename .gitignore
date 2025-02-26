@@ -3,6 +3,10 @@
 ## Cache ##
 **/__pycache__/
 
+## Build files ##
+build/
+frad.egg-info/
+
 #------------ SYSTEM FILES ------------#
 
 ## macOS ##
