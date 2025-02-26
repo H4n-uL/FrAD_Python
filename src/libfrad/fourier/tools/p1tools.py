@@ -13,7 +13,7 @@ QUANT_ALPHA = 0.75
 def get_bin_range(dlen: int, srate: int, subband_index: int) -> slice:
     return slice(round(dlen/(srate/2)*MODIFIED_OPUS_SUBBANDS[subband_index]), round(dlen/(srate/2)*MODIFIED_OPUS_SUBBANDS[subband_index+1]))
 
-def mask_thres_mos(freqs: np.ndarray, srate: int, bit_depth: int, loss_level: float, alpha: float) -> np.ndarray:
+def mask_thres_mos(freqs: np.ndarray, srate: int, loss_level: float, alpha: float) -> np.ndarray:
     freqs = np.abs(freqs)
     thres = np.zeros(SUBBANDS)
     for i in range(SUBBANDS):
