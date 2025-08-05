@@ -108,7 +108,7 @@ class Encoder:
             # prf = rng.choice(AVAILABLE)
             # self._set_profile(prf, self.srate, self.channels,
             #     rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[prf]))),
-            #     rng.choice(compact.SAMPLES_LI) if prf in profiles.COMPACT else rng.randint(128, 32768)
+            #     rng.choice(compact.SAMPLES) if prf in profiles.COMPACT else rng.randint(128, 32768)
             # )
             # self.set_loss_level(rng.uniform(0.125, 10.0))
             # ecc_data = rng.randint(1, 255)
@@ -117,9 +117,9 @@ class Encoder:
 
             rlen = self.fsize
             if self.asfh.profile in profiles.COMPACT:
-                li_val = min(filter(lambda x: x >= self.fsize, compact.SAMPLES_LI))
+                li_val = min(filter(lambda x: x >= self.fsize, compact.SAMPLES))
                 if li_val <= len(self.overlap_fragment):
-                    rlen = min(filter(lambda x: x > len(self.overlap_fragment), compact.SAMPLES_LI)) - len(self.overlap_fragment)
+                    rlen = min(filter(lambda x: x > len(self.overlap_fragment), compact.SAMPLES)) - len(self.overlap_fragment)
                 else:
                     rlen = li_val - len(self.overlap_fragment)
 

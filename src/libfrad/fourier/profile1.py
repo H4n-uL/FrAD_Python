@@ -18,7 +18,7 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
     if bits not in DEPTHS: bits = 16
     pcm_factor, thres_factor = get_scale_factors(bits)
     # DCT
-    pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES_LI if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
+    pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
     srate, loss_level, dlen, channels = compact.get_valid_srate(srate), max(abs(loss_level), 0.125), len(pcm), len(pcm[0])
     freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * pcm_factor
 

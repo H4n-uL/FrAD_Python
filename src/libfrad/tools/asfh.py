@@ -20,19 +20,15 @@ def decode_pfb(pfb: bytes) -> tuple[int, bool, bool, int]:
 def encode_css_prf1(channels: int, srate: int, fsize: int, force_flush: bool) -> bytes:
     chnl = (channels-1)<<10
     srate = compact.get_srate_index(srate) << 6
-    fsize = min((x for x in compact.SAMPLES_LI if x >= fsize), default=0)
-    mult = next((key for key, values in compact.SAMPLES.items() if fsize in values), 0)
-    px = tuple(compact.SAMPLES).index(mult) << 4
-    fsize = int(math.log2(fsize / mult)) << 1
-
-    return struct.pack('>H', chnl | srate | px | fsize | force_flush)
+    fsize_idx = compact.SAMPLES.index(fsize) << 1
+    return struct.pack('>H', chnl | srate | fsize_idx | force_flush)
 
 def decode_css_prf1(css: bytes) -> tuple[int, int, int, bool]:
     cssint = struct.unpack('>H', css)[0]
-    channels = (cssint>>10) + 1                    # 0x09@0b111-6b: Channels
-    srate = compact.SRATES[cssint>>6&0b1111]       # 0x09@0b001-4b: Sample rate index
-    fsize_prefix = [128, 144, 192][cssint>>4&0b11] # 0x0a@0b101-2b: Frame size prefix
-    fsize = fsize_prefix * 2**(cssint>>1&0b111)    # 0x0a@0b011-3b: Frame size
+    channels = (cssint>>10) + 1                # 0x09@0b111-6b: Channels
+    srate = compact.SRATES[cssint>>6&0b1111]   # 0x09@0b001-4b: Sample rate index
+    fsize = compact.SAMPLES[cssint>>1&0b11111] # 0x0a@0b101-3b: Frame size multiplier
+                                               # 0x0a@0b010-2b: Frame size prefix
     return channels, srate, fsize, cssint & 0b1
 
 class ASFH:
