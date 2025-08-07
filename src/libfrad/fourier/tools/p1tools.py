@@ -1,10 +1,12 @@
 import numpy as np
 import struct
 
-MODIFIED_OPUS_SUBBANDS =  (0,     200,   400,   600,   800,   1000,  1200,  1400,
-        1600,  2000,  2400,  2800,  3200,  4000,  4800,  5600,
-        6800,  8000,  9600,  12000, 15600, 20000, 24000, 28800,
-        34400, 40800, 48000, (2**32)-1)
+MODIFIED_OPUS_SUBBANDS = (
+    0,     200,   400,   600,   800,   1000,  1200,  1400,
+    1600,  2000,  2400,  2800,  3200,  4000,  4800,  5600,
+    6800,  8000,  9600,  12000, 15600, 20000, 24000, 28800,
+    34400, 40800, 48000, (2**32)-1
+)
 
 SUBBANDS = len(MODIFIED_OPUS_SUBBANDS) - 1
 SPREAD_ALPHA = 0.8
@@ -13,7 +15,7 @@ QUANT_ALPHA = 0.75
 def get_bin_range(dlen: int, srate: int, subband_index: int) -> slice:
     return slice(round(dlen/(srate/2)*MODIFIED_OPUS_SUBBANDS[subband_index]), round(dlen/(srate/2)*MODIFIED_OPUS_SUBBANDS[subband_index+1]))
 
-def mask_thres_mos(freqs: np.ndarray, srate: int, loss_level: float, alpha: float) -> np.ndarray:
+def mask_thres_mos(freqs: np.ndarray, srate: int, pcm_factor: float, loss_level: float, alpha: float) -> np.ndarray:
     freqs = np.abs(freqs)
     thres = np.zeros(SUBBANDS)
     for i in range(SUBBANDS):
@@ -25,8 +27,8 @@ def mask_thres_mos(freqs: np.ndarray, srate: int, loss_level: float, alpha: floa
             (3.64 * (f / 1000.0) ** -0.8 - 6.5 * np.exp(-0.6 * (f / 1000.0 - 3.3) ** 2.0) + 1e-3 * ((f / 1000.0) ** 4.0)) / 20
         )
 
-        sfq = np.sqrt(np.mean(subfreqs**2)) ** alpha
-        thres[i] = np.maximum(sfq, min(absolute_hearing_threshold, 1.0)) * loss_level
+        sfq = np.sqrt(np.mean(subfreqs**2)) ** alpha * np.sqrt(pcm_factor)
+        thres[i] = np.maximum(sfq, absolute_hearing_threshold) * loss_level
 
     return thres
 
