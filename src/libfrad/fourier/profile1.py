@@ -20,20 +20,20 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
     # DCT
     pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
     srate, loss_level, dlen, channels = compact.get_valid_srate(srate), max(abs(loss_level), 0.125), len(pcm), len(pcm[0])
-    freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)]) * pcm_factor
+    freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)])
 
     # Quantisation
     freqs_masked = []
     thresholds = []
     for c in range(channels):
-        thres_channel = p1tools.mask_thres_mos(freqs[c], srate, loss_level, p1tools.SPREAD_ALPHA)
+        thres_channel = p1tools.mask_thres_mos(freqs[c], srate, pcm_factor, loss_level, p1tools.SPREAD_ALPHA)
         div_factor = p1tools.mapping_from_opus(thres_channel, dlen, srate)
         div_factor = np.where(div_factor == 0, np.inf, div_factor)
 
         freqs_masked.append(freqs[c] / div_factor)
         thresholds.append(thres_channel)
 
-    freqs_flat = p1tools.quant(np.array(freqs_masked)).round().astype(int).T.ravel()
+    freqs_flat = p1tools.quant(np.array(freqs_masked * pcm_factor)).round().astype(int).T.ravel()
     thres_flat = p1tools.quant(np.array(thresholds) * thres_factor).round().astype(int).T.ravel()
 
     # Ravelling and packing
@@ -59,7 +59,7 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
     thres_gol, frad = frad[:thresbytes], frad[thresbytes:]
 
     # Unpacking and unravelling
-    freqs_flat = p1tools.dequant(p1tools.exp_golomb_rice_decode(frad).astype(float))
+    freqs_flat = p1tools.dequant(p1tools.exp_golomb_rice_decode(frad).astype(float)) / pcm_factor
     thres_flat = p1tools.dequant(p1tools.exp_golomb_rice_decode(thres_gol).astype(float)) / thres_factor
     freqs_flat = untrim(freqs_flat, fsize, channels)
     thres_flat = untrim(thres_flat, fsize, channels)
@@ -71,4 +71,4 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
     freqs = np.array([freqs_masked[c] * p1tools.mapping_from_opus(thresholds[c], fsize, srate) for c in range(channels)])
 
     # Inverse DCT and stacking
-    return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T) / pcm_factor
+    return np.ascontiguousarray(np.array([idct(chnl, norm='forward') for chnl in freqs]).T)
