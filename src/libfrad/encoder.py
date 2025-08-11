@@ -28,63 +28,9 @@ class Encoder:
         self.overlap_fragment = np.array([])
         self.pcm_format = ff_format_to_numpy_type(pcm_format)
         self.loss_level = 0.5
+        self.init = False
 
         self.set_profile(profile, srate, channels, bit_depth, frame_size)
-
-    def set_profile(self, profile: int, srate: int, channels: int, bit_depth: int, frame_size: int):
-        if profile not in AVAILABLE: print(f"Invalid profile! Available: {AVAILABLE}", file=sys.stderr); exit(1)
-
-        self.asfh.profile = profile
-        self.set_srate(srate)
-        self.set_channels(channels)
-        self.set_bit_depth(bit_depth)
-        self.set_frame_size(frame_size)
-
-    def get_channels(self) -> int: return self.channels
-    def set_channels(self, channels: int):
-        if channels == 0: print("Channel count cannot be zero", file=sys.stderr); exit(1)
-        self.channels = channels
-
-    def get_srate(self) -> int: return self.srate
-    def set_srate(self, srate: int):
-        if srate == 0: print("Sample rate cannot be zero", file=sys.stderr); exit(1)
-        if self.asfh.profile in profiles.COMPACT:
-            x = compact.get_valid_srate(srate)
-            if x != srate:
-                print(f"Invalid sample rate! Valid rates for profile {self.asfh.profile}: {compact.SRATES}", file=sys.stderr)
-                print(f"Auto-adjusting to: {x}", file=sys.stderr)
-                srate = x
-        self.srate = srate
-
-    def get_frame_size(self) -> int: return self.fsize
-    def set_frame_size(self, frame_size: int):
-        if frame_size == 0: print("Frame size cannot be zero", file=sys.stderr); exit(1)
-        if frame_size > SEGMAX[self.asfh.profile]: print(f"Samples per frame cannot exceed {SEGMAX[self.asfh.profile]}", file=sys.stderr); exit(1)
-        self.fsize = frame_size
-
-    def get_bit_depth(self) -> int: return self.bit_depth
-    def set_bit_depth(self, bit_depth: int):
-        if bit_depth == 0: print("Bit depth cannot be zero", file=sys.stderr); exit(1)
-        if bit_depth not in BIT_DEPTHS[self.asfh.profile]:
-            print(f"Invalid bit depth! Valid depths for profile {self.asfh.profile}: {list(filter(lambda x: x != 0, BIT_DEPTHS[self.asfh.profile]))}", file=sys.stderr)
-            exit(1)
-        self.bit_depth = bit_depth
-
-    def set_ecc(self, ecc: bool, ecc_ratio: tuple[int, int]):
-        self.asfh.ecc = ecc
-        dsize_zero, exceed_255 = ecc_ratio[0] == 0, ecc_ratio[0] + ecc_ratio[1] > 255
-        if dsize_zero or exceed_255:
-            if dsize_zero: print("ECC data size must not be zero", file=sys.stderr)
-            if exceed_255: print(f"ECC data size and check size must not exceed 255, given: {ecc_ratio[0]} and {ecc_ratio[1]}", file=sys.stderr)
-            print("Setting ECC to default 96 24", file=sys.stderr)
-            ecc_ratio = (96, 24)
-        self.asfh.ecc_dsize, self.asfh.ecc_codesize = ecc_ratio
-
-    def set_little_endian(self, little_endian: bool): self.asfh.endian = little_endian
-    def set_loss_level(self, loss_level: float): self.loss_level = max(abs(loss_level), 0.125)
-    def set_overlap_ratio(self, overlap_ratio: int):
-        if overlap_ratio != 0: overlap_ratio = max(2, min(256, overlap_ratio))
-        self.asfh.overlap_ratio = overlap_ratio
 
     def overlap(self, frame: np.ndarray) -> np.ndarray:
         if self.overlap_fragment.shape != EMPTY:
@@ -150,4 +96,103 @@ class Encoder:
         return EncodeResult(ret, samples)
 
     def process(self, stream: bytes) -> EncodeResult: return self.inner(stream, False)
-    def flush(self) -> EncodeResult: return self.inner(b'', True)
+    def flush(self) -> EncodeResult:
+        if self.init: return self.inner(b'', True)
+        return EncodeResult(b'', 0)
+
+    # Getters and Setters
+    @staticmethod
+    def verify_profile(profile: int) -> str | None:
+        if profile not in AVAILABLE:
+            return f"Invalid profile! Available: {AVAILABLE}"
+        return None
+    
+    @staticmethod
+    def verify_srate(profile: int, srate: int) -> str | None:
+        if srate == 0:
+            return "Sample rate cannot be zero"
+        if profile in profiles.COMPACT:
+            x = compact.get_valid_srate(srate)
+            if x != srate:
+                return f"Invalid sample rate! Valid rates for profile {profile}: {compact.SRATES}"
+        return None
+    
+    @staticmethod
+    def verify_channels(profile: int, channels: int) -> str | None:
+        if channels == 0:
+            return "Channel count cannot be zero"
+        return None
+    
+    @staticmethod
+    def verify_bit_depth(profile: int, bit_depth: int) -> str | None:
+        if bit_depth == 0:
+            return "Bit depth cannot be zero"
+        if bit_depth not in BIT_DEPTHS[profile]:
+            return f"Invalid bit depth! Valid depths for profile {profile}: {list(filter(lambda x: x != 0, BIT_DEPTHS[profile]))}"
+        return None
+    
+    @staticmethod
+    def verify_frame_size(profile: int, frame_size: int) -> str | None:
+        if frame_size == 0:
+            return "Frame size cannot be zero"
+        if frame_size > SEGMAX[profile]:
+            return f"Samples per frame cannot exceed {SEGMAX[profile]}"
+        return None
+
+    def get_profile(self) -> int: return self.asfh.profile
+    def set_profile(self, profile: int, srate: int, channels: int, bit_depth: int, frame_size: int) -> str | EncodeResult:
+        if (e := self.verify_profile(profile)) is not None: return e
+        if (e := self.verify_srate(profile, srate)) is not None: return e
+        if (e := self.verify_channels(profile, channels)) is not None: return e
+        if (e := self.verify_bit_depth(profile, bit_depth)) is not None: return e
+        if (e := self.verify_frame_size(profile, frame_size)) is not None: return e
+
+        res = self.flush()
+        self.asfh.profile = profile
+        self.srate = srate
+        self.channels = channels
+        self.bit_depth = bit_depth
+        self.fsize = frame_size
+        self.init = True
+        
+        return res
+
+    def get_channels(self) -> int: return self.channels
+    def set_channels(self, channels: int) -> str | EncodeResult:
+        self.verify_channels(self.get_profile(), channels)
+        res = self.flush()
+        self.channels = channels
+        return res
+
+    def get_srate(self) -> int: return self.srate
+    def set_srate(self, srate: int) -> str | EncodeResult:
+        if e := self.verify_srate(self.get_profile(), srate): return e
+        res = self.flush()
+        self.srate = srate
+        return res
+
+    def get_frame_size(self) -> int: return self.fsize
+    def set_frame_size(self, frame_size: int) -> str | None:
+        if e := self.verify_frame_size(self.get_profile(), frame_size): return e
+        self.fsize = frame_size
+
+    def get_bit_depth(self) -> int: return self.bit_depth
+    def set_bit_depth(self, bit_depth: int) -> str | None:
+        if e := self.verify_bit_depth(self.get_profile(), bit_depth): return e
+        self.bit_depth = bit_depth
+
+    def set_ecc(self, ecc: bool, ecc_ratio: tuple[int, int]):
+        self.asfh.ecc = ecc
+        dsize_zero, exceed_255 = ecc_ratio[0] == 0, ecc_ratio[0] + ecc_ratio[1] > 255
+        if dsize_zero or exceed_255:
+            if dsize_zero: print("ECC data size must not be zero", file=sys.stderr)
+            if exceed_255: print(f"ECC data size and check size must not exceed 255, given: {ecc_ratio[0]} and {ecc_ratio[1]}", file=sys.stderr)
+            print("Setting ECC to default 96 24", file=sys.stderr)
+            ecc_ratio = (96, 24)
+        self.asfh.ecc_dsize, self.asfh.ecc_codesize = ecc_ratio
+
+    def set_little_endian(self, little_endian: bool): self.asfh.endian = little_endian
+    def set_loss_level(self, loss_level: float): self.loss_level = max(abs(loss_level), 0.125)
+    def set_overlap_ratio(self, overlap_ratio: int):
+        if overlap_ratio != 0: overlap_ratio = max(2, min(256, overlap_ratio))
+        self.asfh.overlap_ratio = overlap_ratio
