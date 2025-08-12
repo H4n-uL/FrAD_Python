@@ -20,7 +20,7 @@ def decode_pfb(pfb: bytes) -> tuple[int, bool, bool, int]:
 def encode_css_prf1(channels: int, srate: int, fsize: int, force_flush: bool) -> bytes:
     chnl = (channels-1)<<10
     srate = compact.get_srate_index(srate) << 6
-    fsize = compact.get_samples_min_larger_than(fsize)
+    fsize = compact.get_samples_index(fsize)
     fsize_idx = compact.SAMPLES.index(fsize) << 1
     return struct.pack('>H', chnl | srate | fsize_idx | force_flush)
 
