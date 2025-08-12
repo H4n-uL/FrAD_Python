@@ -46,20 +46,21 @@ class Encoder:
         self.buffer += stream
         ret, samples = b'', 0
 
-        if self.channels == 0 or self.srate == 0 or self.fsize == 0:
+        if not self.init:
             return EncodeResult(ret, samples)
 
         while True:
-            # rng = random.Random()
-            # prf = rng.choice(AVAILABLE)
-            # self._set_profile(prf, self.srate, self.channels,
-            #     rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[prf]))),
-            #     rng.choice(compact.SAMPLES) if prf in profiles.COMPACT else rng.randint(128, 32768)
-            # )
-            # self.set_loss_level(rng.uniform(0.125, 10.0))
-            # ecc_data = rng.randint(1, 255)
-            # self.set_ecc(rng.random() < 0.5, (ecc_data, rng.randint(0, 255 - ecc_data)))
-            # self.set_overlap_ratio(rng.randint(2, 256))
+            # if not flush:
+            #     rng = random.Random()
+            #     prf = rng.choice(AVAILABLE)
+            #     self._set_profile(prf, self.srate, self.channels,
+            #         rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[prf]))),
+            #         rng.choice(compact.SAMPLES) if prf in profiles.COMPACT else rng.randint(128, 32768)
+            #     )
+            #     self.set_loss_level(rng.uniform(0.125, 10.0))
+            #     ecc_data = rng.randint(1, 255)
+            #     self.set_ecc(rng.random() < 0.5, (ecc_data, rng.randint(0, 255 - ecc_data)))
+            #     self.set_overlap_ratio(rng.randint(2, 256))
 
             rlen = self.fsize
             if self.asfh.profile in profiles.COMPACT:
@@ -144,7 +145,8 @@ class Encoder:
         if (e := self.verify_bit_depth(profile, bit_depth)) is not None: return e
         if (e := self.verify_frame_size(profile, frame_size)) is not None: return e
 
-        res = self.flush()
+        res = EncodeResult(b'', 0)
+        if self.channels != channels or self.srate != srate: res = self.flush()
         self.asfh.profile = profile
         self.srate = srate
         self.channels = channels
@@ -157,14 +159,16 @@ class Encoder:
     def get_channels(self) -> int: return self.channels
     def set_channels(self, channels: int) -> str | EncodeResult:
         self.verify_channels(self.get_profile(), channels)
-        res = self.flush()
+        res = EncodeResult(b'', 0)
+        if self.channels != channels: res = self.flush()
         self.channels = channels
         return res
 
     def get_srate(self) -> int: return self.srate
     def set_srate(self, srate: int) -> str | EncodeResult:
         if e := self.verify_srate(self.get_profile(), srate): return e
-        res = self.flush()
+        res = EncodeResult(b'', 0)
+        if self.srate != srate: res = self.flush()
         self.srate = srate
         return res
 
