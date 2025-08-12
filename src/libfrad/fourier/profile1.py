@@ -33,7 +33,7 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
         freqs_masked.append(freqs[c] / div_factor)
         thresholds.append(thres_channel)
 
-    freqs_flat = p1tools.quant(np.array(freqs_masked * pcm_factor)).round().astype(int).T.ravel()
+    freqs_flat = p1tools.quant(np.array(freqs_masked) * pcm_factor).round().astype(int).T.ravel()
     thres_flat = p1tools.quant(np.array(thresholds) * thres_factor).round().astype(int).T.ravel()
 
     # Ravelling and packing
