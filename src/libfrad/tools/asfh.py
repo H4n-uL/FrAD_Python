@@ -1,4 +1,4 @@
-import math, struct
+import struct
 from ..fourier.profiles import compact, COMPACT
 from ..common import FRM_SIGN, crc16_ansi
 from zlib import crc32
@@ -20,6 +20,7 @@ def decode_pfb(pfb: bytes) -> tuple[int, bool, bool, int]:
 def encode_css_prf1(channels: int, srate: int, fsize: int, force_flush: bool) -> bytes:
     chnl = (channels-1)<<10
     srate = compact.get_srate_index(srate) << 6
+    fsize = compact.get_samples_min_larger_than(fsize)
     fsize_idx = compact.SAMPLES.index(fsize) << 1
     return struct.pack('>H', chnl | srate | fsize_idx | force_flush)
 
@@ -108,7 +109,6 @@ class ASFH:
             if force_flush: return 'ForceFlush', buffer
 
             self.overlap_ratio = self.buffer[11]
-            if self.overlap_ratio != 0: self.overlap_ratio += 1
 
             if self.ecc:
                 x, buffer = self.fill_buffer(buffer, 16)

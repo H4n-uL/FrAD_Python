@@ -63,11 +63,8 @@ class Encoder:
 
             rlen = self.fsize
             if self.asfh.profile in profiles.COMPACT:
-                li_val = min(filter(lambda x: x >= self.fsize, compact.SAMPLES))
-                if li_val <= len(self.overlap_fragment):
-                    rlen = min(filter(lambda x: x > len(self.overlap_fragment), compact.SAMPLES)) - len(self.overlap_fragment)
-                else:
-                    rlen = li_val - len(self.overlap_fragment)
+                overlap_len = len(self.overlap_fragment)
+                rlen = compact.get_samples_min_larger_than(max(rlen, overlap_len))
 
             bytes_per_sample = self.pcm_format.itemsize
             read_bytes = rlen * self.channels * bytes_per_sample

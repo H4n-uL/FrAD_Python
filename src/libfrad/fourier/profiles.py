@@ -23,6 +23,10 @@ class compact:
     ]
 
     @staticmethod
+    def get_samples_min_larger_than(smpl: int) -> int:
+        return min([x for x in compact.SAMPLES if x >= smpl])
+
+    @staticmethod
     def get_samples_mult_from_value(key: int) -> int:
         return compact.SAMPLES[compact.SAMPLES.index(key) % 8]
 
