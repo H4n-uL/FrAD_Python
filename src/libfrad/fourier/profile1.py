@@ -6,19 +6,17 @@ import struct, zlib
 
 DEPTHS = (8, 12, 16, 24, 32, 48, 64)
 
-def get_scale_factors(bits: int) -> tuple[float, float]:
-    pcm_factor = 2 ** (bits - 1)
-    thres_factor = 4 * (np.sqrt(1 / bits) * 4) ** 16
-    return pcm_factor, thres_factor
+def get_scale_factors(bits: int) -> float:
+    return 2.0 ** (bits - 1)
 
 def untrim(arr: np.ndarray, fsize: int, channels: int) -> np.ndarray:
     return np.pad(arr, (0, max(0, (fsize*channels)-len(arr))), 'constant')
 
 def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple[bytes, int, int, int]:
     if bits not in DEPTHS: bits = 16
-    pcm_factor, thres_factor = get_scale_factors(bits)
+    pcm_factor = get_scale_factors(bits)
     # DCT
-    pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
+    pcm = np.pad(pcm, ((0, compact.get_samples_min_ge(len(pcm))-len(pcm)), (0, 0)), mode='constant')
     srate, loss_level, dlen, channels = compact.get_valid_srate(srate), max(abs(loss_level), 0.125), len(pcm), len(pcm[0])
     freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)])
 
@@ -33,8 +31,13 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
         freqs_masked.append(freqs[c] / div_factor)
         thresholds.append(thres_channel)
 
-    freqs_flat = p1tools.quant(np.array(freqs_masked) * pcm_factor).round().astype(int).T.ravel()
-    thres_flat = p1tools.quant(np.array(thresholds) * thres_factor).round().astype(int).T.ravel()
+    freqs_flat = p1tools.quant(
+        np.array(freqs_masked) * pcm_factor
+    ).round().astype(int).T.ravel()
+
+    thres_flat = p1tools.dequant(
+        np.log(np.array(thresholds).clip(min=1.0)) / np.log(np.e / 2)
+    ).round().astype(int).T.ravel()
 
     # Ravelling and packing
     thres_gol = p1tools.exp_golomb_rice_encode(thres_flat)
@@ -50,7 +53,7 @@ def analogue(pcm: np.ndarray, bits: int, srate: int, loss_level: float) -> tuple
 
 def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.ndarray:
     bits = DEPTHS[fb]
-    pcm_factor, thres_factor = get_scale_factors(bits)
+    pcm_factor = get_scale_factors(bits)
 
     # Inflating
     try: frad = zlib.decompress(frad, wbits=-15)
@@ -60,7 +63,7 @@ def digital(frad: bytes, fb: int, channels: int, srate: int, fsize: int) -> np.n
 
     # Unpacking and unravelling
     freqs_flat = p1tools.dequant(p1tools.exp_golomb_rice_decode(frad).astype(float)) / pcm_factor
-    thres_flat = p1tools.dequant(p1tools.exp_golomb_rice_decode(thres_gol).astype(float)) / thres_factor
+    thres_flat = np.power(np.e / 2, p1tools.quant(p1tools.exp_golomb_rice_decode(thres_gol).astype(float)))
     freqs_flat = untrim(freqs_flat, fsize, channels)
     thres_flat = untrim(thres_flat, fsize, channels)
 

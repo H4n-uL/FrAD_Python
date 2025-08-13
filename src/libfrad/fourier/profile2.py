@@ -9,7 +9,7 @@ DEPTHS = (8, 9, 10, 11, 12, 14, 16)
 def analogue(pcm: np.ndarray, bits: int, srate: int) -> tuple[bytes, int, int, int]:
     if bits not in DEPTHS: bits = 16
     # DCT
-    pcm = np.pad(pcm, ((0, min((x for x in compact.SAMPLES if x >= len(pcm)), default=len(pcm))-len(pcm)), (0, 0)), mode='constant')
+    pcm = np.pad(pcm, ((0, compact.get_samples_min_ge(len(pcm))-len(pcm)), (0, 0)), mode='constant')
     srate, channels = compact.get_valid_srate(srate), len(pcm[0])
     freqs = np.array([dct(pcm[:, i], norm='forward') for i in range(channels)])
 

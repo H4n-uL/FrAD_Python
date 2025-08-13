@@ -28,7 +28,7 @@ def mask_thres_mos(freqs: np.ndarray, srate: int, loss_level: float, alpha: floa
         )
 
         sfq = np.sqrt(np.mean(subfreqs**2)) ** alpha
-        thres[i] = np.maximum(sfq, absolute_hearing_threshold) * loss_level
+        thres[i] = max(sfq, min(absolute_hearing_threshold, 1.0)) * loss_level
 
     return thres
 

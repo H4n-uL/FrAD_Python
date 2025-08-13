@@ -31,8 +31,4 @@ class compact:
         smpl = compact.get_samples_min_ge(smpl)
         return compact.SAMPLES.index(smpl)
 
-    @staticmethod
-    def get_samples_mult_from_value(key: int) -> int:
-        return compact.SAMPLES[compact.SAMPLES.index(key) % 8]
-
     MAX_SMPL = max(SAMPLES)
