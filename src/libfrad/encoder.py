@@ -32,11 +32,17 @@ class Encoder:
 
         self.set_profile(profile, srate, channels, bit_depth, frame_size)
 
-    def overlap(self, frame: np.ndarray) -> np.ndarray:
+    def overlap(self, frame: np.ndarray, flush: bool) -> np.ndarray:
         if self.overlap_fragment.shape != EMPTY:
             frame = np.concatenate((self.overlap_fragment, frame), axis=0)
+
         next_overlap = np.array([])
-        if self.asfh.profile in profiles.COMPACT and self.asfh.overlap_ratio > 1:
+        next_flag = (
+            not flush and
+            self.asfh.profile in profiles.COMPACT and
+            self.asfh.overlap_ratio > 1
+        )
+        if next_flag:
             frame_cutout = len(frame) * (self.asfh.overlap_ratio - 1) // self.asfh.overlap_ratio
             next_overlap = frame[frame_cutout:]
         self.overlap_fragment = next_overlap
@@ -75,13 +81,15 @@ class Encoder:
             pcm_bytes, self.buffer = self.buffer[:read_bytes], self.buffer[read_bytes:]
             frame = np.frombuffer(pcm_bytes, self.pcm_format).reshape(-1, self.channels)
             frame = to_f64(frame, self.pcm_format)
+            samples_in_frame = len(frame)
 
+            frame = self.overlap(frame, flush)
             if frame.size == 0 and self.overlap_fragment.shape == EMPTY:
                 ret += self.asfh.force_flush()
                 break
-            samples += len(frame)
+            samples += samples_in_frame
+            fsize = len(frame)
 
-            frame = self.overlap(frame); fsize = len(frame)
             frad, bit_depth_index, channels, srate = None, 0, 0, 0
             match self.asfh.profile:
                 case 1: frad, bit_depth_index, channels, srate = fourier.profile1.analogue(frame, self.bit_depth, self.srate, self.loss_level)
