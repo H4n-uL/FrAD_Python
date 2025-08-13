@@ -105,7 +105,7 @@ class Encoder:
         if profile not in AVAILABLE:
             return f"Invalid profile! Available: {AVAILABLE}"
         return None
-    
+
     @staticmethod
     def verify_srate(profile: int, srate: int) -> str | None:
         if srate == 0:
@@ -115,13 +115,13 @@ class Encoder:
             if x != srate:
                 return f"Invalid sample rate! Valid rates for profile {profile}: {compact.SRATES}"
         return None
-    
+
     @staticmethod
     def verify_channels(profile: int, channels: int) -> str | None:
         if channels == 0:
             return "Channel count cannot be zero"
         return None
-    
+
     @staticmethod
     def verify_bit_depth(profile: int, bit_depth: int) -> str | None:
         if bit_depth == 0:
@@ -129,7 +129,7 @@ class Encoder:
         if bit_depth not in BIT_DEPTHS[profile]:
             return f"Invalid bit depth! Valid depths for profile {profile}: {list(filter(lambda x: x != 0, BIT_DEPTHS[profile]))}"
         return None
-    
+
     @staticmethod
     def verify_frame_size(profile: int, frame_size: int) -> str | None:
         if frame_size == 0:
@@ -154,7 +154,7 @@ class Encoder:
         self.bit_depth = bit_depth
         self.fsize = frame_size
         self.init = True
-        
+
         return res
 
     def get_channels(self) -> int: return self.channels

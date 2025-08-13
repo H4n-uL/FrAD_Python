@@ -25,7 +25,7 @@ class compact:
     @staticmethod
     def get_samples_min_ge(smpl: int) -> int:
         return min([x for x in compact.SAMPLES if x >= smpl])
-    
+
     @staticmethod
     def get_samples_index(smpl: int) -> int:
         smpl = compact.get_samples_min_ge(smpl)
