@@ -27,6 +27,7 @@ def format_time(n: float) -> str:
     else: return '0'
 
 def format_si(n: float) -> str:
+    if n == 0: return '0 '
     exp = int(math.log10(n) // 3)
     unit = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
     return f'{n / 1000.0 ** exp:.3f} {unit[exp]}'
