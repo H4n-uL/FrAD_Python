@@ -6,7 +6,7 @@ from .fourier.profiles import compact
 from .tools import ecc
 from .tools.asfh import ASFH
 import sys
-# import random
+import random
 
 EMPTY = np.array([]).shape
 
@@ -53,7 +53,7 @@ class Encoder:
             # if not flush:
             #     rng = random.Random()
             #     prf = rng.choice(AVAILABLE)
-            #     self._set_profile(prf, self.srate, self.channels,
+            #     self.set_profile(prf, self.srate, self.channels,
             #         rng.choice(list(filter(lambda x: x != 0, BIT_DEPTHS[prf]))),
             #         rng.choice(compact.SAMPLES) if prf in profiles.COMPACT else rng.randint(128, 32768)
             #     )
@@ -63,7 +63,7 @@ class Encoder:
             #     self.set_overlap_ratio(rng.randint(2, 256))
 
             overlap_len = len(self.overlap_fragment)
-            rlen = max(rlen, overlap_len)
+            rlen = max(self.fsize, overlap_len)
             if self.asfh.profile in profiles.COMPACT:
                 rlen = compact.get_samples_min_ge(rlen)
             rlen -= overlap_len
@@ -76,7 +76,9 @@ class Encoder:
             frame = np.frombuffer(pcm_bytes, self.pcm_format).reshape(-1, self.channels)
             frame = to_f64(frame, self.pcm_format)
 
-            if frame.size == 0: ret += self.asfh.force_flush(); break
+            if frame.size == 0 and self.overlap_fragment.shape == EMPTY:
+                ret += self.asfh.force_flush()
+                break
             samples += len(frame)
 
             frame = self.overlap(frame); fsize = len(frame)
