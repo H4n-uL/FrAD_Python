@@ -63,7 +63,7 @@ class Encoder:
             #     self.set_overlap_ratio(rng.randint(2, 256))
 
             overlap_len = len(self.overlap_fragment)
-            rlen = max(rlen, overlap_len + 1)
+            rlen = max(rlen, overlap_len)
             if self.asfh.profile in profiles.COMPACT:
                 rlen = compact.get_samples_min_ge(rlen)
             rlen -= overlap_len
