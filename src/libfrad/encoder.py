@@ -62,10 +62,11 @@ class Encoder:
             #     self.set_ecc(rng.random() < 0.5, (ecc_data, rng.randint(0, 255 - ecc_data)))
             #     self.set_overlap_ratio(rng.randint(2, 256))
 
-            rlen = self.fsize
+            overlap_len = len(self.overlap_fragment)
+            rlen = max(rlen, overlap_len + 1)
             if self.asfh.profile in profiles.COMPACT:
-                overlap_len = len(self.overlap_fragment)
-                rlen = compact.get_samples_min_ge(max(rlen, overlap_len + 1)) - overlap_len
+                rlen = compact.get_samples_min_ge(rlen)
+            rlen -= overlap_len
 
             bytes_per_sample = self.pcm_format.itemsize
             read_bytes = rlen * self.channels * bytes_per_sample
