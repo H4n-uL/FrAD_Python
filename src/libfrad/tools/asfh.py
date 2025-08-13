@@ -20,8 +20,7 @@ def decode_pfb(pfb: bytes) -> tuple[int, bool, bool, int]:
 def encode_css_prf1(channels: int, srate: int, fsize: int, force_flush: bool) -> bytes:
     chnl = (channels-1)<<10
     srate = compact.get_srate_index(srate) << 6
-    fsize = compact.get_samples_index(fsize)
-    fsize_idx = compact.SAMPLES.index(fsize) << 1
+    fsize_idx = compact.get_samples_index(fsize) << 1
     return struct.pack('>H', chnl | srate | fsize_idx | force_flush)
 
 def decode_css_prf1(css: bytes) -> tuple[int, int, int, bool]:
@@ -109,6 +108,7 @@ class ASFH:
             if force_flush: return 'ForceFlush', buffer
 
             self.overlap_ratio = self.buffer[11]
+            if self.overlap_ratio != 0: self.overlap_ratio += 1
 
             if self.ecc:
                 x, buffer = self.fill_buffer(buffer, 16)
