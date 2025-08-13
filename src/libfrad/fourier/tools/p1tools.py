@@ -37,7 +37,7 @@ def mapping_from_opus(mapped_thres, freqs_len, srate):
     for i in range(SUBBANDS-1):
         start = min(get_bin_range(freqs_len, srate, i).start, freqs_len)
         end = min(get_bin_range(freqs_len, srate, i+1).start, freqs_len)
-        thres[start:end] = np.linspace(mapped_thres[i], mapped_thres[i+1], end-start)
+        thres[start:end] = np.linspace(mapped_thres[i], mapped_thres[i+1], end-start, endpoint = False)
     return thres
 
 def quant(x: np.ndarray) -> np.ndarray: return np.sign(x) * np.abs(x)**QUANT_ALPHA
