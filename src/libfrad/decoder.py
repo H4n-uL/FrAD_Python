@@ -21,23 +21,28 @@ class Decoder:
         self.info = ASFH()
         self.buffer = b''
         self.overlap_fragment = np.array([])
+        self.overlap_prog = 0
         self.fix_error = fix_error
         self.broken_frame = False
 
     def overlap(self, frame: np.ndarray) -> np.ndarray:
+        olap_len = len(self.overlap_fragment)
         if self.overlap_fragment.shape != EMPTY:
-            olap_len = len(self.overlap_fragment)
             fade_in = hanning_in_overlap(olap_len)
-            for c in range(self.asfh.channels):
-                frame[:olap_len, c] = \
-                frame[:olap_len, c] * fade_in + self.overlap_fragment[:, c] * fade_in[::-1]
+            ov_left = min(olap_len - self.overlap_prog, len(frame))
+            for i in range(ov_left):
+                i_ov = i + self.overlap_prog
+                for j in range(self.asfh.channels):
+                    frame[i, j] *= fade_in[i_ov]
+                    frame[i, j] += self.overlap_fragment[i_ov, j] * fade_in[olap_len - i_ov - 1]
+            self.overlap_prog += ov_left
 
-        next_overlap = np.array([])
-        if self.asfh.profile in profiles.COMPACT and self.asfh.overlap_ratio != 0:
-            frame_cutout = len(frame) * (self.asfh.overlap_ratio - 1) // self.asfh.overlap_ratio
-            next_overlap = frame[frame_cutout:]
-            frame = frame[:frame_cutout]
-        self.overlap_fragment = next_overlap
+        if olap_len <= self.overlap_prog:
+            self.overlap_fragment = np.array([])
+            self.overlap_prog = 0
+            if self.asfh.profile in profiles.COMPACT and self.asfh.overlap_ratio != 0:
+                frame_cutout = len(frame) * (self.asfh.overlap_ratio - 1) // self.asfh.overlap_ratio
+                self.overlap_fragment, frame = frame[frame_cutout:], frame[:frame_cutout]
         return frame
 
     def is_empty(self) -> bool: return len(self.buffer) < len(common.FRM_SIGN) or self.broken_frame
