@@ -1,5 +1,5 @@
-PIPEIN = ['pipe:', 'pipe:0', '-', '/dev/stdin', 'dev/fd/0']
-PIPEOUT = ['pipe:', 'pipe:1', '-', '/dev/stdout', 'dev/fd/1']
+PIPEIN = ['-', '/dev/stdin', '/dev/fd/0']
+PIPEOUT = ['-', '/dev/stdout', '/dev/fd/1']
 
 import math, os, sys
 
