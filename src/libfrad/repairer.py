@@ -31,9 +31,11 @@ class Repairer:
 
         while True:
             if self.asfh.all_set:
-                if len(stream) == 0: self.broken_frame = True; break
                 self.broken_frame = False
-                if len(self.buffer) < self.asfh.frmbytes: break
+                if len(self.buffer) < self.asfh.frmbytes:
+                    if len(stream) == 0: self.broken_frame = True
+                    break
+
                 frad, self.buffer = self.buffer[:self.asfh.frmbytes], self.buffer[self.asfh.frmbytes:]
 
                 if self.asfh.ecc:
