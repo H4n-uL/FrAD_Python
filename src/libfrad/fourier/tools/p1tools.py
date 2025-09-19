@@ -46,10 +46,10 @@ def dequant(x: np.ndarray) -> np.ndarray: return np.sign(x) * np.abs(x)**(1/QUAN
 bitstr2bytes = lambda bstr: bytes(int(bstr[i:i+8].ljust(8, '0'), 2) for i in range(0, len(bstr), 8))
 bytes2bitstr = lambda b: ''.join(f'{byte:08b}' for byte in b)
 
-def exp_golomb_rice_encode(data: np.ndarray):
+def exp_golomb_rice_encode(data: np.ndarray) -> bytes:
     if not data.size: return b'\x00'
     dmax = np.abs(data).max()
-    k = dmax and int(np.ceil(np.log2(dmax))) or 0
+    k = int(np.ceil(np.log2(dmax))) if dmax else 0
     encoded = ''
     for n in data:
         n = ((n << 1) - 1) if (n > 0) else (-n << 1)
@@ -59,7 +59,7 @@ def exp_golomb_rice_encode(data: np.ndarray):
 
     return struct.pack('B', k) + bitstr2bytes(encoded)
 
-def exp_golomb_rice_decode(dbytes: bytes):
+def exp_golomb_rice_decode(dbytes: bytes) -> np.ndarray:
     k = struct.unpack('B', dbytes[:1])[0]
     decoded = []
     data = bytes2bitstr(dbytes[1:])
