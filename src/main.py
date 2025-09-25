@@ -47,7 +47,6 @@ def main():
         elif INPUT in cli.VORBISMETA_OPT: helpname = 'vorbismeta'
         elif INPUT in cli.PROFILES_OPT:   helpname = 'profiles'
         print(open(f'{PATH_ABSOLUTE}/help/{helpname}.txt', 'r').read().replace(b'{frad}'.decode(), executable))
-        print()
     else:
         print('Fourier Analogue-in-Digital Python Master', file=sys.stderr)
         print(f'Abstract syntax: {executable} [encode|decode|repair] <input> [kwargs...]', file=sys.stderr)
