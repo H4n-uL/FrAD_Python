@@ -9,7 +9,7 @@ import os, sys
 PATH_ABSOLUTE = os.path.dirname(os.path.abspath(__file__))
 BANNER = \
 '                    Fourier Analogue-in-Digital Python Master\n' + \
-'                             Original Author - HaמuL\n'
+'                             Original Author - HaƞuL\n'
 
 def main():
     executable = os.path.basename(sys.argv[0])
