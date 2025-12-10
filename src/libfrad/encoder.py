@@ -32,15 +32,17 @@ class Encoder:
 
         self.set_profile(profile, srate, channels, bit_depth, frame_size)
 
-    def overlap(self, frame: np.ndarray, flush: bool) -> np.ndarray:
+    def overlap(self, frame: np.ndarray, overlap_read: int, flush: bool) -> np.ndarray:
         if self.overlap_fragment.shape != EMPTY:
-            frame = np.concatenate((self.overlap_fragment, frame), axis=0)
+            frame = np.concatenate((self.overlap_fragment[:overlap_read], frame), axis=0)
+            self.overlap_fragment = self.overlap_fragment[overlap_read:]
 
         next_overlap = np.array([])
         next_flag = (
             not flush and
             self.asfh.profile in profiles.COMPACT and
-            self.asfh.overlap_ratio > 1
+            self.asfh.overlap_ratio > 1 and
+            len(self.overlap_fragment) < 1
         )
         if next_flag:
             frame_cutout = len(frame) * (self.asfh.overlap_ratio - 1) // self.asfh.overlap_ratio
@@ -68,10 +70,11 @@ class Encoder:
             # self.set_overlap_ratio(rng.randint(2, 256))
 
             overlap_len = len(self.overlap_fragment)
-            rlen = max(self.fsize, overlap_len)
+            rlen = self.fsize
             if self.asfh.profile in profiles.COMPACT:
                 rlen = compact.get_samples_min_ge(rlen)
-            rlen -= overlap_len
+            overlap_read = min(overlap_len, rlen)
+            rlen -= overlap_read
 
             bytes_per_sample = self.pcm_format.itemsize
             read_bytes = rlen * self.channels * bytes_per_sample
@@ -82,7 +85,7 @@ class Encoder:
             frame = to_f64(frame, self.pcm_format)
             samples_in_frame = len(frame)
 
-            frame = self.overlap(frame, flush)
+            frame = self.overlap(frame, overlap_read, flush)
             if frame.size == 0 and self.overlap_fragment.shape == EMPTY:
                 ret += self.asfh.force_flush()
                 break
